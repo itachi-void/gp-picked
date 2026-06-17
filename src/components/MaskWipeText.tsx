@@ -1,41 +1,27 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-
 /**
- * MaskWipeText — premium left-to-right reveal (Apple / Stripe style).
+ * MaskWipeText — premium left-to-right reveal (Apple / Stripe style), CSS-only.
  *
  * The text stays static while a clip mask wipes across it from left to right,
- * uncovering it cleanly. No per-character or per-word churn — one calm sweep.
+ * uncovering it cleanly. One calm sweep — driven by the `animate-mask-wipe`
+ * keyframe in landing-animations.css.
  */
 export function MaskWipeText({
   text,
   className = "",
-  delay = 350,
-  duration = 1000,
+  delay = 0.35,
+  duration = 1,
 }: {
   text: string;
   className?: string;
-  delay?: number; // ms
-  duration?: number; // ms
+  delay?: number;
+  duration?: number;
 }) {
-  const [revealed, setRevealed] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setRevealed(true);
-    }, delay);
-    return () => clearTimeout(timer);
-  }, [delay]);
-
   return (
     <span
-      style={{
-        transitionDuration: `${duration}ms`,
-        transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
-        clipPath: revealed ? "inset(0 0% 0 0)" : "inset(0 100% 0 0)",
-      }}
-      className={`inline-block transition-[clip-path] ${className}`}
+      className={`inline-block animate-mask-wipe ${className}`}
+      style={{ animationDelay: `${delay}s`, animationDuration: `${duration}s` }}
     >
       {text}
     </span>

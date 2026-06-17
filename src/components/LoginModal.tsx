@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { X, Mail, Lock, User as UserIcon, Recycle } from "lucide-react";
@@ -17,6 +17,17 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean; onClo
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("demo1234");
   const [submitting, setSubmitting] = useState(false);
+  
+  // CSS-only enter transition
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    if (!isOpen) {
+      setShow(false);
+      return;
+    }
+    const id = requestAnimationFrame(() => setShow(true));
+    return () => cancelAnimationFrame(id);
+  }, [isOpen]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,16 +51,18 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean; onClo
   const inputClass =
     "w-full pl-10 pr-4 h-11 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/50";
 
+  if (!isOpen) return null;
+
   return (
     <div
-      className={`fixed inset-0 bg-black/50 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all duration-300 ${
-        isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+      className={`fixed inset-0 bg-black/50 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${
+        show ? "opacity-100" : "opacity-0"
       }`}
       onClick={onClose}
     >
       <div
-        className={`bg-white rounded-2xl p-8 max-w-md w-full relative shadow-2xl transition-all duration-300 transform ${
-          isOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-8"
+        className={`bg-white rounded-2xl p-8 max-w-md w-full relative shadow-2xl transition-all duration-300 ${
+          show ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-90 translate-y-10"
         }`}
         onClick={(e) => e.stopPropagation()}
       >

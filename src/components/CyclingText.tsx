@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 
 /**
- * CyclingText — calm phrase rotator.
+ * CyclingText — calm phrase rotator (CSS-only, no Motion).
  *
- * Crossfades between phrases with a soft CSS transition. No per-character churn,
- * just one clean reveal per phrase on a gentle easing curve.
+ * Crossfades between phrases with a soft blur + slide on each change. The
+ * animation is re-triggered by keying the span on the active index so React
+ * remounts it and replays the `animate-cycle-in` keyframe.
  */
 export function CyclingText({
   texts,
@@ -18,27 +19,22 @@ export function CyclingText({
   className?: string;
 }) {
   const [index, setIndex] = useState(0);
-  const [animate, setAnimate] = useState(true);
 
   useEffect(() => {
-    const id = window.setInterval(() => {
-      setAnimate(false);
-      setTimeout(() => {
-        setIndex((p) => (p + 1) % texts.length);
-        setAnimate(true);
-      }, 300); // Delay text update until fade-out is complete
-    }, interval);
-
+    const id = window.setInterval(
+      () => setIndex((p) => (p + 1) % texts.length),
+      interval,
+    );
     return () => window.clearInterval(id);
   }, [texts, interval]);
 
   return (
     <span className="relative inline-block align-bottom">
+      {/* keeps layout height stable while phrases swap */}
       <span className="invisible whitespace-nowrap">{texts[index]}</span>
       <span
-        className={`absolute inset-0 whitespace-nowrap transition-all duration-300 transform ${
-          animate ? "opacity-100 translate-y-0 blur-none" : "opacity-0 -translate-y-4 blur-[4px]"
-        } ${className}`}
+        key={index}
+        className={`absolute inset-0 whitespace-nowrap animate-cycle-in ${className}`}
       >
         {texts[index]}
       </span>

@@ -1,5 +1,48 @@
-/* Supplemental keyframes for the landing page. Most motion is handled by Motion;
-   these are lightweight CSS-only accents. */
+/* =========================================================================
+ * Landing page animations — 100% CSS / Tailwind. No Framer Motion / Motion.
+ *
+ *  - .reveal-*  : scroll-triggered reveals (paired with the useReveal hook,
+ *                 which toggles `.is-visible`).
+ *  - .animate-* : on-mount + continuous (infinite) animations.
+ *  Primary easing curve mirrors the old Motion config: cubic-bezier(.22,1,.36,1).
+ * ========================================================================= */
+
+:root {
+  --landing-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ----------------------------- Scroll reveals ---------------------------- */
+.reveal-up,
+.reveal-up-sm,
+.reveal-scale,
+.reveal-scale-sm,
+.reveal-fade,
+.reveal-left {
+  opacity: 0;
+  transition:
+    opacity 0.6s var(--landing-ease),
+    transform 0.6s var(--landing-ease);
+  will-change: opacity, transform;
+}
+
+.reveal-up { transform: translateY(50px); }
+.reveal-up-sm { transform: translateY(20px); }
+.reveal-scale { transform: scale(0.95); }
+.reveal-scale-sm { transform: scale(0.98); }
+.reveal-fade { transform: none; }
+.reveal-left { transform: translateX(-40px); }
+
+.reveal-up.is-visible,
+.reveal-up-sm.is-visible,
+.reveal-scale.is-visible,
+.reveal-scale-sm.is-visible,
+.reveal-fade.is-visible,
+.reveal-left.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ----------------------------- Keyframes & Classes ---------------------------- */
 
 @keyframes landing-float {
   0%, 100% { transform: translateY(0); }
@@ -35,7 +78,7 @@
 }
 
 .animate-spin-slow {
-  animation: spin-slow 8s linear infinite;
+  animation: spin-slow 12s linear infinite;
 }
 
 @keyframes shimmer-pass {
@@ -47,7 +90,7 @@
   animation: shimmer-pass 2s linear infinite;
 }
 
-/* Custom CSS Transition Classes for Framer Motion Revert */
+/* 3D transitions perspective */
 .perspective-1000 {
   perspective: 1000px;
 }
@@ -112,4 +155,106 @@
 }
 .impact-card-active:hover .impact-card-icon {
   transform: translateY(-15px) scale(1.15);
+}
+
+/* --- Added Animations based on the UI specifications --- */
+
+@keyframes scale-pop {
+  0% { opacity: 0; transform: scale(0.9) translateY(10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-scale-pop {
+  animation: scale-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes spin-med {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-med {
+  animation: spin-med 15s linear infinite;
+}
+
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer-sweep {
+  animation: shimmer-sweep 2.5s ease-in-out infinite;
+}
+
+@keyframes cycle-in {
+  0% { opacity: 0; transform: translateY(10px) scale(0.98); filter: blur(4px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+.animate-cycle-in {
+  animation: cycle-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes mask-wipe {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+.animate-mask-wipe {
+  animation: mask-wipe 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  clip-path: inset(0 100% 0 0);
+}
+
+@keyframes arrow-nudge {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}
+
+.animate-arrow-nudge {
+  animation: arrow-nudge 1.2s ease-in-out infinite;
+}
+
+@keyframes cta-dot {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.5); }
+}
+
+.animate-cta-dot {
+  animation: cta-dot 3s ease-in-out infinite;
+}
+
+@keyframes nav-drop {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-nav-drop {
+  animation: nav-drop 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes nav-item {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-nav-item {
+  animation: nav-item 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
