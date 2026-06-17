@@ -1,0 +1,115 @@
+/* Supplemental keyframes for the landing page. Most motion is handled by Motion;
+   these are lightweight CSS-only accents. */
+
+@keyframes landing-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.landing-float {
+  animation: landing-float 6s ease-in-out infinite;
+}
+
+@keyframes landing-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.landing-shimmer {
+  background-size: 200% 100%;
+  animation: landing-shimmer 2s linear infinite;
+}
+
+@keyframes loader-logo {
+  0% { opacity: 0; transform: scale(0.92); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.animate-loader-logo {
+  animation: loader-logo 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+@keyframes shimmer-pass {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.animate-shimmer-pass {
+  animation: shimmer-pass 2s linear infinite;
+}
+
+/* Custom CSS Transition Classes for Framer Motion Revert */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* FeatureCard Transitions */
+.feature-card-transition {
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+  transform-style: preserve-3d;
+}
+.feature-card-enter {
+  opacity: 0;
+  transform: translateY(50px) rotateY(90deg);
+}
+.feature-card-active {
+  opacity: 1;
+  transform: translateY(0) rotateY(0deg);
+}
+.feature-card-active:hover {
+  transform: translateY(-15px) rotateY(0deg);
+  box-shadow: 0 25px 50px rgba(16,185,129,0.2);
+  border-color: rgb(16,185,129);
+}
+
+/* StepItem Transitions */
+.step-circle-transition {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.step-circle-transition:hover {
+  transform: scale(1.2) rotate(360deg);
+  box-shadow: 0 0 30px rgba(16,185,129,0.6);
+}
+
+/* RoleCard Transitions */
+.role-card-transition {
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+  transform-style: preserve-3d;
+}
+.role-card-enter {
+  opacity: 0;
+  transform: rotateY(90deg);
+}
+.role-card-active {
+  opacity: 1;
+  transform: rotateY(0deg);
+}
+.role-card-active:hover {
+  transform: translateY(-15px) scale(1.03);
+  box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+  border-color: rgb(16,185,129);
+}
+
+/* ImpactStatCard Transitions */
+.impact-card-transition {
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+}
+.impact-card-active:hover {
+  transform: translateY(-10px) scale(1.05);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+.impact-card-icon {
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.impact-card-active:hover .impact-card-icon {
+  transform: translateY(-15px) scale(1.15);
+}
