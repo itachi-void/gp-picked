@@ -1,7 +1,7 @@
 export function homePathForRole(role: "Citizen" | "Driver" | "Admin" | string): string {
   switch (role) {
     case "Admin":
-      return "/dashboard";
+      return "/overview";
     case "Driver":
       return "/driver-portal";
     case "Citizen":

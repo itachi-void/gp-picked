@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { X, Mail, Lock, User as UserIcon, Recycle } from "lucide-react";
-import { useAuth } from "@/app/contexts/AuthContext";
+import { useAuth } from "@/store/authStore";
 import { homePathForRole } from "@/app/utils/roleAccess";
 
 type Mode = "login" | "signup";
@@ -17,6 +17,7 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean; onClo
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("demo1234");
   const [submitting, setSubmitting] = useState(false);
+  const [role, setRole] = useState<"Citizen" | "Driver" | "Admin">("Citizen");
   
   // CSS-only enter transition
   const [show, setShow] = useState(false);
@@ -29,24 +30,40 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean; onClo
     return () => cancelAnimationFrame(id);
   }, [isOpen]);
 
+
+  
   const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim() || !password.trim() || (mode === "signup" && !name.trim())) {
-      toast.error("Please fill in all fields");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const u = mode === "login" ? await login(email, password) : await signup(name, email, password);
-      toast.success(mode === "login" ? "Welcome back!" : "Account created!");
-      onClose();
-      router.push(homePathForRole(u.role));
-    } catch {
-      toast.error("Authentication failed");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  e.preventDefault();
+
+  const isSignup = mode === "signup";
+
+  const valid =
+    email.trim() &&
+    password.trim() &&
+    (!isSignup || name.trim());
+
+  if (!valid) {
+    toast.error("Please fill in all fields");
+    return;
+  }
+
+  setSubmitting(true);
+
+  try {
+    const user = isSignup
+      ? await signup(name, email, password)
+      : await login(email, password, role);
+
+    toast.success(isSignup ? "Account created!" : "Welcome back!");
+
+    onClose();
+    router.push(homePathForRole(user.role));
+  } catch (err) {
+    toast.error("Authentication failed");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const inputClass =
     "w-full pl-10 pr-4 h-11 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/50";
@@ -95,11 +112,26 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean; onClo
           )}
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input className={inputClass} type="email" placeholder="Email (try admin@ / citizen@)" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input className={inputClass} type="text" placeholder="Username (try admin@ / citizen@)" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input className={inputClass} type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          </div>
+          <div className="relative">
+            <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as any)}
+              className={`${inputClass} pl-10 pr-8 appearance-none cursor-pointer bg-white dark:bg-slate-900`}
+            >
+              <option value="Citizen">Citizen</option>
+              <option value="Driver">Driver</option>
+              <option value="Admin">Admin</option>
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-xs">
+              ▼
+            </div>
           </div>
 
           <button

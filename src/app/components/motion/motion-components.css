@@ -1,0 +1,30 @@
+@keyframes mcCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mcScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translate(-50%, -50%);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translate(-50%, -50%);
+  }
+}
+
+.mc-card-in {
+  animation: mcCardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mc-scale-in {
+  animation: mcScaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: 0 0;
+}

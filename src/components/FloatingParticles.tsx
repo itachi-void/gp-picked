@@ -8,7 +8,7 @@ export default function FloatingParticles() {
   const [ready, setReady] = useState(false);
   const bgOptions = useMemo(
     () => ({
-      fullScreen: { enable: true, zIndex: 1 },
+      fullScreen: { enable: false },
       background: { color: { value: "transparent" } },
       particles: {
         number: { value: 70 },
@@ -35,7 +35,7 @@ export default function FloatingParticles() {
 
   const fgOptions = useMemo(
     () => ({
-      fullScreen: { enable: true, zIndex: 2 },
+      fullScreen: { enable: false },
       background: { color: { value: "transparent" } },
       interactivity: {
         events: { onHover: { enable: true, mode: ["repulse", "slow"] } },
@@ -75,18 +75,18 @@ export default function FloatingParticles() {
       }}
     >
       {ready && (
-        <>
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
           <Particles
             id="tsparticles-bg"
-            className="pointer-events-none soft-layer"
+            className="absolute inset-0 w-full h-full pointer-events-none"
             options={bgOptions}
           />
           <Particles
             id="tsparticles-fg"
-            className="pointer-events-none soft-layer"
+            className="absolute inset-0 w-full h-full pointer-events-none"
             options={fgOptions}
           />
-        </>
+        </div>
       )}
     </ParticlesProvider>
   );

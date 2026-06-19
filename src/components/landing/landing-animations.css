@@ -11,36 +11,7 @@
   --landing-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ----------------------------- Scroll reveals ---------------------------- */
-.reveal-up,
-.reveal-up-sm,
-.reveal-scale,
-.reveal-scale-sm,
-.reveal-fade,
-.reveal-left {
-  opacity: 0;
-  transition:
-    opacity 0.6s var(--landing-ease),
-    transform 0.6s var(--landing-ease);
-  will-change: opacity, transform;
-}
 
-.reveal-up { transform: translateY(50px); }
-.reveal-up-sm { transform: translateY(20px); }
-.reveal-scale { transform: scale(0.95); }
-.reveal-scale-sm { transform: scale(0.98); }
-.reveal-fade { transform: none; }
-.reveal-left { transform: translateX(-40px); }
-
-.reveal-up.is-visible,
-.reveal-up-sm.is-visible,
-.reveal-scale.is-visible,
-.reveal-scale-sm.is-visible,
-.reveal-fade.is-visible,
-.reveal-left.is-visible {
-  opacity: 1;
-  transform: none;
-}
 
 /* ----------------------------- Keyframes & Classes ---------------------------- */
 
@@ -88,73 +59,6 @@
 
 .animate-shimmer-pass {
   animation: shimmer-pass 2s linear infinite;
-}
-
-/* 3D transitions perspective */
-.perspective-1000 {
-  perspective: 1000px;
-}
-
-/* FeatureCard Transitions */
-.feature-card-transition {
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
-  transform-style: preserve-3d;
-}
-.feature-card-enter {
-  opacity: 0;
-  transform: translateY(50px) rotateY(90deg);
-}
-.feature-card-active {
-  opacity: 1;
-  transform: translateY(0) rotateY(0deg);
-}
-.feature-card-active:hover {
-  transform: translateY(-15px) rotateY(0deg);
-  box-shadow: 0 25px 50px rgba(16,185,129,0.2);
-  border-color: rgb(16,185,129);
-}
-
-/* StepItem Transitions */
-.step-circle-transition {
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.step-circle-transition:hover {
-  transform: scale(1.2) rotate(360deg);
-  box-shadow: 0 0 30px rgba(16,185,129,0.6);
-}
-
-/* RoleCard Transitions */
-.role-card-transition {
-  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
-  transform-style: preserve-3d;
-}
-.role-card-enter {
-  opacity: 0;
-  transform: rotateY(90deg);
-}
-.role-card-active {
-  opacity: 1;
-  transform: rotateY(0deg);
-}
-.role-card-active:hover {
-  transform: translateY(-15px) scale(1.03);
-  box-shadow: 0 30px 60px rgba(0,0,0,0.15);
-  border-color: rgb(16,185,129);
-}
-
-/* ImpactStatCard Transitions */
-.impact-card-transition {
-  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
-}
-.impact-card-active:hover {
-  transform: translateY(-10px) scale(1.05);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-}
-.impact-card-icon {
-  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.impact-card-active:hover .impact-card-icon {
-  transform: translateY(-15px) scale(1.15);
 }
 
 /* --- Added Animations based on the UI specifications --- */
@@ -247,7 +151,7 @@
 }
 
 .animate-nav-item {
-  animation: nav-item 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: nav-item 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes fade-in-up {
@@ -256,5 +160,15 @@
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: fade-in-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+/* Accuracy progress bar transitions inside visible cards */
+.progress-bar-fill {
+  transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-aos]:not(.aos-animate) .progress-bar-fill {
+  width: 0% !important;
+}
+

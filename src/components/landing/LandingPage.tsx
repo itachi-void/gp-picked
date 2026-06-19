@@ -26,11 +26,8 @@ import { Stat, FeatureT, StepT, RoleT, ImpactEqT, ImpactStatT } from "./types";
 
 // Reusable Components & Hooks
 import FloatingParticles from "../FloatingParticles";
-import LoginModal from "../LoginModal";
 import { CyclingText } from "../CyclingText";
 import { MaskWipeText } from "../MaskWipeText";
-import { Reveal } from "../Reveal";
-import { useReveal } from "@/app/hooks/useReveal";
 
 import "./landing-animations.css";
 
@@ -105,7 +102,6 @@ const IMPACT_STATS: ImpactStatT[] = [
 /* -------------------------------------------------------------------------- */
 export default function LandingPage() {
   const [qrModalOpen, setQrModalOpen] = useState(false);
-  const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [bottleCount, setBottleCount] = useState(100);
   const [mounted, setMounted] = useState(false);
 
@@ -148,20 +144,20 @@ export default function LandingPage() {
             </div>
 
             <div className="flex items-center gap-2 flex-shrink-0">
-              <button
-                onClick={() => setLoginModalOpen(true)}
+              <Link
+                href="/login"
                 className="hidden sm:block rounded-full px-5 py-2 text-sm font-semibold text-emerald-700 transition-all duration-200 hover:bg-emerald-50 hover:scale-[1.04] active:scale-95 whitespace-nowrap cursor-pointer"
               >
                 Sign In
-              </button>
+              </Link>
 
-              <button
-                onClick={() => setLoginModalOpen(true)}
+              <Link
+                href="/signup"
                 className="group flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all duration-200 hover:shadow-emerald-500/50 hover:scale-[1.04] active:scale-95 whitespace-nowrap cursor-pointer"
               >
                 Get Started
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -271,7 +267,10 @@ export default function LandingPage() {
       {/* -------------------------- Rewards Calculator ------------------------- */}
       <section id="pricing" className="relative z-10 py-20 px-4">
         <div className="container mx-auto max-w-4xl">
-          <Reveal variant="scale" className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 md:p-12 shadow-2xl border border-emerald-100">
+          <div
+            data-aos="fade-up"
+            className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 md:p-12 shadow-2xl border border-emerald-100"
+          >
             <div className="text-center mb-8">
               <h2 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-4">
                 Rewards Calculator
@@ -319,7 +318,7 @@ export default function LandingPage() {
 
               <LiquidProgress progress={bottleCount / 1000} />
             </div>
-          </Reveal>
+          </div>
         </div>
       </section>
 
@@ -343,7 +342,10 @@ export default function LandingPage() {
             <p className="text-xl text-green-100 max-w-2xl mx-auto">Making a real difference for our planet</p>
           </div>
 
-          <Reveal variant="scale" className="max-w-4xl mx-auto mb-12">
+          <div
+            data-aos="fade-up"
+            className="max-w-4xl mx-auto mb-12"
+          >
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
               <h3 className="text-2xl font-bold mb-6 text-center">Impact Equation</h3>
               <div className="flex flex-wrap items-center justify-center gap-4 text-lg">
@@ -361,7 +363,7 @@ export default function LandingPage() {
                 })}
               </div>
             </div>
-          </Reveal>
+          </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {IMPACT_STATS.map((stat, i) => (
@@ -374,7 +376,10 @@ export default function LandingPage() {
       {/* --------------------------------- CTA --------------------------------- */}
       <section className="relative z-10 py-20 px-4">
         <div className="container mx-auto">
-          <Reveal variant="scale" className="bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 rounded-3xl p-12 md:p-16 text-center text-white shadow-2xl relative overflow-hidden">
+          <div
+            data-aos="fade-up"
+            className="bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 rounded-3xl p-12 md:p-16 text-center text-white shadow-2xl relative overflow-hidden"
+          >
             <div className="absolute inset-0 opacity-20 pointer-events-none">
               {[...Array(20)].map((_, i) => (
                 <span
@@ -396,24 +401,24 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-wrap gap-4 justify-center relative z-10">
-              <button
-                onClick={() => setLoginModalOpen(true)}
+              <Link
+                href="/signup"
                 className="px-8 py-4 bg-white text-emerald-600 rounded-lg transition-all duration-300 flex items-center gap-2 shadow-lg font-semibold hover:scale-105 active:scale-95 hover:shadow-[0_20px_40px_rgba(255,255,255,0.3)] cursor-pointer"
               >
                 Get Started Free
                 <span className="inline-flex animate-arrow-nudge">
                   <ArrowRight className="w-5 h-5" />
                 </span>
-              </button>
+              </Link>
 
-              <button
-                onClick={() => setLoginModalOpen(true)}
+              <Link
+                href="/signup"
                 className="px-8 py-4 bg-emerald-800 text-white rounded-lg transition-all duration-300 flex items-center gap-2 shadow-lg font-semibold hover:scale-105 active:scale-95 hover:shadow-[0_20px_40px_rgba(0,0,0,0.3)] cursor-pointer"
               >
                 Schedule Demo
-              </button>
+              </Link>
             </div>
-          </Reveal>
+          </div>
         </div>
       </section>
 
@@ -421,7 +426,7 @@ export default function LandingPage() {
       <footer className="relative z-10 bg-gray-900 text-white py-12 px-4">
         <div className="container mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <Reveal variant="up-sm">
+            <div data-aos="fade-up">
               <div className="flex items-center gap-2 mb-4">
                 <div className="animate-spin-slow">
                   <Recycle className="w-6 h-6" />
@@ -431,14 +436,14 @@ export default function LandingPage() {
               <p className="text-gray-400 text-sm">
                 Smart bottle recycling system with AI verification and instant rewards.
               </p>
-            </Reveal>
+            </div>
 
             {[
               { title: "Product", links: ["Features", "How It Works", "Pricing", "Dashboard"] },
               { title: "Company", links: ["About", "Careers", "Contact"] },
               { title: "Legal", links: ["Privacy", "Terms", "Security"] },
             ].map((section, index) => (
-              <Reveal key={section.title} variant="up-sm" delay={index * 0.1}>
+              <div key={section.title} data-aos="fade-up" data-aos-delay={index * 100}>
                 <h4 className="font-semibold mb-4">{section.title}</h4>
                 <ul className="space-y-2 text-sm text-gray-400">
                   {section.links.map((link) => (
@@ -449,7 +454,7 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-              </Reveal>
+              </div>
             ))}
           </div>
 
@@ -469,19 +474,18 @@ export default function LandingPage() {
 
       {/* Modals */}
       <QRScannerModal isOpen={qrModalOpen} onClose={() => setQrModalOpen(false)} />
-      <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
     </div>
   );
 }
 
-// ProgressLine: خط التقدم اللي بيكبر للعرض الكامل أول ما يظهر — CSS فقط
+// ProgressLine: خط التقدم اللي بيكبر للعرض الكامل أول ما يظهر — AOS fade-right
 function ProgressLine() {
-  const [ref, inView] = useReveal<HTMLDivElement>({ once: true });
   return (
     <div
-      ref={ref}
-      className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 relative transition-[width] duration-[2000ms] ease-out"
-      style={{ width: inView ? "100%" : "0%", boxShadow: "0 0 20px rgba(16,185,129,0.6)" }}
+      data-aos="fade-right"
+      data-aos-duration="1500"
+      className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 relative"
+      style={{ width: "100%", boxShadow: "0 0 20px rgba(16,185,129,0.6)" }}
     >
       <div className="absolute inset-0 bg-white/30 animate-shimmer-sweep" />
     </div>
