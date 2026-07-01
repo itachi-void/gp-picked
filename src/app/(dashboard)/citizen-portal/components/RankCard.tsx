@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Trophy, Medal, TrendingUp } from "lucide-react";
 import { GlassCard } from "@/app/components/GlassCard";
+import api from "@/lib/axios";
 
 interface RankData {
   userId: number;
@@ -43,23 +44,8 @@ export function RankCard({ userId }: RankCardProps) {
         setLoading(true);
         setError(null);
 
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setError("Please login first");
-          return;
-        }
-
-        const res = await fetch(`/api/User/GetRankingUser/${userId}?sortOrder=asc`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!res.ok) {
-          const data = await res.json();
-          setError(data.message || "Failed to fetch rank");
-          return;
-        }
-
-        const data: RankData = await res.json();
+        const res = await api.get<RankData>(`/User/GetRankingUser/${userId}?sortOrder=asc`);
+        const data = res.data;
         setRankData(data);
       } catch {
         setError("An error occurred while fetching your rank");

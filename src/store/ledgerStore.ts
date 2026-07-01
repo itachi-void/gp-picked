@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import api from "@/lib/axios";
 
 export interface PointsEntry {
   id: string;
@@ -30,19 +31,8 @@ export const useLedgerStore = create<LedgerStore>((set) => ({
         return;
       }
 
-      const res = await fetch("/api/points-ledger", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) {
-        const err = await res
-          .json()
-          .catch(() => ({ message: "Failed to fetch ledger" }));
-        set({ isLoading: false, error: err.message });
-        return;
-      }
-
-      const data = await res.json();
+      const res = await api.get("/points-ledger");
+      const data = res.data;
 
       // Accept both array and { data: [] } wrapper
       const list = Array.isArray(data)

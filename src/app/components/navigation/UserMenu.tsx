@@ -99,7 +99,7 @@ export function UserMenu() {
         {/* الروابط */}
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href="/profile" className="flex items-center gap-2 cursor-pointer w-full">
+            <Link href={role === "employee" ? "/employee-profile" : "/profile"} className="flex items-center gap-2 cursor-pointer w-full">
               <UserIcon className="h-4 w-4" /> Profile
             </Link>
           </DropdownMenuItem>

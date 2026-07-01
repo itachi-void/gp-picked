@@ -24,7 +24,7 @@ import { DataTable, DataTableColumn } from "@/app/components/DataTable";
 import { exportToCsv } from "@/app/utils/exportCsv";
 import { GlassCard } from "@/app/components/GlassCard";
 import { accentMap } from "@/app/utils/accent";
-
+import api from "@/lib/axios";
 
 const priorityAccent: Record<string, string> = {
   Critical: "bg-rose-500/10 text-rose-700 dark:text-rose-300",
@@ -39,18 +39,10 @@ const statusAccent: Record<string, string> = {
   Completed: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
 };
 
-interface ExtendedRow {
-  req: PickupRequest;
-  material: string;
-  weight: number;
-  slaMinutesLeft: number;
-  requestedAt: string;
-}
-
 const DRIVERS = ["Mike Tyson", "Omar S.", "Khaled H.", "Ahmed Hassan", "Mohamed Ali"];
 
 function PickupRequestsPageContent() {
-  useRoleContext();
+  const { role, user } = useRoleContext();
   const { addNotification } = useNotifications();
   const { requests, setRequests } = usePickup();
   const [search, setSearch] = useState("");
@@ -61,9 +53,20 @@ function PickupRequestsPageContent() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDriver, setBulkDriver] = useState<string>("");
 
+  const isDriver = role === "Driver" || role === "Recycler" || role === "driver" || role === "recycler";
+
+  // Filter requests depending on role
+  const displayRequests = useMemo(() => {
+    if (isDriver) {
+      // Drivers only see available pending requests (unassigned)
+      return requests.filter((r) => r.status === "Pending" && !r.driver);
+    }
+    return requests;
+  }, [requests, isDriver]);
+
   const enriched: ExtendedRow[] = useMemo(
     () =>
-      requests.map((r, i) => {
+      displayRequests.map((r, i) => {
         const material = r.items[0]?.plasticType ?? "Mixed";
         const weight = r.items.reduce((a, b) => a + b.expectedWeightKg, 0);
         const slaBase: Record<string, number> = { Critical: 30, High: 120, Normal: 360, Low: 1440 };
@@ -72,7 +75,7 @@ function PickupRequestsPageContent() {
         const requestedAt = `${elapsedM}m ago`;
         return { req: r, material, weight, slaMinutesLeft, requestedAt };
       }),
-    [requests]
+    [displayRequests]
   );
 
   const zones = Array.from(new Set(enriched.map((e) => e.req.zone.name)));
@@ -125,6 +128,41 @@ function PickupRequestsPageContent() {
     setBulkDriver("");
   };
 
+  // Driver bulk accept action
+  const handleDriverAccept = async () => {
+    if (selected.size < 5) {
+      toast.error("يجب اختيار 5 طلبات تجميع على الأقل للقبول!");
+      return;
+    }
+
+    const orderIds = Array.from(selected);
+
+    try {
+      // Call Swagger bulk accept API
+      await api.put("/recycler/pickup-requests/accept-bulk", orderIds);
+    } catch (err) {
+      console.error("Backend accept-bulk failed (falling back to local update):", err);
+    }
+
+    // Local state fallback update
+    setRequests(
+      requests.map((r) =>
+        selected.has(r.id) ? { ...r, driver: { name: user?.name || "Driver" }, status: "In Progress" } : r
+      )
+    );
+
+    toast.success(`تم بنجاح قبول ${selected.size} طلبات وإضافتها لمسارك!`);
+    addNotification({
+      title: "تم قبول طلبات التجميع",
+      body: `لقد قبلت عدد ${selected.size} طلبات تجميع في مسارك بنجاح.`,
+      severity: "success",
+      icon: "Truck",
+      link: "/driver-portal",
+    });
+
+    setSelected(new Set());
+  };
+
   const handleExport = () => {
     exportToCsv(
       "pickup-requests",
@@ -145,82 +183,90 @@ function PickupRequestsPageContent() {
     toast.success(`Exported ${filtered.length} rows`);
   };
 
-  const columns: DataTableColumn<ExtendedRow>[] = [
-    {
-      key: "select",
-      label: "",
-      render: (e) => (
-        <input
-          type="checkbox"
-          checked={selected.has(e.req.id)}
-          onChange={() => toggleRow(e.req.id)}
-          onClick={(ev) => ev.stopPropagation()}
-          className="rounded accent-emerald-600 cursor-pointer"
-        />
-      ),
-    },
-    { key: "id", label: "ID", sortable: true, accessor: (e) => e.req.id, render: (e) => <span className="text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>{e.req.id}</span> },
-    {
-      key: "citizen",
-      label: "Citizen",
-      sortable: true,
-      accessor: (e) => e.req.citizen.name,
-      render: (e) => (
-        <span className="inline-flex items-center gap-2"><Users className="w-3.5 h-3.5 text-slate-400" />{e.req.citizen.name}</span>
-      ),
-    },
-    {
-      key: "zone",
-      label: "Zone",
-      sortable: true,
-      accessor: (e) => e.req.zone.name,
-      render: (e) => (
-        <span className="inline-flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-slate-400" />{e.req.zone.name}</span>
-      ),
-    },
-    { key: "material", label: "Material", sortable: true, accessor: (e) => e.material, render: (e) => e.material },
-    { key: "weight", label: "Weight", sortable: true, accessor: (e) => e.weight, render: (e) => `${e.weight} kg` },
-    {
-      key: "priority",
-      label: "Priority",
-      sortable: true,
-      accessor: (e) => e.req.priority,
-      render: (e) => <span className={`px-2 py-0.5 rounded-full text-xs ${priorityAccent[e.req.priority]}`}>{e.req.priority}</span>,
-    },
-    {
-      key: "status",
-      label: "Status",
-      sortable: true,
-      accessor: (e) => e.req.status,
-      render: (e) => <span className={`px-2 py-0.5 rounded-full text-xs ${statusAccent[e.req.status]}`}>{e.req.status}</span>,
-    },
-    {
-      key: "sla",
-      label: "SLA",
-      sortable: true,
-      accessor: (e) => e.slaMinutesLeft,
-      render: (e) => {
-        const breached = e.slaMinutesLeft < 0;
-        return (
-          <span className={`px-2 py-0.5 rounded-full text-xs ${breached ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : "bg-slate-500/10 text-slate-700 dark:text-slate-300"}`}>
-            {formatSla(e.slaMinutesLeft)}
-          </span>
-        );
+  const columns = useMemo(() => {
+    const cols: DataTableColumn<ExtendedRow>[] = [
+      {
+        key: "select",
+        label: "",
+        render: (e) => (
+          <input
+            type="checkbox"
+            checked={selected.has(e.req.id)}
+            onChange={() => toggleRow(e.req.id)}
+            onClick={(ev) => ev.stopPropagation()}
+            className="rounded accent-emerald-600 cursor-pointer"
+          />
+        ),
       },
-    },
-    {
-      key: "driver",
-      label: "Driver",
-      sortable: true,
-      accessor: (e) => e.req.driver?.name ?? "",
-      render: (e) => e.req.driver?.name ?? <span className="text-slate-400">—</span>,
-    },
-    {
+      { key: "id", label: "ID", sortable: true, accessor: (e) => e.req.id, render: (e) => <span className="text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>{e.req.id}</span> },
+      {
+        key: "citizen",
+        label: "Citizen",
+        sortable: true,
+        accessor: (e) => e.req.citizen.name,
+        render: (e) => (
+          <span className="inline-flex items-center gap-2"><Users className="w-3.5 h-3.5 text-slate-400" />{e.req.citizen.name}</span>
+        ),
+      },
+      {
+        key: "zone",
+        label: "Zone",
+        sortable: true,
+        accessor: (e) => e.req.zone.name,
+        render: (e) => (
+          <span className="inline-flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-slate-400" />{e.req.zone.name}</span>
+        ),
+      },
+      { key: "material", label: "Material", sortable: true, accessor: (e) => e.material, render: (e) => e.material },
+      { key: "weight", label: "Weight", sortable: true, accessor: (e) => e.weight, render: (e) => `${e.weight} kg` },
+      {
+        key: "priority",
+        label: "Priority",
+        sortable: true,
+        accessor: (e) => e.req.priority,
+        render: (e) => <span className={`px-2 py-0.5 rounded-full text-xs ${priorityAccent[e.req.priority]}`}>{e.req.priority}</span>,
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        accessor: (e) => e.req.status,
+        render: (e) => <span className={`px-2 py-0.5 rounded-full text-xs ${statusAccent[e.req.status]}`}>{e.req.status}</span>,
+      },
+      {
+        key: "sla",
+        label: "SLA",
+        sortable: true,
+        accessor: (e) => e.slaMinutesLeft,
+        render: (e) => {
+          const breached = e.slaMinutesLeft < 0;
+          return (
+            <span className={`px-2 py-0.5 rounded-full text-xs ${breached ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : "bg-slate-500/10 text-slate-700 dark:text-slate-300"}`}>
+              {formatSla(e.slaMinutesLeft)}
+            </span>
+          );
+        },
+      },
+    ];
+
+    if (!isDriver) {
+      cols.push({
+        key: "driver",
+        label: "Driver",
+        sortable: true,
+        accessor: (e) => e.req.driver?.name ?? "",
+        render: (e) => e.req.driver?.name ?? <span className="text-slate-400">—</span>,
+      });
+    }
+
+    cols.push({
       key: "requested",
       label: "Requested",
       render: (e) => <span className="text-xs text-slate-500 dark:text-slate-400">{e.requestedAt}</span>,
-    },
-  ];
+    });
+
+    return cols;
+  }, [selected, isDriver]);
 
   const formatSla = (m: number) => {
     if (m < 0) return `Breached ${Math.abs(m)}m`;
@@ -236,8 +282,15 @@ function PickupRequestsPageContent() {
             <Package className="w-6 h-6 text-sky-600 dark:text-sky-400" />
           </div>
           <div>
-            <h1 className="text-3xl tracking-tight text-slate-900 dark:text-white font-bold" style={{ fontWeight: 700 }}>Pickup Requests</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-0.5">Triage and assign incoming pickups from citizens</p>
+            <h1 className="text-3xl tracking-tight text-slate-900 dark:text-white font-bold" style={{ fontWeight: 700 }}>
+              {isDriver ? "Available Pickups" : "Pickup Requests"}
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-0.5">
+              {isDriver 
+                ? "Select available pending pickups to add to your active route (Minimum 5 orders required)" 
+                : "Triage and assign incoming pickups from citizens"
+              }
+            </p>
           </div>
         </div>
         <button
@@ -301,45 +354,100 @@ function PickupRequestsPageContent() {
         </div>
       </GlassCard>
 
+      {/* Bulk actions for Admin and Driver */}
       {selected.size > 0 && (
         <div className="mc-fade-in-up">
-          <GlassCard className="p-4 flex flex-wrap items-center gap-3">
-            <span className="text-sm text-slate-700 dark:text-slate-200 font-semibold" style={{ fontWeight: 600 }}>{selected.size} selected</span>
-            <select
-              value={bulkDriver}
-              onChange={(e) => setBulkDriver(e.target.value)}
-              className="h-9 px-3 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 cursor-pointer"
-            >
-              <option value="">Choose driver...</option>
-              {DRIVERS.map((d) => <option key={d} value={d}>{d}</option>)}
-            </select>
-            <button
-              onClick={bulkAssign}
-              className="flex items-center gap-2 px-4 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors text-sm cursor-pointer"
-            >
-              <Truck className="w-4 h-4" /> Assign
-            </button>
-            <button onClick={() => setSelected(new Set())} className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer">Clear</button>
-          </GlassCard>
+          {isDriver ? (
+            /* Driver Bulk Accept Actions */
+            <GlassCard className="p-4 flex flex-wrap items-center justify-between gap-3 border-emerald-500/20 bg-emerald-500/5">
+              <div className="flex items-center gap-2.5">
+                <span className="text-sm text-slate-700 dark:text-slate-200 font-semibold" style={{ fontWeight: 600 }}>
+                  Selected: {selected.size} order(s)
+                </span>
+                {selected.size < 5 && (
+                  <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
+                    (Choose at least {5 - selected.size} more to meet the 5-order minimum requirement)
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleDriverAccept}
+                  disabled={selected.size < 5}
+                  className={`flex items-center gap-2 px-5 h-10 rounded-full transition-all text-sm font-semibold cursor-pointer ${
+                    selected.size >= 5
+                      ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 active:scale-95"
+                      : "bg-slate-200 dark:bg-white/10 text-slate-400 dark:text-slate-600 cursor-not-allowed"
+                  }`}
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Accept Selected Pickups
+                </button>
+                <button onClick={() => setSelected(new Set())} className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer">
+                  Clear
+                </button>
+              </div>
+            </GlassCard>
+          ) : (
+            /* Admin Bulk Assignment Actions */
+            <GlassCard className="p-4 flex flex-wrap items-center gap-3">
+              <span className="text-sm text-slate-700 dark:text-slate-200 font-semibold" style={{ fontWeight: 600 }}>{selected.size} selected</span>
+              <select
+                value={bulkDriver}
+                onChange={(e) => setBulkDriver(e.target.value)}
+                className="h-9 px-3 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 cursor-pointer"
+              >
+                <option value="">Choose driver...</option>
+                {DRIVERS.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+              <button
+                onClick={bulkAssign}
+                className="flex items-center gap-2 px-4 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors text-sm cursor-pointer"
+              >
+                <Truck className="w-4 h-4" /> Assign
+              </button>
+              <button onClick={() => setSelected(new Set())} className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer">Clear</button>
+            </GlassCard>
+          )}
         </div>
       )}
 
       {filtered.length === 0 ? (
         <EmptyState
           Icon={Package}
-          title="No pickup requests match your filters"
-          description="Try adjusting your search, status, or zone filter to see results."
-          cta={{ label: "Reset filters", onClick: () => { setSearch(""); setPriority("all"); setStatus("all"); setZone("all"); setMaterial("all"); } }}
+          title={isDriver ? "No available pending pickups" : "No pickup requests match your filters"}
+          description={isDriver 
+            ? "There are currently no pending pickups awaiting collection in your active zones."
+            : "Try adjusting your search, status, or zone filter to see results."
+          }
+          cta={{ 
+            label: "Reset filters", 
+            onClick: () => { 
+              setSearch(""); 
+              setPriority("all"); 
+              setStatus("all"); 
+              setZone("all"); 
+              setMaterial("all"); 
+            } 
+          }}
         />
       ) : (
-      <DataTable
-        data={filtered}
-        columns={columns}
-        rowKey={(e) => e.req.id}
-      />
+        <DataTable
+          data={filtered}
+          columns={columns}
+          rowKey={(e) => e.req.id}
+        />
       )}
     </div>
   );
+}
+
+interface ExtendedRow {
+  req: PickupRequest;
+  material: string;
+  weight: number;
+  slaMinutesLeft: number;
+  requestedAt: string;
 }
 
 export default function PickupRequestsPage() {

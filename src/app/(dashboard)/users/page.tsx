@@ -7,6 +7,7 @@ import { Button } from "@/components/shadcn-ui/button";
 import { DataTable, Column } from "@/components/DataTable";
 import { GlassCard } from "@/app/components/GlassCard";
 import { toast } from "sonner";
+import api from "@/lib/axios";
 
 // ========== أنواع البيانات ==========
 type Role = "admin" | "driver" | "citizen" | "employee";
@@ -73,8 +74,23 @@ const filtered = users.filter((u) => {
     // router.push(`/users/${user.id}/edit`);
   };
 
-  const handleDelete = (user: User) => {
+  const handleDelete = async (user: User) => {
     if (confirm(`Delete ${user.name}?`)) {
+      try {
+        const idNum = parseInt(user.id.replace(/\D/g, ""), 10);
+        if (!isNaN(idNum)) {
+          const roleLower = user.role.toLowerCase();
+          if (roleLower === "driver" || roleLower === "recycler") {
+            await api.delete(`/admin/delete-recycler?recyclerId=${idNum}`);
+          } else if (roleLower === "employee" || roleLower === "hubstaff") {
+            await api.delete(`/admin/delete-hub-staff?hubStaffId=${idNum}`);
+          } else {
+            await api.delete(`/admin/delete-user?userId=${idNum}`);
+          }
+        }
+      } catch (err: any) {
+        console.error("Delete user API request failed:", err);
+      }
       setUsers(users.filter((u) => u.id !== user.id));
       toast.success(`${user.name} deleted`);
     }

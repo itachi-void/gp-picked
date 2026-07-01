@@ -10,6 +10,7 @@ import {
 import { useAuth } from "@/store/authStore";
 import { usePickup, PickupProvider } from "@/app/contexts/PickupContext";
 import { GlassCard } from "@/app/components/GlassCard";
+import api from "@/lib/axios";
 
 /* =========================================================================
  * Driver Overview — the driver's home dashboard.
@@ -62,16 +63,8 @@ function DriverOverviewDashboard() {
   useEffect(() => {
     const fetchDriverNotifications = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        const response = await fetch("/api/proxy/Notifications/my-notifications", {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
-        if (response.ok) {
-          const data = await response.json();
+        const response = await api.get("/Notifications/my-notifications");
+        const data = response.data;
           let list = [];
           if (Array.isArray(data)) {
             list = data;
@@ -104,9 +97,6 @@ function DriverOverviewDashboard() {
           } else {
             setNotifications(mockNotifications);
           }
-        } else {
-          setNotifications(mockNotifications);
-        }
       } catch (err) {
         console.error("Failed to fetch driver notifications:", err);
         setNotifications(mockNotifications);
