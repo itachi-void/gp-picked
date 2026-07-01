@@ -1,0 +1,351 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import "@/app/components/motion/motion-components.css";
+import {
+  Package,
+  Search,
+  Filter,
+  Clock,
+  AlertTriangle,
+  CheckCircle,
+  Loader2,
+  Truck,
+  MapPin,
+  Users,
+  Download,
+} from "lucide-react";
+import { usePickup, PickupRequest, PickupProvider } from "@/app/contexts/PickupContext";
+import { useRoleContext } from "@/contexts/RoleContext";
+import { useNotifications } from "@/app/contexts/NotificationContext";
+import { toast } from "sonner";
+import EmptyState from "@/app/components/EmptyState";
+import { DataTable, DataTableColumn } from "@/app/components/DataTable";
+import { exportToCsv } from "@/app/utils/exportCsv";
+import { GlassCard } from "@/app/components/GlassCard";
+import { accentMap } from "@/app/utils/accent";
+
+
+const priorityAccent: Record<string, string> = {
+  Critical: "bg-rose-500/10 text-rose-700 dark:text-rose-300",
+  High: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  Normal: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
+  Low: "bg-slate-500/10 text-slate-700 dark:text-slate-300",
+};
+
+const statusAccent: Record<string, string> = {
+  Pending: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  "In Progress": "bg-sky-500/10 text-sky-700 dark:text-sky-300",
+  Completed: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+};
+
+interface ExtendedRow {
+  req: PickupRequest;
+  material: string;
+  weight: number;
+  slaMinutesLeft: number;
+  requestedAt: string;
+}
+
+const DRIVERS = ["Mike Tyson", "Omar S.", "Khaled H.", "Ahmed Hassan", "Mohamed Ali"];
+
+function PickupRequestsPageContent() {
+  useRoleContext();
+  const { addNotification } = useNotifications();
+  const { requests, setRequests } = usePickup();
+  const [search, setSearch] = useState("");
+  const [priority, setPriority] = useState<string>("all");
+  const [status, setStatus] = useState<string>("all");
+  const [zone, setZone] = useState<string>("all");
+  const [material, setMaterial] = useState<string>("all");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDriver, setBulkDriver] = useState<string>("");
+
+  const enriched: ExtendedRow[] = useMemo(
+    () =>
+      requests.map((r, i) => {
+        const material = r.items[0]?.plasticType ?? "Mixed";
+        const weight = r.items.reduce((a, b) => a + b.expectedWeightKg, 0);
+        const slaBase: Record<string, number> = { Critical: 30, High: 120, Normal: 360, Low: 1440 };
+        const elapsedM = (i + 1) * 25;
+        const slaMinutesLeft = slaBase[r.priority] - elapsedM;
+        const requestedAt = `${elapsedM}m ago`;
+        return { req: r, material, weight, slaMinutesLeft, requestedAt };
+      }),
+    [requests]
+  );
+
+  const zones = Array.from(new Set(enriched.map((e) => e.req.zone.name)));
+  const materials = Array.from(new Set(enriched.map((e) => e.material)));
+
+  const filtered = enriched.filter((e) => {
+    const r = e.req;
+    const ms =
+      r.id.toLowerCase().includes(search.toLowerCase()) ||
+      r.citizen.name.toLowerCase().includes(search.toLowerCase()) ||
+      r.zone.name.toLowerCase().includes(search.toLowerCase());
+    return (
+      ms &&
+      (priority === "all" || r.priority === priority) &&
+      (status === "all" || r.status === status) &&
+      (zone === "all" || r.zone.name === zone) &&
+      (material === "all" || e.material === material)
+    );
+  });
+
+  const stats = [
+    { label: "Open", value: enriched.filter((e) => e.req.status === "Pending").length, accent: "amber", Icon: Clock },
+    { label: "In Progress", value: enriched.filter((e) => e.req.status === "In Progress").length, accent: "sky", Icon: Loader2 },
+    { label: "Completed Today", value: enriched.filter((e) => e.req.status === "Completed").length, accent: "emerald", Icon: CheckCircle },
+    { label: "SLA Breached", value: enriched.filter((e) => e.slaMinutesLeft < 0).length, accent: "rose", Icon: AlertTriangle },
+  ];
+
+  const toggleRow = (id: string) => {
+    setSelected((p) => {
+      const n = new Set(p);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  };
+
+  const bulkAssign = () => {
+    if (!bulkDriver || selected.size === 0) {
+      toast.error("Pick a driver and select rows first");
+      return;
+    }
+    setRequests(
+      requests.map((r) =>
+        selected.has(r.id) ? { ...r, driver: { name: bulkDriver }, status: r.status === "Pending" ? "In Progress" : r.status } : r
+      )
+    );
+    toast.success(`Assigned ${selected.size} pickup${selected.size > 1 ? "s" : ""} to ${bulkDriver}`);
+    addNotification({ title: "Pickups assigned", body: `${selected.size} pickup${selected.size > 1 ? "s" : ""} assigned to ${bulkDriver}.`, severity: "info", icon: "Truck", link: "/pickups" });
+    setSelected(new Set());
+    setBulkDriver("");
+  };
+
+  const handleExport = () => {
+    exportToCsv(
+      "pickup-requests",
+      filtered,
+      [
+        { key: "id", label: "ID", accessor: (e) => e.req.id },
+        { key: "citizen", label: "Citizen", accessor: (e) => e.req.citizen.name },
+        { key: "zone", label: "Zone", accessor: (e) => e.req.zone.name },
+        { key: "material", label: "Material", accessor: (e) => e.material },
+        { key: "weight", label: "Weight (kg)", accessor: (e) => e.weight },
+        { key: "priority", label: "Priority", accessor: (e) => e.req.priority },
+        { key: "status", label: "Status", accessor: (e) => e.req.status },
+        { key: "sla", label: "SLA Minutes Left", accessor: (e) => e.slaMinutesLeft },
+        { key: "driver", label: "Driver", accessor: (e) => e.req.driver?.name ?? "" },
+        { key: "requested", label: "Requested", accessor: (e) => e.requestedAt },
+      ],
+    );
+    toast.success(`Exported ${filtered.length} rows`);
+  };
+
+  const columns: DataTableColumn<ExtendedRow>[] = [
+    {
+      key: "select",
+      label: "",
+      render: (e) => (
+        <input
+          type="checkbox"
+          checked={selected.has(e.req.id)}
+          onChange={() => toggleRow(e.req.id)}
+          onClick={(ev) => ev.stopPropagation()}
+          className="rounded accent-emerald-600 cursor-pointer"
+        />
+      ),
+    },
+    { key: "id", label: "ID", sortable: true, accessor: (e) => e.req.id, render: (e) => <span className="text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>{e.req.id}</span> },
+    {
+      key: "citizen",
+      label: "Citizen",
+      sortable: true,
+      accessor: (e) => e.req.citizen.name,
+      render: (e) => (
+        <span className="inline-flex items-center gap-2"><Users className="w-3.5 h-3.5 text-slate-400" />{e.req.citizen.name}</span>
+      ),
+    },
+    {
+      key: "zone",
+      label: "Zone",
+      sortable: true,
+      accessor: (e) => e.req.zone.name,
+      render: (e) => (
+        <span className="inline-flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-slate-400" />{e.req.zone.name}</span>
+      ),
+    },
+    { key: "material", label: "Material", sortable: true, accessor: (e) => e.material, render: (e) => e.material },
+    { key: "weight", label: "Weight", sortable: true, accessor: (e) => e.weight, render: (e) => `${e.weight} kg` },
+    {
+      key: "priority",
+      label: "Priority",
+      sortable: true,
+      accessor: (e) => e.req.priority,
+      render: (e) => <span className={`px-2 py-0.5 rounded-full text-xs ${priorityAccent[e.req.priority]}`}>{e.req.priority}</span>,
+    },
+    {
+      key: "status",
+      label: "Status",
+      sortable: true,
+      accessor: (e) => e.req.status,
+      render: (e) => <span className={`px-2 py-0.5 rounded-full text-xs ${statusAccent[e.req.status]}`}>{e.req.status}</span>,
+    },
+    {
+      key: "sla",
+      label: "SLA",
+      sortable: true,
+      accessor: (e) => e.slaMinutesLeft,
+      render: (e) => {
+        const breached = e.slaMinutesLeft < 0;
+        return (
+          <span className={`px-2 py-0.5 rounded-full text-xs ${breached ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : "bg-slate-500/10 text-slate-700 dark:text-slate-300"}`}>
+            {formatSla(e.slaMinutesLeft)}
+          </span>
+        );
+      },
+    },
+    {
+      key: "driver",
+      label: "Driver",
+      sortable: true,
+      accessor: (e) => e.req.driver?.name ?? "",
+      render: (e) => e.req.driver?.name ?? <span className="text-slate-400">—</span>,
+    },
+    {
+      key: "requested",
+      label: "Requested",
+      render: (e) => <span className="text-xs text-slate-500 dark:text-slate-400">{e.requestedAt}</span>,
+    },
+  ];
+
+  const formatSla = (m: number) => {
+    if (m < 0) return `Breached ${Math.abs(m)}m`;
+    if (m < 60) return `${m}m left`;
+    return `${Math.floor(m / 60)}h ${m % 60}m left`;
+  };
+
+  return (
+    <div className="max-w-[1600px] mx-auto p-6 space-y-6">
+      <div className="mc-fade-in-down flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-sky-500/10 rounded-2xl flex items-center justify-center">
+            <Package className="w-6 h-6 text-sky-600 dark:text-sky-400" />
+          </div>
+          <div>
+            <h1 className="text-3xl tracking-tight text-slate-900 dark:text-white font-bold" style={{ fontWeight: 700 }}>Pickup Requests</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-0.5">Triage and assign incoming pickups from citizens</p>
+          </div>
+        </div>
+        <button
+          onClick={handleExport}
+          className="flex items-center gap-2 px-4 h-10 bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-full hover:bg-white dark:hover:bg-white/10 transition-colors text-sm cursor-pointer font-semibold"
+          style={{ fontWeight: 600 }}
+        >
+          <Download className="w-4 h-4" />
+          Export CSV
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {stats.map((s, i) => {
+          const a = accentMap[s.accent];
+          const Icon = s.Icon;
+          return (
+            <div key={s.label} className="mc-card-in hover-lift" style={{ animationDelay: `${i * 0.05}s` }}>
+              <GlassCard className="p-5">
+                <div className={`w-12 h-12 rounded-2xl ${a.bg} flex items-center justify-center mb-3`}>
+                  <Icon className={`w-6 h-6 ${a.fg}`} />
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{s.label}</p>
+                <p className="text-2xl tracking-tight text-slate-900 dark:text-white mt-1 font-bold" style={{ fontWeight: 700 }}>{s.value}</p>
+              </GlassCard>
+            </div>
+          );
+        })}
+      </div>
+
+      <GlassCard className="p-4 space-y-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search by ID, citizen, zone..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 h-10 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Filter className="w-4 h-4 text-slate-400" />
+          {[
+            { label: "Priority", value: priority, set: setPriority, opts: ["all", "Critical", "High", "Normal", "Low"] },
+            { label: "Status", value: status, set: setStatus, opts: ["all", "Pending", "In Progress", "Completed"] },
+            { label: "Zone", value: zone, set: setZone, opts: ["all", ...zones] },
+            { label: "Material", value: material, set: setMaterial, opts: ["all", ...materials] },
+          ].map((f) => (
+            <select
+              key={f.label}
+              value={f.value}
+              onChange={(e) => f.set(e.target.value)}
+              className="h-9 px-3 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-slate-200 cursor-pointer"
+            >
+              {f.opts.map((o) => (
+                <option key={o} value={o}>{f.label}: {o}</option>
+              ))}
+            </select>
+          ))}
+        </div>
+      </GlassCard>
+
+      {selected.size > 0 && (
+        <div className="mc-fade-in-up">
+          <GlassCard className="p-4 flex flex-wrap items-center gap-3">
+            <span className="text-sm text-slate-700 dark:text-slate-200 font-semibold" style={{ fontWeight: 600 }}>{selected.size} selected</span>
+            <select
+              value={bulkDriver}
+              onChange={(e) => setBulkDriver(e.target.value)}
+              className="h-9 px-3 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 cursor-pointer"
+            >
+              <option value="">Choose driver...</option>
+              {DRIVERS.map((d) => <option key={d} value={d}>{d}</option>)}
+            </select>
+            <button
+              onClick={bulkAssign}
+              className="flex items-center gap-2 px-4 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors text-sm cursor-pointer"
+            >
+              <Truck className="w-4 h-4" /> Assign
+            </button>
+            <button onClick={() => setSelected(new Set())} className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer">Clear</button>
+          </GlassCard>
+        </div>
+      )}
+
+      {filtered.length === 0 ? (
+        <EmptyState
+          Icon={Package}
+          title="No pickup requests match your filters"
+          description="Try adjusting your search, status, or zone filter to see results."
+          cta={{ label: "Reset filters", onClick: () => { setSearch(""); setPriority("all"); setStatus("all"); setZone("all"); setMaterial("all"); } }}
+        />
+      ) : (
+      <DataTable
+        data={filtered}
+        columns={columns}
+        rowKey={(e) => e.req.id}
+      />
+      )}
+    </div>
+  );
+}
+
+export default function PickupRequestsPage() {
+  return (
+    <PickupProvider>
+      <PickupRequestsPageContent />
+    </PickupProvider>
+  );
+}

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import axios from "axios";
 import {
   Recycle,
   Leaf,
@@ -36,13 +37,6 @@ import "./landing-animations.css";
 /* -------------------------------------------------------------------------- */
 const NAV_ITEMS = ["Features", "How It Works", "Pricing", "Impact"];
 
-const STATS: Stat[] = [
-  { icon: Recycle, label: "Bottles Recycled", value: 2547893, color: "emerald" },
-  { icon: Users, label: "Active Citizens", value: 45678, suffix: "+", color: "blue" },
-  { icon: Coins, label: "Points Earned", value: 1234567, color: "amber" },
-  { icon: Leaf, label: "Tons CO₂ Saved", value: 3456, color: "green" },
-];
-
 const FEATURES: FeatureT[] = [
   { icon: Recycle, name: "AI Bottle Matching", accuracy: 99, description: "Identify bottle types instantly with 99.9% accuracy" },
   { icon: QrCode, name: "QR Verification", accuracy: 95, description: "Secure QR system for instant authentication" },
@@ -63,7 +57,7 @@ const STEPS: StepT[] = [
 const ROLES: RoleT[] = [
   {
     icon: Users,
-    title: "Citizen",
+    title: "User",
     description: "Scan and recycle",
     features: ["Scan & Recycle", "Earn Rewards", "Redeem Prizes"],
     color: "emerald",
@@ -105,9 +99,64 @@ export default function LandingPage() {
   const [bottleCount, setBottleCount] = useState(100);
   const [mounted, setMounted] = useState(false);
 
+  const [totalRecyclers, setTotalRecyclers] = useState<number | null>(null);
+  const [activeRecyclers, setActiveRecyclers] = useState<number | null>(null);
+  const [totalPickups, setTotalPickups] = useState<number | null>(null);
+  const [totalEarnings, setTotalEarnings] = useState<number | null>(null);
+
   useEffect(() => {
     setMounted(true);
+
+    const fetchStats = async () => {
+      try {
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+        const [resTotal, resActive, resPickups, resEarnings] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/admin/total-recyclers`, { headers }),
+          axios.get(`${API_BASE_URL}/api/admin/total-recycling-active`, { headers }),
+          axios.get(`${API_BASE_URL}/api/admin/total-pickup-requests`, { headers }),
+          axios.get(`${API_BASE_URL}/api/admin/Total-Earing`, { headers })
+        ]);
+
+        if (typeof resTotal.data === "number") {
+          setTotalRecyclers(resTotal.data);
+        } else if (resTotal.data && typeof resTotal.data.total === "number") {
+          setTotalRecyclers(resTotal.data.total);
+        }
+
+        if (typeof resActive.data === "number") {
+          setActiveRecyclers(resActive.data);
+        } else if (resActive.data && typeof resActive.data.active === "number") {
+          setActiveRecyclers(resActive.data.active);
+        }
+
+        if (typeof resPickups.data === "number") {
+          setTotalPickups(resPickups.data);
+        } else if (resPickups.data && typeof resPickups.data.total === "number") {
+          setTotalPickups(resPickups.data.total);
+        }
+
+        if (typeof resEarnings.data === "number") {
+          setTotalEarnings(resEarnings.data);
+        } else if (resEarnings.data && typeof resEarnings.data.totalEarnings === "number") {
+          setTotalEarnings(resEarnings.data.totalEarnings);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch admin stats, using mock data", err);
+      }
+    };
+
+    fetchStats();
   }, []);
+
+  const STATS: Stat[] = useMemo(() => [
+    { icon: Recycle, label: "Total Pickups", value: totalPickups !== null ? totalPickups : 2547893, suffix: totalPickups !== null ? "" : "+", color: "emerald" },
+    { icon: Users, label: "Total Recyclers", value: totalRecyclers !== null ? totalRecyclers : 52140, suffix: totalRecyclers !== null ? "" : "+", color: "purple" },
+    { icon: Users, label: "Active Recyclers", value: activeRecyclers !== null ? activeRecyclers : 45678, suffix: activeRecyclers !== null ? "" : "+", color: "blue" },
+    { icon: Coins, label: "Total Earnings", value: totalEarnings !== null ? totalEarnings : 1234567, suffix: " $", color: "amber" },
+  ], [activeRecyclers, totalRecyclers, totalPickups, totalEarnings]);
 
   const calculatedValue = useMemo(() => bottleCount * 0.5, [bottleCount]);
   const calculatedPoints = useMemo(() => bottleCount * 10, [bottleCount]);

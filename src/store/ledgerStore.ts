@@ -1,6 +1,5 @@
 import { create } from "zustand";
 
-// 1. تعريف الواجهات
 export interface PointsEntry {
   id: string;
   type: "earn" | "redeem";
@@ -10,41 +9,65 @@ export interface PointsEntry {
   rewardId?: string;
 }
 
-// 2. الداتا الوهمية (نقلناها هنا عشان ننضف الصفحة)
-const SEED_LEDGER: PointsEntry[] = [
-  { id: "p-1", type: "earn", label: "Recycled 420 bottles", points: 8400, date: "2026-05-02" },
-  { id: "p-2", type: "earn", label: "Weekly streak bonus", points: 1500, date: "2026-05-20" },
-  { id: "p-3", type: "earn", label: "Recycled 260 bottles", points: 5200, date: "2026-06-01" },
-  { id: "p-4", type: "redeem", label: "Coffee Voucher", points: 500, date: "2026-06-04", rewardId: "rwd-001" },
-  { id: "p-5", type: "redeem", label: "Eco Tote Bag", points: 600, date: "2026-06-08", rewardId: "rwd-007" },
-];
-
 interface LedgerStore {
   ledger: PointsEntry[];
   isLoading: boolean;
+  error: string | null;
   fetchLedger: () => Promise<void>;
 }
 
-// 3. إنشاء الستور بدالة جلب البيانات
 export const useLedgerStore = create<LedgerStore>((set) => ({
   ledger: [],
-  isLoading: true, // بنبدأ بحالة التحميل
+  isLoading: true,
+  error: null,
 
   fetchLedger: async () => {
-    set({ isLoading: true });
+    set({ isLoading: true, error: null });
     try {
-      // ==========================================
-      // 🚧 لما الباك إند يجهز، هتشيل الكومنت وتكلم السيرفر من هنا
-      // const response = await axios.get('/api/points-ledger');
-      // set({ ledger: response.data, isLoading: false });
-      // ==========================================
+      const token = localStorage.getItem("token");
+      if (!token) {
+        set({ isLoading: false, error: "No token found" });
+        return;
+      }
 
-      // 🛠️ الجزء التجريبي (تأخير 0.8 ثانية لمحاكاة التحميل الحقيقي)
-      await new Promise((res) => setTimeout(res, 800));
-      set({ ledger: SEED_LEDGER, isLoading: false });
-    } catch (error) {
+      const res = await fetch("/api/points-ledger", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const err = await res
+          .json()
+          .catch(() => ({ message: "Failed to fetch ledger" }));
+        set({ isLoading: false, error: err.message });
+        return;
+      }
+
+      const data = await res.json();
+
+      // Accept both array and { data: [] } wrapper
+      const list = Array.isArray(data)
+        ? data
+        : (data?.data ?? data?.transactions ?? []);
+
+      const mapped: PointsEntry[] = list.map((item: any) => ({
+        id: String(item.id || Math.random()),
+        type:
+          item.type === "redeem" || item.type === "withdraw"
+            ? "redeem"
+            : "earn",
+        label: item.label || item.description || item.title || "",
+        points: Math.abs(item.points || item.amount || 0),
+        date: item.date || item.createdAt || new Date().toISOString(),
+        rewardId: item.rewardId,
+      }));
+
+      set({ ledger: mapped, isLoading: false });
+    } catch (error: any) {
       console.error("Failed to fetch ledger", error);
-      set({ isLoading: false });
+      set({
+        isLoading: false,
+        error: error.message || "Failed to fetch ledger",
+      });
     }
   },
 }));

@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { AuthPageWrapper } from "@/app/components/AuthPageWrapper";
+import { AuthPageWrapper } from "@/app/components/auth/AuthPageWrapper";
 
 export default function SignupPage() {
   return (

@@ -15,7 +15,13 @@ interface RoleCardProps {
 export function RoleCard({ role, index }: RoleCardProps) {
   const { user } = useAuth();
   const Icon = role.icon;
-  const targetHref = user ? homePathForRole(role.title) : `/login?role=${role.title}`;
+
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const targetHref = (mounted && user) ? homePathForRole(role.title) : `/login?role=${role.title}`;
 
   return (
     <div

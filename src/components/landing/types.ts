@@ -63,7 +63,7 @@ export type StepT = {
 
 export type RoleT = {
   icon: IconType;
-  title: "Citizen" | "Driver" | "Admin";
+  title: "User" | "Driver" | "Admin";
   description: string;
   features: string[];
   color: string;
