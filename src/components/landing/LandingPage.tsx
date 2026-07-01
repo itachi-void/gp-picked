@@ -109,7 +109,7 @@ export default function LandingPage() {
 
     const fetchStats = async () => {
       try {
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://smartwaste.runasp.net";
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 

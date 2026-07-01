@@ -55,7 +55,8 @@ const getInitialUser = (): User | null => {
 };
 
 // ========== الرابط الأساسي للـ API ==========
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://smartwaste.runasp.net";
+
 
 export const useAuth = create<AuthStore>((set) => ({
   user: getInitialUser(),
