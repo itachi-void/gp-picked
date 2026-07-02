@@ -13,7 +13,7 @@ export default function FloatingParticles() {
       fullScreen: { enable: false },
       background: { color: { value: "transparent" } },
       particles: {
-        number: { value: 70 },
+        number: { value: 150 },
         color: { value: ["#0ea5e9", "#22c55e"] },
         paint: {
           fill: {
@@ -49,7 +49,7 @@ export default function FloatingParticles() {
         },
       },
       particles: {
-        number: { value: 70 },
+        number: { value: 150 },
         color: { value: ["#22c55e", "#f59e0b", "#ef4444"] },
         paint: {
           fill: {
