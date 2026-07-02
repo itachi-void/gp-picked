@@ -15,6 +15,12 @@ export default function FloatingParticles() {
       particles: {
         number: { value: 70 },
         color: { value: ["#0ea5e9", "#22c55e"] },
+        paint: {
+          fill: {
+            enable: true,
+            color: { value: ["#0ea5e9", "#22c55e"] },
+          },
+        },
         size: { value: { min: 1, max: 4 } },
         opacity: { value: 0.35 },
         move: {
@@ -45,6 +51,12 @@ export default function FloatingParticles() {
       particles: {
         number: { value: 70 },
         color: { value: ["#22c55e", "#f59e0b", "#ef4444"] },
+        paint: {
+          fill: {
+            enable: true,
+            color: { value: ["#22c55e", "#f59e0b", "#ef4444"] },
+          },
+        },
         size: { value: { min: 3, max: 10 } },
         opacity: { value: { min: 0.7, max: 1 } },
         move: {
