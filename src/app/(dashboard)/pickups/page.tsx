@@ -77,8 +77,9 @@ function PickupRequestsPageContent() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDriver, setBulkDriver] = useState<string>("");
 
-  // Backend state for employee view integration
+  // Backend state for employee and driver/admin views integration
   const [backendRequests, setBackendRequests] = useState<PickupRequest[] | null>(null);
+  const [pendingBackendRequests, setPendingBackendRequests] = useState<PickupRequest[] | null>(null);
   const [loadingBackend, setLoadingBackend] = useState(false);
 
   const isDriver = role === "Driver" || role === "Recycler" || role === "driver" || role === "recycler";
@@ -107,7 +108,6 @@ function PickupRequestsPageContent() {
         }
 
         // 2. Fetch history verified by this employee
-        // We will try multiple IDs (current logged in employeeId, and ID 1 as fallback)
         let listHistory: any[] = [];
         const idsToTry = [employeeId];
         if (employeeId !== 1) {
@@ -115,7 +115,6 @@ function PickupRequestsPageContent() {
         }
 
         for (const id of idsToTry) {
-          // Try /history endpoint first
           try {
             const resHistory = await api.get(`/HubStaff/${id}/history`);
             const data = Array.isArray(resHistory.data)
@@ -129,7 +128,6 @@ function PickupRequestsPageContent() {
             console.error(`Failed to fetch history for employee ID ${id}:`, e);
           }
 
-          // Fallback to basic profile endpoint
           try {
             const resProfile = await api.get(`/HubStaff/${id}`);
             const data = resProfile.data?.pickupRequests || [];
@@ -142,7 +140,6 @@ function PickupRequestsPageContent() {
           }
         }
 
-        // Map they both
         const mappedInProgress = listInProgress.map((r: any) => ({
           ...mapBackendToFrontend(r),
           status: "In Progress"
@@ -153,7 +150,6 @@ function PickupRequestsPageContent() {
           status: r.status || "Completed"
         }));
 
-        // Combine lists
         setBackendRequests([...mappedInProgress, ...mappedHistory]);
       } catch (err) {
         console.error("Critical error building employee requests list:", err);
@@ -166,10 +162,38 @@ function PickupRequestsPageContent() {
     fetchEmployeeData();
   }, [isEmployee, user]);
 
+  // Fetch pending requests from backend for Driver/Admin (independent call)
+  useEffect(() => {
+    if (isEmployee) return;
+
+    const fetchPendingData = async () => {
+      setLoadingBackend(true);
+      try {
+        const response = await api.get("/PickupRequests/GetPendingRequestForms");
+        const list = Array.isArray(response.data)
+          ? response.data
+          : (response.data && Array.isArray((response.data as any).data) ? (response.data as any).data : []);
+
+        const mapped = list.map((r: any) => ({
+          ...mapBackendToFrontend(r),
+          status: "Pending"
+        }));
+
+        setPendingBackendRequests(mapped);
+      } catch (err) {
+        console.error("Failed to fetch pending requests from backend:", err);
+        setPendingBackendRequests([]);
+      } finally {
+        setLoadingBackend(false);
+      }
+    };
+
+    fetchPendingData();
+  }, [isEmployee]);
+
   // Filter requests depending on role
   const displayRequests = useMemo(() => {
     if (isEmployee) {
-      // If we loaded backend data for employee, use it; otherwise fallback to filtered mock data
       if (backendRequests !== null) return backendRequests;
 
       return requests.filter(
@@ -179,11 +203,17 @@ function PickupRequestsPageContent() {
       );
     }
     if (isDriver) {
-      // Drivers only see available pending requests (unassigned)
+      if (pendingBackendRequests !== null) {
+        return pendingBackendRequests.filter((r) => !r.driver || r.driver.name === "No Driver Assigned" || r.driver.name === "");
+      }
       return requests.filter((r) => r.status === "Pending" && !r.driver);
     }
+    // Admin / Manager view
+    if (pendingBackendRequests !== null) {
+      return pendingBackendRequests;
+    }
     return requests;
-  }, [requests, isDriver, isEmployee, backendRequests, user]);
+  }, [requests, isDriver, isEmployee, backendRequests, pendingBackendRequests, user]);
 
   const enriched: ExtendedRow[] = useMemo(
     () =>
@@ -437,7 +467,7 @@ function PickupRequestsPageContent() {
         </button>
       </div>
 
-      {loadingBackend && isEmployee ? (
+      {loadingBackend ? (
         <div className="flex justify-center items-center py-12">
           <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
           <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">Loading pickups...</span>
