@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { GlassCard } from "@/app/components/GlassCard";
 import { useHubRequests } from "./hooks/useHubRequests";
@@ -17,7 +17,20 @@ export default function VerificationStationPage() {
   const [rejectedCount, setRejectedCount] = useState(0);
 
   // جلب الطلبات النشطة للـ HubStaff من الباك اند باستخدام الهوك المخصص
-  const { data: orders = [], isLoading, refetch } = useHubRequests();
+  const { data: rawOrders = [], isLoading, refetch } = useHubRequests();
+
+  // التأكد من أن orders مصفوفة دائماً وبشكل دفاعي متين
+  const orders = useMemo(() => {
+    if (Array.isArray(rawOrders)) return rawOrders;
+    if (rawOrders && typeof rawOrders === "object") {
+      const anyOrders = rawOrders as any;
+      if (Array.isArray(anyOrders.data)) return anyOrders.data;
+      if (Array.isArray(anyOrders.requests)) return anyOrders.requests;
+      if (Array.isArray(anyOrders.items)) return anyOrders.items;
+      if (Array.isArray(anyOrders.value)) return anyOrders.value;
+    }
+    return [];
+  }, [rawOrders]);
 
   // تحديد الطلب النشط تلقائياً إذا لم يكن محدداً
   useEffect(() => {
