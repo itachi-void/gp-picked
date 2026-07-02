@@ -103,7 +103,7 @@ export default function UsersPage() {
             </GlassCard>
           ))}
         </div>
-        <GlassCard className="p-0 h-64 bg-slate-200/50 dark:bg-slate-800/50" />
+        <GlassCard className="p-0 h-64 bg-slate-200/50 dark:bg-slate-800/50"><div /></GlassCard>
       </div>
     );
   }

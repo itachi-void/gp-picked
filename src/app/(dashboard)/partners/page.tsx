@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import { useRoleContext } from "@/contexts/RoleContext";
 import { GlassCard } from "@/app/components/GlassCard";
 import { accentMap } from "@/app/utils/accent";
-import { usePartners, type Partner, type PartnerType, type PartnerStatus } from "@/app/contexts/PartnersContext";
+import { PartnersProvider, usePartners, type Partner, type PartnerType, type PartnerStatus } from "@/app/contexts/PartnersContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 
 const typeAccent: Record<PartnerType, { bg: string; fg: string; gradient: string; icon: any; label: string }> = {
