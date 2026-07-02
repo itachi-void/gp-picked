@@ -33,6 +33,7 @@ export function canAccess(role: string, path: string): boolean {
   if (normRole === "driver" || normRole === "recycler") {
     const driverRoutes = [
       "/driver-portal",
+      "/driver-home",
       "/pickups",
       "/routes",
       "/fleet",
@@ -44,13 +45,15 @@ export function canAccess(role: string, path: string): boolean {
   }
 
   // Employee has station/verification access
-  if (normRole === "employee") {
+  if (normRole === "employee" || normRole === "hubstaff") {
     const employeeRoutes = [
       "/verification",
       "/employee-history",
       "/employee-profile",
       "/pickups",
-      "/support"
+      "/support",
+      "/centers-list",
+      "/ai-validation"
     ];
     return employeeRoutes.some(p => path === p || path.startsWith(p + "/"));
   }
@@ -59,6 +62,7 @@ export function canAccess(role: string, path: string): boolean {
   if (normRole === "citizen" || normRole === "user") {
     const citizenRoutes = [
       "/citizen-portal",
+      "/portal",
       "/citizen-levels",
       "/badges",
       "/leaderboards",

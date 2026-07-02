@@ -12,29 +12,37 @@ import {
 } from "lucide-react";
 import "@/app/components/motion/motion-components.css";
 
-interface VerifiedRequest {
-  requestID: number;
-  userID: number;
+interface PickupUser {
+  fullName: string;
+  email?: string;
+  phone?: string;
+}
+
+interface PickupRecycler {
+  fullName: string;
+  phone?: string;
+}
+
+interface PickupRequestItem {
+  requestId: number;
+  userId: number;
+  recyclerId: number | null;
+  hubStaffId: number | null;
   requestDate: string;
   verificationDate: string;
   status: string;
+  finalBottlesCount: number | null;
   finalPoints: number;
-  finalBottlesCount: number;
   verificationImageUrl: string;
+  user: PickupUser | null;
+  recycler: PickupRecycler | null;
 }
 
-interface HubStaffHistoryResponse {
-  requestID: number;
-  userID: number;
-  requestDate: string | null;
-  verificationDate: string | null;
-  status: string | null;
-  finalPoints: number | null;
-  finalBottlesCount: number | null;
-  verificationImageUrl: string | null;
-  totalVerifiedRequests: number;
-  totalBottlesVerified: number;
-  verifiedRequests: VerifiedRequest[];
+interface HubStaffProfile {
+  staffId: number;
+  fullName: string;
+  role: string;
+  pickupRequests: PickupRequestItem[];
 }
 
 export default function EmployeeHistoryPage() {
@@ -45,40 +53,40 @@ export default function EmployeeHistoryPage() {
 
   const employeeId = user?.id || 1;
 
-  const { data: historyData, isLoading } = useQuery<HubStaffHistoryResponse>({
-    queryKey: ["hubStaffHistory", employeeId],
+  const { data: profileData, isLoading } = useQuery<HubStaffProfile>({
+    queryKey: ["hubStaffProfile", employeeId],
     queryFn: async () => {
       try {
-        const response = await api.get<HubStaffHistoryResponse>(`/HubStaff/${employeeId}/history`);
-        if (response.data && response.data.verifiedRequests?.length > 0) {
+        const response = await api.get<HubStaffProfile>(`/HubStaff/${employeeId}`);
+        if (response.data && response.data.pickupRequests?.length > 0) {
           return response.data;
         }
       } catch (e) {
-        console.error(`Failed to fetch history for employee ID ${employeeId}:`, e);
+        console.error(`Failed to fetch profile for employee ID ${employeeId}:`, e);
       }
 
-      // Fallback to ID 1 if current ID fails or has no history
+      // Fallback to ID 1 if current ID fails or has no data
       if (employeeId !== 1) {
         try {
-          const fallbackResponse = await api.get<HubStaffHistoryResponse>(`/HubStaff/1/history`);
+          const fallbackResponse = await api.get<HubStaffProfile>(`/HubStaff/1`);
           return fallbackResponse.data;
         } catch (err) {
-          console.error("Failed to fetch fallback history for employee ID 1:", err);
+          console.error("Failed to fetch fallback profile for employee ID 1:", err);
         }
       }
 
-      return { requestID: 0, userID: 0, requestDate: null, verificationDate: null, status: null, finalPoints: null, finalBottlesCount: null, verificationImageUrl: null, totalVerifiedRequests: 0, totalBottlesVerified: 0, verifiedRequests: [] };
+      return { staffId: 0, fullName: "", role: "", pickupRequests: [] };
     },
     enabled: !!employeeId,
   });
 
-  const historyItems: VerifiedRequest[] = historyData?.verifiedRequests || [];
+  const historyItems: PickupRequestItem[] = profileData?.pickupRequests || [];
 
   // Filter history logs based on search and status filters
   const filteredHistory = historyItems.filter((item) => {
-    const orderNoStr = `EV-${item.requestID}`;
-    const clientName = `User #${item.userID || ""}`;
-    const driverName = "";
+    const orderNoStr = `EV-${item.requestId}`;
+    const clientName = item.user?.fullName || "not yet from api";
+    const driverName = item.recycler?.fullName || "not yet from api";
 
     const matchesSearch =
       orderNoStr.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -100,7 +108,7 @@ export default function EmployeeHistoryPage() {
   });
 
   // Calculate statistics from the backend response
-  const totalCount = historyData?.totalVerifiedRequests || historyItems.length;
+  const totalCount = historyItems.length;
   const approvedCount = historyItems.filter(
     (item) => item.status.toLowerCase() === "verified" || item.status.toLowerCase() === "completed"
   ).length;
@@ -289,14 +297,14 @@ export default function EmployeeHistoryPage() {
                   const itemStatus = item.status.toLowerCase();
 
                   return (
-                    <tr key={item.requestID} className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
+                    <tr key={item.requestId} className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
                       <td className="px-6 py-4">
-                        <span className="font-mono text-slate-900 dark:text-slate-100 font-bold">EV-{item.requestID}</span>
+                        <span className="font-mono text-slate-900 dark:text-slate-100 font-bold">EV-{item.requestId}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="font-semibold text-slate-800 dark:text-slate-100">User #{item.userID || "N/A"}</div>
+                        <div className="font-semibold text-slate-800 dark:text-slate-100">{item.user?.fullName || "not yet from api"}</div>
                       </td>
-                      <td className="px-6 py-4 text-slate-600 dark:text-slate-300">—</td>
+                      <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{item.recycler?.fullName || "not yet from api"}</td>
                       <td className="px-6 py-4">
                         <div className="text-slate-800 dark:text-slate-200">{dateStr}</div>
                         <div className="text-xs text-slate-400">{timeStr}</div>

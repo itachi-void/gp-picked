@@ -85,8 +85,10 @@ export default function SupportTicketsPage() {
 
   const isCitizen = role === "User" || role === "user" || role === "citizen" || role === "Citizen";
   const isDriver = role === "Driver" || role === "driver" || role === "Recycler" || role === "recycler";
-  const isAdmin = role === "Admin" || role === "admin" || role === "Manager" || role === "manager";
 
+  const isEmployee = role === "HubStaff" || role === "hubstaff" || role === "Employee" || role === "employee";
+
+  const isAdmin = role === "Admin" || role === "admin" || role === "Manager" || role === "manager";
   // Fetch support tickets
   const fetchTickets = async () => {
     setLoading(true);
@@ -165,14 +167,14 @@ export default function SupportTicketsPage() {
       "support-tickets",
       filtered,
       [
-        { key: "id", label: "ID" },
-        { key: "subject", label: "Subject" },
-        { key: "status", label: "Status" },
-        { key: "priority", label: "Priority" },
-        { key: "category", label: "Category" },
-        { key: "citizenName", label: "Citizen" },
-        { key: "driverName", label: "Driver" },
-        { key: "rating", label: "Rating" },
+        { key: "id", label: "ID", accessor: (t) => t.id },
+        { key: "subject", label: "Subject", accessor: (t) => t.subject },
+        { key: "status", label: "Status", accessor: (t) => t.status },
+        { key: "priority", label: "Priority", accessor: (t) => t.priority },
+        { key: "category", label: "Category", accessor: (t) => t.category },
+        { key: "citizenName", label: "Citizen", accessor: (t) => t.citizenName },
+        { key: "driverName", label: "Driver", accessor: (t) => t.driverName },
+        { key: "rating", label: "Rating", accessor: (t) => t.rating },
         { key: "createdAt", label: "Created", accessor: (t) => t.createdAt.toISOString() },
       ],
     );

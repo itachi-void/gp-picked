@@ -39,7 +39,7 @@ export default function VerificationStationPage() {
     }
   }, [orders, activeId]);
 
-  const active = orders.find((o) => o.requestId === activeId) || orders[0] || null;
+  const active = orders.find((o: any) => o.requestId === activeId) || orders[0] || null;
 
   const onResolve = (id: number, resultType: "verified" | "rejected") => {
     if (resultType === "verified") {
@@ -56,7 +56,7 @@ export default function VerificationStationPage() {
     refetch();
     
     // اختيار الطلب التالي في القائمة
-    const nextPending = orders.find((o) => o.requestId !== id);
+    const nextPending = orders.find((o: any) => o.requestId !== id);
     setActiveId(nextPending ? nextPending.requestId : null);
   };
 

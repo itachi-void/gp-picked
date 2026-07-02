@@ -16,7 +16,16 @@ interface Tab {
 // ========== الهوك الرئيسي ==========
 export function useRoleTabs() {
   const user = useAuth((state) => state.user);
-  const role = (user?.role?.toLowerCase() ?? "citizen") as "admin" | "manager" | "driver" | "employee" | "citizen";
+  
+  // Normalize roles to avoid mismatches
+  const rawRole = user?.role?.toLowerCase() ?? "citizen";
+  const role = (rawRole === "hubstaff" || rawRole === "employee") 
+    ? "employee" 
+    : (rawRole === "recycler" || rawRole === "driver") 
+      ? "driver" 
+      : (rawRole === "user" || rawRole === "citizen") 
+        ? "citizen" 
+        : rawRole;
 
   // ========== جلب التبويبات حسب الرول ==========
   let tabs: Tab[] = [];
