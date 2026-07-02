@@ -72,10 +72,10 @@ const initialReviews: Review[] = [
 const inputCls = "w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50";
 
 export default function PermissionsPage() {
-  const { currentRole } = useRoleContext();
+  const { role: currentRole } = useRoleContext();
   const { addNotification } = useNotifications();
   const [tab, setTab] = useState<TabId>("roles");
-  const isAdmin = currentRole === "admin";
+  const isAdmin = currentRole?.toLowerCase() === "admin" || currentRole?.toLowerCase() === "manager";
 
   const [roles, setRoles] = useState<Role[]>(initialRoles);
   const [matrix, setMatrix] = useLocalStorage<Matrix>("ecovoid.permissions.v1", initialMatrix);
@@ -461,7 +461,7 @@ export default function PermissionsPage() {
                 {RESOURCES.map((res) => (
                   <div key={res} className="grid grid-cols-[1fr_auto] items-center gap-3">
                     <span className="text-sm text-slate-700 dark:text-slate-200">{res}</span>
-                    <select value={roleForm.levels[res]} onChange={(e) => setEditingRole ? setRoleForm({ ...roleForm, levels: { ...roleForm.levels, [res]: e.target.value as Level } }) : undefined} className="h-9 px-3 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-slate-200">
+                    <select value={roleForm.levels[res]} onChange={(e) => setRoleForm({ ...roleForm, levels: { ...roleForm.levels, [res]: e.target.value as Level } })} className="h-9 px-3 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-slate-200">
                       {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
                     </select>
                   </div>

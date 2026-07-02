@@ -44,7 +44,7 @@ const inputCls =
   "w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50";
 
 export default function PartnersPage() {
-  const { currentRole } = useRoleContext();
+  const { role: currentRole } = useRoleContext();
   const { partners, addPartner, updatePartner, removePartner, assignShipment } = usePartners();
   const { addNotification } = useNotifications();
 
