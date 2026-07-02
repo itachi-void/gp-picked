@@ -3,12 +3,13 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { ChevronDown, LogOut } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useRoleTabs } from "@/hooks/useRoleTabs";
 import { moreGroups } from "@/data/navigation";
 import { useAuth } from "@/store/authStore";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import PremiumAuthButton from "@/app/components/auth/PremiumAuthButton";
 
 export function MoreDropdown() {
   const [mounted, setMounted] = useState(false);
@@ -139,14 +140,8 @@ export function MoreDropdown() {
             ))}
           </div>
 
-          <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-end">
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all cursor-pointer"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              Sign Out
-            </button>
+          <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-center">
+            <PremiumAuthButton variant="logout" label="Sign Out" onLogout={handleLogout} />
           </div>
         </div>,
         document.body

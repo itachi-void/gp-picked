@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { LogOut, Settings, User as UserIcon, ChevronDown } from "lucide-react";
+import { Settings, User as UserIcon, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -17,6 +17,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/store/authStore";
+import PremiumAuthButton from "@/app/components/auth/PremiumAuthButton";
 
 // ========== خارطة الأدوار ==========
 const ROLE_LABELS: Record<string, string> = {
@@ -113,12 +114,9 @@ export function UserMenu() {
         <DropdownMenuSeparator />
 
         {/* تسجيل الخروج */}
-        <DropdownMenuItem
-          onClick={handleLogout}
-          className="text-red-600 flex items-center gap-2 cursor-pointer focus:text-red-600"
-        >
-          <LogOut className="h-4 w-4" /> Logout
-        </DropdownMenuItem>
+        <div className="flex justify-center px-2 py-2">
+          <PremiumAuthButton variant="logout" onLogout={handleLogout} />
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );

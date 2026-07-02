@@ -28,3 +28,73 @@
   animation: mcScaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
   transform-origin: 0 0;
 }
+
+@keyframes mcFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.mc-float {
+  animation: mcFloat 3s ease-in-out infinite;
+}
+
+@keyframes charSprint {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(8deg); }
+  50% { transform: rotate(-4deg); }
+  75% { transform: rotate(6deg); }
+}
+
+.char-sprinting .prem-arm-l { animation: sprintArmL 0.18s ease-in-out infinite alternate; }
+.char-sprinting .prem-arm-r { animation: sprintArmR 0.18s ease-in-out infinite alternate; }
+.char-sprinting .prem-leg-l { animation: sprintLegL 0.18s ease-in-out infinite alternate; }
+.char-sprinting .prem-leg-r { animation: sprintLegR 0.18s ease-in-out infinite alternate; }
+
+@keyframes sprintArmL {
+  from { transform: rotate(-20deg); }
+  to   { transform: rotate(30deg); }
+}
+@keyframes sprintArmR {
+  from { transform: rotate(20deg); }
+  to   { transform: rotate(-30deg); }
+}
+@keyframes sprintLegL {
+  from { transform: rotate(-25deg); }
+  to   { transform: rotate(25deg); }
+}
+@keyframes sprintLegR {
+  from { transform: rotate(25deg); }
+  to   { transform: rotate(-25deg); }
+}
+
+.char-working .prem-arm-l,
+.char-working .prem-arm-r {
+  animation: workArms 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes workArms {
+  from { transform: rotate(-10deg); }
+  to   { transform: rotate(10deg); }
+}
+
+.char-flailing .fall-arm-l,
+.char-flailing .fall-arm-r {
+  animation: flailArms 0.12s ease-in-out infinite alternate;
+}
+.char-flailing .fall-leg-l,
+.char-flailing .fall-leg-r {
+  animation: flailLegs 0.15s ease-in-out infinite alternate;
+}
+
+@keyframes flailArms {
+  from { transform: rotate(-60deg); }
+  to   { transform: rotate(60deg); }
+}
+@keyframes flailLegs {
+  from { transform: rotate(-35deg); }
+  to   { transform: rotate(35deg); }
+}
+
+.char-sprinting > g {
+  transition: none;
+}

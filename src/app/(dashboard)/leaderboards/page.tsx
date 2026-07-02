@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import api from "@/lib/axios";
 import "@/app/components/motion/motion-components.css";
 import { GlassCard } from "@/app/components/GlassCard";
 import { accentMap } from "@/app/utils/accent";
@@ -61,11 +61,8 @@ export default function LeaderboardsPage() {
   const { data: rawData, isLoading, isError } = useQuery<any[]>({
     queryKey: ["leaderboard", sortOrder],
     queryFn: async () => {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await axios.get("/api/proxy/User/SortingUser", {
+      const res = await api.get("/User/SortingUser", {
         params: { sortOrder },
-        headers,
       });
       return res.data;
     },
@@ -77,9 +74,9 @@ export default function LeaderboardsPage() {
     .map((item: any, idx: number) => {
       const rank = item.rank || idx + 1;
       const citizenId = String(item.userId || `CIT-${20000 + idx}`);
-      const citizenName = item.name || "Eco Recycler";
+      const citizenName = item.fullName || item.name || "Eco Recycler";
       const points = item.walletPoints || 0;
-      const bottlesRecycled = parseInt(item.bottleCount || "0", 10) || 0;
+      const bottlesRecycled = parseInt(item.bottleCount || item.bottle || "0", 10) || Math.round(points / 5);
       const level = Math.max(1, Math.floor(points / 1000));
       
       const trends: Trend[] = ["up", "same", "down"];

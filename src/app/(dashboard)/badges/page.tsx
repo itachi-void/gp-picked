@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { useRoleContext } from "@/contexts/RoleContext";
 import { GlassCard } from "@/app/components/GlassCard";
+import { useAuth } from "@/store/authStore";
+import { useUserWallet } from "@/hooks/useUserWallet";
 
 type Rarity = "common" | "rare" | "epic" | "legendary";
 type Category = "milestone" | "streak" | "recycling" | "special";
@@ -79,9 +81,26 @@ const categoryAccent: Record<Category, { bg: string; fg: string }> = {
 
 export default function BadgesPage() {
   const { role: _r } = useRoleContext();
+  const { user } = useAuth();
+  const { data: walletData } = useUserWallet(user?.id);
+  const points = walletData?.walletPoints ?? 0;
+
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<"all" | Category>("all");
   const [filterRarity, setFilterRarity] = useState<"all" | Rarity>("all");
+
+  const checkUnlocked = (badgeId: string) => {
+    if (badgeId === "badge-001") return points >= 10;
+    if (badgeId === "badge-002") return points >= 100;
+    if (badgeId === "badge-003") return points >= 500;
+    if (badgeId === "badge-004") return points >= 1000;
+    if (badgeId === "badge-005") return points >= 50;
+    if (badgeId === "badge-006") return points >= 300;
+    if (badgeId === "badge-007") return points >= 20;
+    if (badgeId === "badge-008") return points >= 150;
+    if (badgeId === "badge-009") return true; // joined launch month
+    return false;
+  };
 
   const filtered = badgesData.filter((b) => {
     const matchesSearch =
@@ -184,7 +203,7 @@ export default function BadgesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map((badge, i) => {
           const Icon = iconMap[badge.icon] || Award;
-          const isUnlocked = badge.unlockedBy.length > 0;
+          const isUnlocked = checkUnlocked(badge.id);
           const rA = rarityAccent[badge.rarity];
           const cA = categoryAccent[badge.category];
           return (

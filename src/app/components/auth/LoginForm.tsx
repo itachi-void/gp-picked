@@ -10,6 +10,7 @@ import { Lock, User as UserIcon } from "lucide-react";
 import { useAuth, type Role } from "@/store/authStore";
 import { homePathForRole } from "@/app/utils/roleAccess";
 import { ForgotPasswordModal } from "./ForgotPasswordModal";
+import PremiumAuthButton from "./PremiumAuthButton";
 
 // ========== ١. قواعد التحقق من البيانات ==========
 const loginSchema = z.object({
@@ -125,13 +126,12 @@ export function LoginForm() {
         </div>
 
         {/* زرار تسجيل الدخول */}
-        <button
-          type="submit"
-          disabled={form.formState.isSubmitting}
-          className="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-full text-sm font-semibold shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/35 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {form.formState.isSubmitting ? "Processing..." : "Login"}
-        </button>
+        <div className="flex justify-center pt-2">
+          <PremiumAuthButton
+            variant="login"
+            onLogin={() => form.handleSubmit(onSubmit)()}
+          />
+        </div>
       </form>
 
       <ForgotPasswordModal
