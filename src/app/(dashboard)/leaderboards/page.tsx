@@ -28,19 +28,7 @@ interface Entry {
   trend: Trend;
 }
 
-// Fallback Mock Data in case backend is empty or fails
-const fallbackData: Entry[] = [
-  { rank: 1, citizenId: "CIT-12345", citizenName: "Ahmed Hassan", points: 15420, bottlesRecycled: 1542, level: 12, trend: "same" },
-  { rank: 2, citizenId: "CIT-12346", citizenName: "Fatma Mohamed", points: 14890, bottlesRecycled: 1489, level: 11, trend: "up" },
-  { rank: 3, citizenId: "CIT-12347", citizenName: "Omar Ali", points: 13750, bottlesRecycled: 1375, level: 11, trend: "up" },
-  { rank: 4, citizenId: "CIT-12348", citizenName: "Sara Mahmoud", points: 12200, bottlesRecycled: 1220, level: 10, trend: "down" },
-  { rank: 5, citizenId: "CIT-12349", citizenName: "Karim Youssef", points: 11580, bottlesRecycled: 1158, level: 10, trend: "up" },
-  { rank: 6, citizenId: "CIT-12350", citizenName: "Nour Ibrahim", points: 10920, bottlesRecycled: 1092, level: 9, trend: "same" },
-  { rank: 7, citizenId: "CIT-12351", citizenName: "Hassan Ahmed", points: 10340, bottlesRecycled: 1034, level: 9, trend: "up" },
-  { rank: 8, citizenId: "CIT-12352", citizenName: "Amira Samir", points: 9850, bottlesRecycled: 985, level: 8, trend: "down" },
-  { rank: 9, citizenId: "CIT-12353", citizenName: "Mohamed Ali", points: 9420, bottlesRecycled: 942, level: 8, trend: "up" },
-  { rank: 10, citizenId: "CIT-12354", citizenName: "Layla Khaled", points: 8970, bottlesRecycled: 897, level: 8, trend: "same" },
-];
+
 
 const podiumGradient: Record<number, string> = {
   1: "from-amber-400 to-amber-600",
@@ -93,8 +81,7 @@ export default function LeaderboardsPage() {
       };
     });
 
-  // Use mapped backend data if available, otherwise use mock fallback
-  const finalData = mappedData.length > 0 ? mappedData : fallbackData;
+  const finalData = mappedData;
 
   const topThree = finalData.slice(0, 3);
   const rest = finalData.slice(3);
