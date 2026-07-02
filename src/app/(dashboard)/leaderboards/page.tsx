@@ -47,14 +47,13 @@ export default function LeaderboardsPage() {
 
   // React Query with Axios fetching SortingUser endpoint
   const { data: rawData, isLoading, isError } = useQuery<any[]>({
-    queryKey: ["leaderboard", sortOrder],
+    queryKey: ["sorting-users", { sortOrder }],
     queryFn: async () => {
       const res = await api.get("/User/SortingUser", {
         params: { sortOrder },
       });
       return res.data;
     },
-    staleTime: 30000, // 30 seconds
   });
 
   // Map API response to Component Interface

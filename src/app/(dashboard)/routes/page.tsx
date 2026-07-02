@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { GlassCard } from "@/app/components/GlassCard";
 import { accentMap } from "@/app/utils/accent";
 import api from "@/lib/axios";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueries } from "@tanstack/react-query";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Select,
@@ -62,67 +62,87 @@ export default function RoutesPage() {
 
   const canManage = !(currentRole === "citizen" || currentRole === "driver" || currentRole === "recycler");
 
-  const { data: fetchedRoutes, isLoading: loading } = useQuery<Route[]>({
-    queryKey: ["routes-list"],
+  const { data: rawDrivers = [], isLoading: driversLoading } = useQuery<any[]>({
+    queryKey: ["recyclers-details"],
     queryFn: async () => {
       const res = await api.get("/admin/recyclers-details");
-      const list = Array.isArray(res.data) ? res.data : [];
-      
-      const mappedPromises = list.map(async (d: any, idx: number) => {
-        const driverId = String(d.recyclerID || d.id || `TRK-${idx}`);
-        const driverName = d.fullName || "Driver";
-        
-        let stops = 4;
-        let status: RouteStatus = normalizeStatus(d.status);
-        let zoneName = `${driverName}'s Route`;
-        
-        // Try fetching active collection requests representing the stops/stops on the route
-        try {
-          const reqRes = await api.get(`/PickupRequests/GetRequestsByRecyclerId/${driverId}`);
-          if (Array.isArray(reqRes.data)) {
-            stops = reqRes.data.length;
-            const pendingOrEnRoute = reqRes.data.some(
-              (r: any) =>
-                r.status?.toLowerCase() === "pending" ||
-                r.status?.toLowerCase() === "accepted" ||
-                r.status?.toLowerCase() === "enroute"
-            );
-            
-            if (pendingOrEnRoute) {
-              status = "active";
-            } else if (stops > 0) {
-              status = "completed";
-            }
-            
-            const firstWithZone = reqRes.data.find((r: any) => r.zone);
-            if (firstWithZone) {
-              zoneName = `${firstWithZone.zone} Area`;
-            }
-          }
-        } catch (e) {
-          // Ignore, falls back to default values
-        }
-
-        const distanceVal = `${(stops * 3.2).toFixed(1)} km`;
-        const durationVal = `${stops * 20} mins`;
-
-        return {
-          id: driverId,
-          name: zoneName,
-          driver: driverName,
-          stops,
-          distance: distanceVal,
-          duration: durationVal,
-          status,
-        };
-      });
-
-      return Promise.all(mappedPromises);
+      return Array.isArray(res.data) ? res.data : [];
     },
   });
 
+  const stopsQueries = useQueries({
+    queries: rawDrivers.map((d: any, idx: number) => {
+      const driverId = String(d.recyclerID || d.id || `TRK-${idx}`);
+      return {
+        queryKey: ["driver-requests", driverId],
+        queryFn: async () => {
+          const res = await api.get(`/PickupRequests/GetRequestsByRecyclerId/${driverId}`);
+          return Array.isArray(res.data) ? res.data : [];
+        },
+      };
+    }),
+  });
+
+  const loading = driversLoading || stopsQueries.some((q) => q.isLoading);
+
+  const stopsQueryDataString = JSON.stringify(
+    stopsQueries.map((q) => ({
+      status: q.status,
+      dataLength: Array.isArray(q.data) ? q.data.length : 0,
+      firstZone: Array.isArray(q.data) ? q.data.find((r: any) => r.zone)?.zone : undefined,
+      pendingOrEnRoute: Array.isArray(q.data) ? q.data.some(
+        (r: any) =>
+          r.status?.toLowerCase() === "pending" ||
+          r.status?.toLowerCase() === "accepted" ||
+          r.status?.toLowerCase() === "enroute"
+      ) : false,
+    }))
+  );
+
+  const fetchedRoutes = useMemo(() => {
+    if (rawDrivers.length === 0) return [];
+    
+    const queryData = JSON.parse(stopsQueryDataString);
+
+    return rawDrivers.map((d: any, idx: number) => {
+      const driverId = String(d.recyclerID || d.id || `TRK-${idx}`);
+      const driverName = d.fullName || "Driver";
+      
+      let stops = 4;
+      let status: RouteStatus = normalizeStatus(d.status);
+      let zoneName = `${driverName}'s Route`;
+
+      const qResult = queryData[idx];
+      if (qResult && qResult.status === "success") {
+        stops = qResult.dataLength;
+        if (qResult.pendingOrEnRoute) {
+          status = "active";
+        } else if (stops > 0) {
+          status = "completed";
+        }
+        
+        if (qResult.firstZone) {
+          zoneName = `${qResult.firstZone} Area`;
+        }
+      }
+
+      const distanceVal = `${(stops * 3.2).toFixed(1)} km`;
+      const durationVal = `${stops * 20} mins`;
+
+      return {
+        id: driverId,
+        name: zoneName,
+        driver: driverName,
+        stops,
+        distance: distanceVal,
+        duration: durationVal,
+        status,
+      };
+    });
+  }, [rawDrivers, stopsQueryDataString]);
+
   useEffect(() => {
-    if (fetchedRoutes) {
+    if (fetchedRoutes && fetchedRoutes.length > 0) {
       setRoutes(fetchedRoutes);
     }
   }, [fetchedRoutes]);

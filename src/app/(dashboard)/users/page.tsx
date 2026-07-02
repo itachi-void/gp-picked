@@ -75,14 +75,13 @@ export default function UsersPage() {
   if (role && !["Admin", "Manager"].includes(role)) return null;
 
   const { data: rawData = [], isLoading } = useQuery<any[]>({
-    queryKey: ["adminUsers"],
+    queryKey: ["sorting-users", { sortOrder: "Descending" }],
     queryFn: async () => {
       const res = await api.get("/User/SortingUser", {
         params: { sortOrder: "Descending" },
       });
       return Array.isArray(res.data) ? res.data : [];
     },
-    staleTime: 30000,
   });
 
   const users = useMemo(() => rawData.map(mapApiUser), [rawData]);

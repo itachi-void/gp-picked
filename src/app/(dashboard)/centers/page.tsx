@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useTheme } from "next-themes";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import {
   Zap,          // أيقونة برق
@@ -681,64 +681,91 @@ export default function IsometricCentersHub() {
 
   const isDark = mounted && resolvedTheme === "dark";
 
-  const { data: CENTERS = [], isLoading: loading } = useQuery<CenterNode[]>({
-    queryKey: ["isometric-centers-hub"],
+  const { data: rawStaff = [], isLoading: staffLoading } = useQuery<any[]>({
+    queryKey: ["hub-staff-all"],
     queryFn: async () => {
-      const staffRes = await api.get("/HubStaff/allHubStaff");
-      const staffList = Array.isArray(staffRes.data) ? staffRes.data : [];
-      
-      const gridCoords = [
-        { x: 18, y: 38 },
-        { x: 42, y: 22 },
-        { x: 68, y: 32 },
-        { x: 32, y: 68 },
-        { x: 55, y: 72 },
-        { x: 78, y: 62 },
-        { x: 12, y: 55 },
-      ];
-
-      const mappedPromises = staffList.map(async (s: any, idx: number) => {
-        const staffId = s.hubStaffId || s.id || idx;
-        let managerName = s.name || "Hub Staff";
-        let historyLength = 0;
-        let activeDrivers = 0;
-        
-        try {
-          const detailRes = await api.get(`/HubStaff/${staffId}`);
-          const detail = detailRes.data || {};
-          managerName = detail.fullName || managerName;
-          
-          const history = Array.isArray(detail.history) ? detail.history : [];
-          historyLength = history.length;
-          activeDrivers = new Set(history.map((r: any) => r.recyclerId).filter(Boolean)).size;
-        } catch (e) {
-          // Ignore
-        }
-
-        const typeList: CenterNode["type"][] = ["collection", "sorting", "processing", "distribution"];
-        const type = typeList[idx % typeList.length];
-        const coord = gridCoords[idx % gridCoords.length] || { x: 30 + (idx * 15) % 60, y: 20 + (idx * 20) % 60 };
-
-        return {
-          id: `C${staffId}`,
-          name: `${managerName}'s Hub`,
-          nameAr: `مركز ${managerName}`,
-          type,
-          status: (idx % 8 === 3 ? "maintenance" : (idx % 8 === 5 ? "offline" : "online")) as any,
-          x: coord.x,
-          y: coord.y,
-          capacity: Math.min(95, Math.max(15, historyLength * 8 || 45)),
-          throughput: historyLength * 6 || 30,
-          efficiency: Math.min(100, Math.max(60, 95 - (idx * 3) % 20)),
-          co2Saved: historyLength * 12 || 85,
-          temperature: Math.round(20 + (idx * 4) % 15),
-          activeDrivers: activeDrivers || 2,
-        };
-      });
-
-      return Promise.all(mappedPromises);
-    }
+      const res = await api.get("/HubStaff/allHubStaff");
+      return Array.isArray(res.data) ? res.data : [];
+    },
   });
+
+  const staffDetailsQueries = useQueries({
+    queries: rawStaff.map((s: any, idx: number) => {
+      const staffId = s.hubStaffId || s.id || idx;
+      return {
+        queryKey: ["hub-staff-detail", String(staffId)],
+        queryFn: async () => {
+          const res = await api.get(`/HubStaff/${staffId}`);
+          return res.data || {};
+        },
+      };
+    }),
+  });
+
+  const loading = staffLoading || staffDetailsQueries.some((q) => q.isLoading);
+
+  const staffQueryDataString = JSON.stringify(
+    staffDetailsQueries.map((q) => ({
+      status: q.status,
+      fullName: q.data?.fullName,
+      historyLength: Array.isArray(q.data?.history) ? q.data.history.length : 0,
+      activeDrivers: Array.isArray(q.data?.history)
+        ? new Set(q.data.history.map((r: any) => r.recyclerId).filter(Boolean)).size
+        : 0,
+    }))
+  );
+
+  const CENTERS = useMemo<CenterNode[]>(() => {
+    if (rawStaff.length === 0) return [];
+
+    const queryData = JSON.parse(staffQueryDataString);
+
+    const gridCoords = [
+      { x: 18, y: 38 },
+      { x: 42, y: 22 },
+      { x: 68, y: 32 },
+      { x: 32, y: 68 },
+      { x: 55, y: 72 },
+      { x: 78, y: 62 },
+      { x: 12, y: 55 },
+    ];
+
+    return rawStaff.map((s: any, idx: number) => {
+      const staffId = s.hubStaffId || s.id || idx;
+      let managerName = s.name || "Hub Staff";
+      let historyLength = 0;
+      let activeDrivers = 0;
+
+      const qResult = queryData[idx];
+      if (qResult && qResult.status === "success") {
+        if (qResult.fullName) {
+          managerName = qResult.fullName;
+        }
+        historyLength = qResult.historyLength;
+        activeDrivers = qResult.activeDrivers;
+      }
+
+      const typeList: CenterNode["type"][] = ["collection", "sorting", "processing", "distribution"];
+      const type = typeList[idx % typeList.length];
+      const coord = gridCoords[idx % gridCoords.length] || { x: 30 + (idx * 15) % 60, y: 20 + (idx * 20) % 60 };
+
+      return {
+        id: `C${staffId}`,
+        name: `${managerName}'s Hub`,
+        nameAr: `مركز ${managerName}`,
+        type,
+        status: (idx % 8 === 3 ? "maintenance" : (idx % 8 === 5 ? "offline" : "online")) as any,
+        x: coord.x,
+        y: coord.y,
+        capacity: Math.min(95, Math.max(15, historyLength * 8 || 45)),
+        throughput: historyLength * 6 || 30,
+        efficiency: Math.min(100, Math.max(60, 95 - (idx * 3) % 20)),
+        co2Saved: historyLength * 12 || 85,
+        temperature: Math.round(20 + (idx * 4) % 15),
+        activeDrivers: activeDrivers || 2,
+      };
+    });
+  }, [rawStaff, staffQueryDataString]);
 
   const CONNECTIONS = useMemo<[string, string][]>(() => {
     if (CENTERS.length < 2) return [];

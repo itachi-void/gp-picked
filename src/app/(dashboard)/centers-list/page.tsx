@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import "@/app/components/motion/motion-components.css";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { Building2, MapPin, Users, Trash2, Edit, Plus, X, Activity } from "lucide-react";
 import { useRoleContext } from "@/contexts/RoleContext";
@@ -37,54 +37,78 @@ export default function CentersListPage() {
 
   const [centers, setCenters] = useState<Center[]>([]);  // ١. البيانات
 
-  const { data: fetchedCenters, isLoading: loading } = useQuery<Center[]>({
-    queryKey: ["hubs-centers-list"],
+  const { data: rawStaff = [], isLoading: staffLoading } = useQuery<any[]>({
+    queryKey: ["hub-staff-all"],
     queryFn: async () => {
-      const staffRes = await api.get("/HubStaff/allHubStaff");
-      const staffList = Array.isArray(staffRes.data) ? staffRes.data : [];
-      
-      const mappedPromises = staffList.map(async (s: any, idx: number) => {
-        const staffId = s.hubStaffId || s.id || idx;
-        let managerName = s.name || "Hub Staff";
-        let location = "Cairo Hub Center";
-        let currentLoad = 120;
-        let status = "active";
-        
-        try {
-          const detailRes = await api.get(`/HubStaff/${staffId}`);
-          const detail = detailRes.data || {};
-          managerName = detail.fullName || managerName;
-          
-          const history = Array.isArray(detail.history) ? detail.history : [];
-          if (history.length > 0) {
-            const reqWithAddress = history.find((r: any) => r.address);
-            if (reqWithAddress) {
-              location = reqWithAddress.address;
-            }
-            currentLoad = history.length * 30;
-          }
-        } catch (e) {
-          // Ignore
-        }
-
-        return {
-          id: String(staffId),
-          name: `${managerName}'s Collection Center`,
-          location,
-          capacity: 1000,
-          currentLoad,
-          status: status as any,
-          manager: managerName,
-          contact: `+20100${String(staffId).padStart(3, "0")}456`,
-        };
-      });
-
-      return Promise.all(mappedPromises);
-    }
+      const res = await api.get("/HubStaff/allHubStaff");
+      return Array.isArray(res.data) ? res.data : [];
+    },
   });
 
+  const staffDetailsQueries = useQueries({
+    queries: rawStaff.map((s: any, idx: number) => {
+      const staffId = s.hubStaffId || s.id || idx;
+      return {
+        queryKey: ["hub-staff-detail", String(staffId)],
+        queryFn: async () => {
+          const res = await api.get(`/HubStaff/${staffId}`);
+          return res.data || {};
+        },
+      };
+    }),
+  });
+
+  const loading = staffLoading || staffDetailsQueries.some((q) => q.isLoading);
+
+  const staffQueryDataString = JSON.stringify(
+    staffDetailsQueries.map((q) => ({
+      status: q.status,
+      fullName: q.data?.fullName,
+      historyLength: Array.isArray(q.data?.history) ? q.data.history.length : 0,
+      firstHistoryAddress: Array.isArray(q.data?.history) ? q.data.history.find((r: any) => r.address)?.address : undefined,
+    }))
+  );
+
+  const fetchedCenters = useMemo(() => {
+    if (rawStaff.length === 0) return [];
+
+    const queryData = JSON.parse(staffQueryDataString);
+
+    return rawStaff.map((s: any, idx: number) => {
+      const staffId = s.hubStaffId || s.id || idx;
+      let managerName = s.name || "Hub Staff";
+      let location = "Cairo Hub Center";
+      let currentLoad = 120;
+      let status = "active";
+
+      const qResult = queryData[idx];
+      if (qResult && qResult.status === "success") {
+        if (qResult.fullName) {
+          managerName = qResult.fullName;
+        }
+        if (qResult.historyLength > 0) {
+          currentLoad = qResult.historyLength * 30;
+        }
+        if (qResult.firstHistoryAddress) {
+          location = qResult.firstHistoryAddress;
+        }
+      }
+
+      return {
+        id: String(staffId),
+        name: `${managerName}'s Collection Center`,
+        location,
+        capacity: 1000,
+        currentLoad,
+        status: status as any,
+        manager: managerName,
+        contact: `+20100${String(staffId).padStart(3, "0")}456`,
+      };
+    });
+  }, [rawStaff, staffQueryDataString]);
+
   useEffect(() => {
-    if (fetchedCenters) {
+    if (fetchedCenters && fetchedCenters.length > 0) {
       setCenters(fetchedCenters);
     }
   }, [fetchedCenters]);

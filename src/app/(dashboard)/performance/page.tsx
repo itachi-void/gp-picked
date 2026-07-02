@@ -125,47 +125,41 @@ export default function PerformanceDashboardPage() {
   const fetchLivePerformance = async () => {
     setLoading(true);
     try {
-      // 1. Fetch Total Earnings
+      const [resEaring, resTotalRec, resActRec, resTrips, resPickups] = await Promise.allSettled([
+        api.get("/admin/Total-Earing"),
+        api.get("/admin/total-recyclers"),
+        api.get("/admin/total-recycling-active"),
+        api.get("/admin/recycler-with-total-trip"),
+        api.get("/admin/total-pickup-requests"),
+      ]);
+
       let earnings = 23900;
-      try {
-        const resEaring = await api.get("/admin/Total-Earing");
-        earnings = Number(resEaring.data) || 23900;
-      } catch (e) {
-        console.error("Failed to load total earnings:", e);
+      if (resEaring.status === "fulfilled") {
+        earnings = Number(resEaring.value.data) || 23900;
       }
 
-      // 2. Fetch Total Recyclers & Active Recyclers
       let totalRecyclers = 4;
-      let activeRecyclers = 3;
-      try {
-        const resTotalRec = await api.get("/admin/total-recyclers");
-        totalRecyclers = Number(resTotalRec.data) || 4;
-        const resActRec = await api.get("/admin/total-recycling-active");
-        activeRecyclers = Number(resActRec.data) || 3;
-      } catch (e) {
-        console.error("Failed to load recycler counts:", e);
+      if (resTotalRec.status === "fulfilled") {
+        totalRecyclers = Number(resTotalRec.value.data) || 4;
       }
 
-      // 3. Fetch Recyclers with total trips (to compute driver ratings)
+      let activeRecyclers = 3;
+      if (resActRec.status === "fulfilled") {
+        activeRecyclers = Number(resActRec.value.data) || 3;
+      }
+
       let avgRating = 4.6;
-      try {
-        const resTrips = await api.get("/admin/recycler-with-total-trip");
-        const recyclers = resTrips.data || [];
+      if (resTrips.status === "fulfilled") {
+        const recyclers = resTrips.value.data || [];
         if (recyclers.length > 0) {
           const sum = recyclers.reduce((acc: number, r: any) => acc + (r.rating || 0), 0);
           avgRating = sum / recyclers.length;
         }
-      } catch (e) {
-        console.error("Failed to load driver trips/ratings:", e);
       }
 
-      // 4. Fetch Total Pickup Requests
       let totalPickups = 15;
-      try {
-        const resPickups = await api.get("/admin/total-pickup-requests");
-        totalPickups = Number(resPickups.data) || 15;
-      } catch (e) {
-        console.error("Failed to load total pickup requests:", e);
+      if (resPickups.status === "fulfilled") {
+        totalPickups = Number(resPickups.value.data) || 15;
       }
 
       // Compute performance metrics

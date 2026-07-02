@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import "@/app/components/motion/motion-components.css";
 import {
   Users,
@@ -107,40 +107,43 @@ export default function DriversListPage() {
 
   const canManage = !(currentRole === "citizen" || currentRole === "driver" || currentRole === "recycler");
 
-  const { data: drivers = [], isLoading: loading, refetch } = useQuery<Driver[]>({
+  const { data: rawDrivers = [], isLoading: loading, refetch } = useQuery<any[]>({
     queryKey: ["recyclers-details"],
     queryFn: async () => {
       const res = await api.get("/admin/recyclers-details");
-      const list = Array.isArray(res.data) ? res.data : [];
-      return list.map((d: any) => {
-        const name = d.fullName || "Driver User";
-        const initials = name
-          .split(" ")
-          .map((n: any) => n[0])
-          .join("")
-          .slice(0, 2)
-          .toUpperCase();
-        
-        return {
-          id: String(d.recyclerID || d.id),
-          name,
-          phone: d.phone || "01000000000",
-          email: d.email || `${name.toLowerCase().replace(/\s+/g, "")}@smartwaste.com`,
-          status: normalizeStatus(d.status),
-          currentRoute: d.currentRoute || "Cairo Route",
-          vehicleNumber: d.vehicleInfo || "N/A",
-          completedTrips: d.totalTripsCompleted || 0,
-          rating: d.rating ? parseFloat(Number(d.rating).toFixed(1)) : 5.0,
-          earnings: d.earnings || (d.totalTripsCompleted ? d.totalTripsCompleted * 150 : 250),
-          onTimePercentage: d.onTimePercentage || 95,
-          fuelEfficiency: d.fuelEfficiency || 12,
-          joinDate: d.joinDate ? new Date(d.joinDate).toISOString().slice(0, 10) : "2026-01-15",
-          avatar: initials || "DR",
-          lastActive: d.lastActive || "2 hours ago",
-        };
-      });
+      return Array.isArray(res.data) ? res.data : [];
     },
   });
+
+  const drivers = useMemo(() => {
+    return rawDrivers.map((d: any) => {
+      const name = d.fullName || "Driver User";
+      const initials = name
+        .split(" ")
+        .map((n: any) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+      
+      return {
+        id: String(d.recyclerID || d.id),
+        name,
+        phone: d.phone || "01000000000",
+        email: d.email || `${name.toLowerCase().replace(/\s+/g, "")}@smartwaste.com`,
+        status: normalizeStatus(d.status),
+        currentRoute: d.currentRoute || "Cairo Route",
+        vehicleNumber: d.vehicleInfo || "N/A",
+        completedTrips: d.totalTripsCompleted || 0,
+        rating: d.rating ? parseFloat(Number(d.rating).toFixed(1)) : 5.0,
+        earnings: d.earnings || (d.totalTripsCompleted ? d.totalTripsCompleted * 150 : 250),
+        onTimePercentage: d.onTimePercentage || 95,
+        fuelEfficiency: d.fuelEfficiency || 12,
+        joinDate: d.joinDate ? new Date(d.joinDate).toISOString().slice(0, 10) : "2026-01-15",
+        avatar: initials || "DR",
+        lastActive: d.lastActive || "2 hours ago",
+      };
+    });
+  }, [rawDrivers]);
 
   const addMutation = useMutation({
     mutationFn: async (formData: typeof form) => {

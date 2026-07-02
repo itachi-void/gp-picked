@@ -80,9 +80,11 @@ export default function BadgesPage() {
   const points = walletData?.walletPoints ?? 0;
 
   const { data: usersRank = [] } = useQuery<any[]>({
-    queryKey: ["users-sorting-desc"],
+    queryKey: ["sorting-users", { sortOrder: "Descending" }],
     queryFn: async () => {
-      const res = await api.get("/User/SortingUser?sortOrder=desc");
+      const res = await api.get("/User/SortingUser", {
+        params: { sortOrder: "Descending" },
+      });
       return Array.isArray(res.data) ? res.data : [];
     }
   });

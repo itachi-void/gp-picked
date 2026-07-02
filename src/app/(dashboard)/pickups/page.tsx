@@ -95,28 +95,26 @@ function PickupRequestsPageContent() {
       try {
         const employeeId = user?.id || 1;
 
-        // 1. Fetch pending requests from backend (independent call)
+        // 1. Fetch pending and in-progress requests in parallel
+        const [resPending, resInProgress] = await Promise.allSettled([
+          api.get("/PickupRequests/GetPendingRequestForms"),
+          api.get("/PickupRequests/GetInProgressHubRequests"),
+        ]);
+
         let listPending: any[] = [];
-        try {
-          const resPending = await api.get("/PickupRequests/GetPendingRequestForms");
-          listPending = Array.isArray(resPending.data)
-            ? resPending.data
-            : (resPending.data && Array.isArray((resPending.data as any).data) ? (resPending.data as any).data : []);
-        } catch (e) {
-          console.error("Failed to fetch pending requests:", e);
+        if (resPending.status === "fulfilled") {
+          const data = resPending.value.data;
+          listPending = Array.isArray(data)
+            ? data
+            : (data && Array.isArray((data as any).data) ? (data as any).data : []);
         }
 
-        // 2. Fetch in progress requests from backend (independent call)
         let listInProgress: any[] = [];
-        try {
-          const resInProgress = await api.get("/PickupRequests/GetInProgressHubRequests");
-          listInProgress = Array.isArray(resInProgress.data)
-            ? resInProgress.data
-            : (resInProgress.data && Array.isArray((resInProgress.data as any).data) 
-                ? (resInProgress.data as any).data 
-                : []);
-        } catch (e) {
-          console.error("Failed to fetch in progress hub requests:", e);
+        if (resInProgress.status === "fulfilled") {
+          const data = resInProgress.value.data;
+          listInProgress = Array.isArray(data)
+            ? data
+            : (data && Array.isArray((data as any).data) ? (data as any).data : []);
         }
 
         // 3. Fetch history verified by this employee

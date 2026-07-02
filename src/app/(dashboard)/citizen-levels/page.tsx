@@ -86,7 +86,7 @@ function calcLevels(data: Citizen[]) {
 
 export default function CitizenLevelsPage() {
   const { data: citizens = [], isLoading } = useQuery<Citizen[]>({
-    queryKey: ["citizen-levels"],
+    queryKey: ["sorting-users", { sortOrder: "Descending" }],
     queryFn: async () => {
       const res = await api.get("/User/SortingUser", { params: { sortOrder: "Descending" } });
       return Array.isArray(res.data) ? res.data : [];

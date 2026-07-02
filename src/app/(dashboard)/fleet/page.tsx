@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import { GlassCard } from "@/app/components/GlassCard";
 import { accentMap } from "@/app/utils/accent";
 import api from "@/lib/axios";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 
 // Dynamic import of Leaflet LiveMap component to bypass SSR window undefined error
@@ -140,61 +140,97 @@ export default function FleetMapPage() {
   const [selectedTruck, setSelectedTruck] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { isLoading: loading, refetch } = useQuery<FleetTruck[]>({
-    queryKey: ["fleet-trucks"],
+  const { data: rawDrivers = [], isLoading: driversLoading, refetch } = useQuery<any[]>({
+    queryKey: ["recyclers-details"],
     queryFn: async () => {
       const res = await api.get("/admin/recyclers-details");
-      const list = Array.isArray(res.data) ? res.data : [];
-      
-      const mappedPromises = list.map(async (d: any, idx: number) => {
-        const driverId = String(d.recyclerID || d.id || `TRK-${idx}`);
-        
-        // Cairo center-based default coordinates
-        const baseLat = 30.0444;
-        const baseLng = 31.2357;
-        const latOffset = ((idx * 17) % 50 - 25) * 0.0018;
-        const lngOffset = ((idx * 23) % 50 - 25) * 0.0018;
-        
-        let zone = "Cairo Zone";
-        let nextStop = "Hub Terminal";
-        
-        // Asynchronously fetch pickup requests for this driver to populate zone and nextStop dynamically from API
-        try {
-          const reqRes = await api.get(`/PickupRequests/GetRequestsByRecyclerId/${driverId}`);
-          if (Array.isArray(reqRes.data) && reqRes.data.length > 0) {
-            const activeReq = reqRes.data.find(
-              (r: any) =>
-                r.status?.toLowerCase() === "pending" ||
-                r.status?.toLowerCase() === "accepted" ||
-                r.status?.toLowerCase() === "enroute"
-            ) || reqRes.data[0];
-            
-            if (activeReq) {
-              zone = activeReq.zone || "Cairo Zone";
-              nextStop = activeReq.address || "Hub Terminal";
-            }
-          }
-        } catch (e) {
-          // No requests or failed, keep defaults
-        }
-
-        return {
-          id: driverId,
-          driver: d.fullName || "Driver",
-          status: normalizeStatus(d.status),
-          zone,
-          fuel: `${Math.round(45 + (idx * 13) % 45)}%`,
-          nextStop,
-          lat: baseLat + latOffset,
-          lng: baseLng + lngOffset,
-        };
-      });
-
-      const result = await Promise.all(mappedPromises);
-      setTrucks(result);
-      return result;
+      return Array.isArray(res.data) ? res.data : [];
     },
   });
+
+  const stopsQueries = useQueries({
+    queries: rawDrivers.map((d: any, idx: number) => {
+      const driverId = String(d.recyclerID || d.id || `TRK-${idx}`);
+      return {
+        queryKey: ["driver-requests", driverId],
+        queryFn: async () => {
+          const res = await api.get(`/PickupRequests/GetRequestsByRecyclerId/${driverId}`);
+          return Array.isArray(res.data) ? res.data : [];
+        },
+      };
+    }),
+  });
+
+  const loading = driversLoading || stopsQueries.some((q) => q.isLoading);
+
+  const stopsQueryDataString = JSON.stringify(
+    stopsQueries.map((q) => ({
+      status: q.status,
+      dataLength: Array.isArray(q.data) ? q.data.length : 0,
+      activeReqZone: Array.isArray(q.data) && q.data.length > 0 ? (
+        q.data.find(
+          (r: any) =>
+            r.status?.toLowerCase() === "pending" ||
+            r.status?.toLowerCase() === "accepted" ||
+            r.status?.toLowerCase() === "enroute"
+        ) || q.data[0]
+      )?.zone : undefined,
+      activeReqAddress: Array.isArray(q.data) && q.data.length > 0 ? (
+        q.data.find(
+          (r: any) =>
+            r.status?.toLowerCase() === "pending" ||
+            r.status?.toLowerCase() === "accepted" ||
+            r.status?.toLowerCase() === "enroute"
+        ) || q.data[0]
+      )?.address : undefined,
+    }))
+  );
+
+  const fetchedTrucks = useMemo(() => {
+    if (rawDrivers.length === 0) return [];
+    
+    const queryData = JSON.parse(stopsQueryDataString);
+
+    return rawDrivers.map((d: any, idx: number) => {
+      const driverId = String(d.recyclerID || d.id || `TRK-${idx}`);
+      
+      // Cairo center-based default coordinates
+      const baseLat = 30.0444;
+      const baseLng = 31.2357;
+      const latOffset = ((idx * 17) % 50 - 25) * 0.0018;
+      const lngOffset = ((idx * 23) % 50 - 25) * 0.0018;
+      
+      let zone = "Cairo Zone";
+      let nextStop = "Hub Terminal";
+
+      const qResult = queryData[idx];
+      if (qResult && qResult.status === "success") {
+        if (qResult.activeReqZone) {
+          zone = qResult.activeReqZone;
+        }
+        if (qResult.activeReqAddress) {
+          nextStop = qResult.activeReqAddress;
+        }
+      }
+
+      return {
+        id: driverId,
+        driver: d.fullName || "Driver",
+        status: normalizeStatus(d.status),
+        zone,
+        fuel: `${Math.round(45 + (idx * 13) % 45)}%`,
+        nextStop,
+        lat: baseLat + latOffset,
+        lng: baseLng + lngOffset,
+      };
+    });
+  }, [rawDrivers, stopsQueryDataString]);
+
+  useEffect(() => {
+    if (fetchedTrucks && fetchedTrucks.length > 0) {
+      setTrucks(fetchedTrucks);
+    }
+  }, [fetchedTrucks]);
 
   // EventSource stream connection for live selected driver location tracking
   useEffect(() => {
