@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { Trash2, UserMinus, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { GlassCard } from "@/app/components/GlassCard";
 import api from "@/lib/axios";
 import OverviewHero from "./components/OverviewHero";
@@ -36,7 +34,7 @@ export default function OverviewPage() {
   const activePickups = data?.totalPickups ?? 0;
   const driversOnRoad = data?.activeRecyclers ?? 0;
   const totalDrivers = data?.totalRecyclers ?? 0;
-  const todayTonnage = data?.totalEaring ? Math.round((data.totalEarning / 1000) * 10) / 10 : 0;
+  const todayTonnage = data?.totalEarning ? Math.round((data.totalEarning / 1000) * 10) / 10 : 0;
   const fleetUtilization = totalDrivers > 0 ? Math.round((driversOnRoad / totalDrivers) * 100) : 0;
 
   if (isLoading) {
@@ -58,8 +56,8 @@ export default function OverviewPage() {
         </div>
         <div className="h-48 bg-slate-200/50 dark:bg-slate-800/50 rounded-2xl" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <GlassCard className="p-5 h-48" />
-          <GlassCard className="p-5 h-48" />
+          <GlassCard className="p-5 h-48"><div /></GlassCard>
+          <GlassCard className="p-5 h-48"><div /></GlassCard>
         </div>
       </div>
     );
