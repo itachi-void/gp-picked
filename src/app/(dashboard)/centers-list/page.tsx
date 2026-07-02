@@ -18,8 +18,8 @@ export interface Center {
   id: string;
   name: string;
   location: string;
-  capacity: number;
-  currentLoad: number;
+  capacity: number | string;
+  currentLoad: number | string;
   status: "active" | "inactive" | "maintenance";
   manager: string;
   contact: string;
@@ -64,6 +64,7 @@ export default function CentersListPage() {
     staffDetailsQueries.map((q) => ({
       status: q.status,
       fullName: q.data?.fullName,
+      phone: q.data?.phone,
       historyLength: Array.isArray(q.data?.history) ? q.data.history.length : 0,
       firstHistoryAddress: Array.isArray(q.data?.history) ? q.data.history.find((r: any) => r.address)?.address : undefined,
     }))
@@ -77,20 +78,20 @@ export default function CentersListPage() {
     return rawStaff.map((s: any, idx: number) => {
       const staffId = s.hubStaffId || s.id || idx;
       let managerName = s.name || "Hub Staff";
-      let location = "Cairo Hub Center";
-      let currentLoad = 120;
+      let location = "not yet from api";
       let status = "active";
+      let contact = "not yet from api";
 
       const qResult = queryData[idx];
       if (qResult && qResult.status === "success") {
         if (qResult.fullName) {
           managerName = qResult.fullName;
         }
-        if (qResult.historyLength > 0) {
-          currentLoad = qResult.historyLength * 30;
-        }
         if (qResult.firstHistoryAddress) {
           location = qResult.firstHistoryAddress;
+        }
+        if (qResult.phone) {
+          contact = qResult.phone;
         }
       }
 
@@ -98,11 +99,11 @@ export default function CentersListPage() {
         id: String(staffId),
         name: `${managerName}'s Collection Center`,
         location,
-        capacity: 1000,
-        currentLoad,
+        capacity: "not yet from api",
+        currentLoad: "not yet from api",
         status: status as any,
         manager: managerName,
-        contact: `+20100${String(staffId).padStart(3, "0")}456`,
+        contact,
       };
     });
   }, [rawStaff, staffQueryDataString]);
@@ -116,18 +117,18 @@ export default function CentersListPage() {
   const [isOpen, setIsOpen] = useState(false);                // ٢. الـ Modal مفتوح؟
   const [editing, setEditing] = useState<Center | null>(null);// ٣. بنعدل على أنهي مركز؟
   const [create, setCreate] = useState(false);                // ٤. بنضيف جديد؟
-  const [form, setForm] = useState<Center>({ id: "", name: "", location: "", capacity: 0, currentLoad: 0, status: "active", manager: "", contact: "" });
+  const [form, setForm] = useState<Center>({ id: "", name: "", location: "", capacity: "not yet from api", currentLoad: "not yet from api", status: "active", manager: "", contact: "" });
 
   // ========== إحصائيات ==========
   const stats = [
     { label: "Total Centers", value: centers.length, icon: Building2, accent: "emerald" },
     { label: "Active Centers", value: centers.filter((c) => c.status === "active").length, icon: Users, accent: "sky" },
-    { label: "Total Capacity", value: centers.reduce((a, c) => a + c.capacity, 0).toLocaleString(), icon: Activity, accent: "rose" },
+    { label: "Total Capacity", value: "not yet from api", icon: Activity, accent: "rose" },
   ];
 
   // ========== فتح الـ Modal للإضافة ==========
   const openCreate = () => {
-    setForm({ id: "",  name: "", location: "", capacity: 0, currentLoad: 0, status: "active", manager: "", contact: "" });
+    setForm({ id: "",  name: "", location: "", capacity: "not yet from api", currentLoad: "not yet from api", status: "active", manager: "", contact: "" });
     setCreate(true);        // بنضيف جديد
     setEditing(null);       // مفيش تعديل
     setIsOpen(true);        // افتح
@@ -230,7 +231,9 @@ setCenters(
             <tbody>
               {centers.map((c) => {
                 const sa = statusAccent[c.status];
-                const pct = Math.min(100, Math.round((c.currentLoad / c.capacity) * 100));
+                const pct = typeof c.currentLoad === "number" && typeof c.capacity === "number"
+                  ? Math.min(100, Math.round((c.currentLoad / c.capacity) * 100))
+                  : 0;
                 return (
                   <tr key={c.id} className="border-b last:border-0 border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
                     <td className="py-4 px-6">
@@ -245,12 +248,12 @@ setCenters(
                         <span>{c.location}</span>
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-slate-700 dark:text-slate-200">{c.capacity.toLocaleString()}</td>
+                    <td className="py-4 px-6 text-slate-700 dark:text-slate-200">{c.capacity}</td>
                    <td className="py-4 px-6">  {/* خلية في الجدول */}
   <div className="space-y-1 min-w-[140px]">  {/* حاوية بعرض أدنى 140px */}
                         {/* ١. الرقم (الحمل الحالي) */}
                         <div className="text-sm text-slate-900 dark:text-white font-semibold">
-      {c.currentLoad.toLocaleString()}  {/* 3200 → "3,200" */}
+      {c.currentLoad}  {/* 3200 → "3,200" */}
                         </div>
                         {/* ٢. شريط التقدم */}
                         <div className="h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">

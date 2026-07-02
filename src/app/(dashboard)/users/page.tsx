@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Search, Shield, Truck, UserCircle2, Users, Mail, Calendar, MoreHorizontal } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Search, Shield, Truck, UserCircle2, Users, Mail, Calendar, MoreHorizontal, Plus, Trash2, X } from "lucide-react";
 import { GlassCard } from "@/app/components/GlassCard";
 import api from "@/lib/axios";
 import { useRoleContext } from "@/contexts/RoleContext";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 type Role = "admin" | "driver" | "citizen" | "employee";
 
@@ -74,7 +75,11 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState<Role | "all">("all");
   if (role && !["Admin", "Manager"].includes(role)) return null;
 
-  const { data: rawData = [], isLoading } = useQuery<any[]>({
+  const [showForm, setShowForm] = useState(false);
+  const emptyForm = { fullName: "", email: "", password: "", address: "", phone: "" };
+  const [form, setForm] = useState(emptyForm);
+
+  const { data: rawData = [], isLoading, refetch } = useQuery<any[]>({
     queryKey: ["sorting-users", { sortOrder: "Descending" }],
     queryFn: async () => {
       const res = await api.get("/User/SortingUser", {
@@ -83,6 +88,80 @@ export default function UsersPage() {
       return Array.isArray(res.data) ? res.data : [];
     },
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      await api.delete("/admin/delete-user", {
+        params: { userId },
+      });
+    },
+    onSuccess: () => {
+      toast.success("User deleted successfully");
+      refetch();
+    },
+    onError: (err: any) => {
+      console.error("Failed to delete user:", err);
+      toast.error(err.response?.data?.message || "Failed to delete user");
+    },
+  });
+
+  const addMutation = useMutation({
+    mutationFn: async (formData: typeof form) => {
+      const multipartData = new FormData();
+      multipartData.append("FullName", formData.fullName);
+      multipartData.append("Email", formData.email);
+      multipartData.append("Password", formData.password);
+      multipartData.append("Address", formData.address);
+      multipartData.append("Phone", formData.phone);
+      
+      await api.post("/admin/create-user", multipartData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("User created successfully");
+      refetch();
+      setShowForm(false);
+      setForm(emptyForm);
+    },
+    onError: (err: any) => {
+      console.error("Failed to create user:", err);
+      toast.error(err.response?.data?.message || "Failed to create user");
+    },
+  });
+
+  const handleDeleteUser = (id: number) => {
+    if (confirm("Are you sure you want to delete this user?")) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (form.fullName.length < 5) {
+      toast.error("Full name must be at least 5 letters");
+      return;
+    }
+    if (!form.email.includes("@")) {
+      toast.error("Please enter a valid email");
+      return;
+    }
+    if (form.password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    if (form.address.length < 30) {
+      toast.error("Address must be at least 30 characters");
+      return;
+    }
+    if (!/^01[0125][0-9]{8}$/.test(form.phone)) {
+      toast.error("Phone must be a valid Egyptian mobile number (e.g. 01012345678)");
+      return;
+    }
+
+    addMutation.mutate(form);
+  };
 
   const users = useMemo(() => rawData.map(mapApiUser), [rawData]);
 
@@ -120,13 +199,25 @@ export default function UsersPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto p-6 space-y-6">
-      <div data-aos="fade-up">
-        <h1 className="text-2xl text-slate-900 dark:text-white tracking-tight" style={{ fontWeight: 700 }}>
-          Users
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Manage all platform users
-        </p>
+      <div data-aos="fade-up" className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl text-slate-900 dark:text-white tracking-tight" style={{ fontWeight: 700 }}>
+            Users
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Manage all platform users
+          </p>
+        </div>
+        {role === "Admin" && (
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-2 px-4 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors text-sm cursor-pointer font-bold"
+            style={{ fontWeight: 600 }}
+          >
+            <Plus className="w-4 h-4" />
+            Add User
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -245,7 +336,16 @@ export default function UsersPage() {
                         </span>
                       </td>
 
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-right flex items-center justify-end gap-1">
+                        {role === "Admin" && (
+                          <button
+                            onClick={() => handleDeleteUser(Number(u.id))}
+                            className="p-1.5 rounded-lg hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 transition-colors cursor-pointer"
+                            title="Delete User"
+                          >
+                            <Trash2 className="w-4.5 h-4.5" />
+                          </button>
+                        )}
                         <button className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 transition-colors">
                           <MoreHorizontal className="w-4 h-4" />
                         </button>
@@ -262,6 +362,46 @@ export default function UsersPage() {
           Showing {filtered.length} of {users.length} users
         </div>
       </GlassCard>
+
+      {/* Add User Modal */}
+      {showForm && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#0a0e14] rounded-3xl p-6 max-w-md w-full border border-slate-200 dark:border-white/10 mc-scale-up">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg tracking-tight text-slate-900 dark:text-white font-bold" style={{ fontWeight: 600 }}>Add New User</h2>
+              <button onClick={() => setShowForm(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer">
+                <X className="w-5 h-5 text-slate-500" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <label className="block">
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Full Name</span>
+                <input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50" placeholder="Min 5 letters" />
+              </label>
+              <label className="block">
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Email</span>
+                <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50" placeholder="user@domain.com" />
+              </label>
+              <label className="block">
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Password</span>
+                <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50" placeholder="Min 8 chars, 1 uppercase, 1 symbol" />
+              </label>
+              <label className="block">
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Address</span>
+                <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50" placeholder="Min 30 characters" />
+              </label>
+              <label className="block">
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Phone</span>
+                <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50" placeholder="Egyptian mobile e.g. 01012345678" />
+              </label>
+            </div>
+            <div className="mt-6 flex items-center justify-end gap-2">
+              <button onClick={() => setShowForm(false)} className="h-10 px-5 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 cursor-pointer">Cancel</button>
+              <button onClick={handleSubmit} className="h-10 px-5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm cursor-pointer font-bold" style={{ fontWeight: 600 }}>Add User</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

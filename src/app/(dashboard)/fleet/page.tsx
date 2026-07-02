@@ -17,6 +17,8 @@ import {
   Clock,
   ShieldAlert,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useRoleContext } from "@/contexts/RoleContext";
 import { useRouter } from "next/navigation";
@@ -25,6 +27,13 @@ import { GlassCard } from "@/app/components/GlassCard";
 import { accentMap } from "@/app/utils/accent";
 import api from "@/lib/axios";
 import { useQuery, useQueries } from "@tanstack/react-query";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import dynamic from "next/dynamic";
 
 // Dynamic import of Leaflet LiveMap component to bypass SSR window undefined error
@@ -218,7 +227,7 @@ export default function FleetMapPage() {
         driver: d.fullName || "Driver",
         status: normalizeStatus(d.status),
         zone,
-        fuel: `${Math.round(45 + (idx * 13) % 45)}%`,
+        fuel: "not yet from api",
         nextStop,
         lat: baseLat + latOffset,
         lng: baseLng + lngOffset,
@@ -298,6 +307,24 @@ export default function FleetMapPage() {
   }, [query, statusFilter, trucks]);
 
   const geofenceAlerts = useMemo(() => generateAlerts(filtered), [filtered]);
+
+  const ITEMS_PER_PAGE = 9;
+  const [rosterPage, setRosterPage] = useState(1);
+  const [alertsPage, setAlertsPage] = useState(1);
+
+  useEffect(() => { setRosterPage(1); }, [query, statusFilter]);
+
+  const totalRosterPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedRoster = filtered.slice(
+    (rosterPage - 1) * ITEMS_PER_PAGE,
+    rosterPage * ITEMS_PER_PAGE
+  );
+
+  const totalAlertsPages = Math.ceil(geofenceAlerts.length / ITEMS_PER_PAGE);
+  const paginatedAlerts = geofenceAlerts.slice(
+    (alertsPage - 1) * ITEMS_PER_PAGE,
+    alertsPage * ITEMS_PER_PAGE
+  );
 
   const kpis = [
     {
@@ -428,7 +455,7 @@ export default function FleetMapPage() {
         })}
       </div>
 
-      {loading ? (
+      {driversLoading && trucks.length === 0 ? (
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="animate-pulse flex flex-col items-center gap-3">
             <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
@@ -438,7 +465,7 @@ export default function FleetMapPage() {
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div
-            className="mc-slide-from-left xl:col-span-2"
+            className="mc-slide-from-left xl:col-span-2 flex flex-col gap-6"
             style={{ animationDelay: "0.2s" }}
           >
             <GlassCard className="p-6">
@@ -473,109 +500,8 @@ export default function FleetMapPage() {
                 Live geographic view centered in Cairo, Egypt. Click a marker pin for details.
               </div>
             </GlassCard>
-          </div>
 
-          <div
-            className="mc-slide-from-right"
-            style={{ animationDelay: "0.3s" }}
-          >
-            <GlassCard className="p-6 h-full flex flex-col">
-              <div className="flex items-center gap-2 mb-1">
-                <Truck className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-                <h3 className="text-base tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>Fleet Roster</h3>
-              </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                {filtered.length} of {trucks.length} trucks
-              </p>
-
-              <div className="flex items-center gap-2 mb-4">
-                <div className="relative flex-1">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search truck, driver, zone…"
-                    className="w-full pl-9 pr-3 h-10 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
-                  />
-                </div>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as any)}
-                  className="px-3 h-10 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer"
-                >
-                  <option value="all">All</option>
-                  <option value="en-route">En route</option>
-                  <option value="idle">Idle</option>
-                  <option value="offline">Offline</option>
-                </select>
-              </div>
-
-              <div className="space-y-2 overflow-y-auto flex-1" style={{ maxHeight: 480 }}>
-                {filtered.map((t, index) => {
-                  const cfg = statusConfig[t.status];
-                  const StatusIcon = cfg.icon;
-                  const isSelected = selectedTruck === t.id;
-                  return (
-                    <div
-                      key={t.id}
-                      onClick={() => setSelectedTruck(t.id)}
-                      className={`mc-fade-in-right hover-shift-x p-3 rounded-2xl cursor-pointer border transition-colors ${
-                        isSelected
-                          ? "bg-emerald-500/10 border-emerald-500/30"
-                          : "bg-slate-50 dark:bg-white/5 border-transparent hover:border-emerald-200 dark:hover:border-emerald-500/30"
-                      }`}
-                      style={{ animationDelay: `${0.05 * index}s` }}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span
-                            className="w-2 h-2 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: cfg.dot }}
-                          />
-                          <span
-                            className="text-sm text-slate-900 dark:text-white truncate"
-                            style={{ fontWeight: 600 }}
-                          >
-                            {t.id}
-                          </span>
-                        </div>
-                        <span
-                          className={`text-xs px-2 h-6 inline-flex items-center gap-1 rounded-full border ${cfg.chip}`}
-                        >
-                          <StatusIcon className="w-3 h-3" />
-                          {cfg.label}
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-700 dark:text-slate-200 mt-1">{t.driver}</p>
-                      <div className="flex items-center justify-between mt-2 text-xs text-slate-500 dark:text-slate-400">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {t.zone}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        Next: {t.nextStop}
-                      </p>
-                    </div>
-                  );
-                })}
-                {filtered.length === 0 && (
-                  <div className="text-center text-sm text-slate-500 dark:text-slate-400 p-6">
-                    No trucks match.
-                  </div>
-                )}
-              </div>
-            </GlassCard>
-          </div>
-        </div>
-      )}
-
-      <div
-        className="mc-fade-in-up"
-        style={{ animationDelay: "0.4s" }}
-      >
-        <GlassCard className="p-6">
+            <GlassCard className="p-6">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
@@ -595,7 +521,7 @@ export default function FleetMapPage() {
           </p>
 
           <div className="space-y-2">
-            {geofenceAlerts.map((alert, index) => (
+            {paginatedAlerts.map((alert, index) => (
               <div
                 key={alert.id}
                 className="mc-card-in hover-shift-x flex items-start gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-2xl cursor-pointer"
@@ -627,8 +553,158 @@ export default function FleetMapPage() {
               </div>
             ))}
           </div>
+
+          {totalAlertsPages > 1 && (
+            <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100 dark:border-white/10">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {(alertsPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(alertsPage * ITEMS_PER_PAGE, geofenceAlerts.length)} of {geofenceAlerts.length}
+              </span>
+              <Pagination className="mx-0 w-auto">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      disabled={alertsPage === 1}
+                      onClick={() => setAlertsPage((p) => Math.max(1, p - 1))}
+                    />
+                  </PaginationItem>
+                  <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 px-3 select-none">
+                    Page {alertsPage} of {totalAlertsPages}
+                  </span>
+                  <PaginationItem>
+                    <PaginationNext
+                      disabled={alertsPage === totalAlertsPages}
+                      onClick={() => setAlertsPage((p) => Math.min(totalAlertsPages, p + 1))}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </GlassCard>
       </div>
+
+      <div
+        className="mc-slide-from-right"
+        style={{ animationDelay: "0.3s" }}
+      >
+        <GlassCard className="p-6 h-full flex flex-col">
+          <div className="flex items-center gap-2 mb-1">
+            <Truck className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+            <h3 className="text-base tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>Fleet Roster</h3>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            {filtered.length} of {trucks.length} trucks
+          </p>
+
+          <div className="flex items-center gap-2 mb-4">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search truck, driver, zone…"
+                className="w-full pl-9 pr-3 h-10 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+              />
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="px-3 h-10 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 cursor-pointer"
+            >
+              <option value="all">All</option>
+              <option value="en-route">En route</option>
+              <option value="idle">Idle</option>
+              <option value="offline">Offline</option>
+            </select>
+          </div>
+
+          <div className="space-y-2 flex-1">
+            {paginatedRoster.map((t, index) => {
+              const cfg = statusConfig[t.status];
+              const StatusIcon = cfg.icon;
+              const isSelected = selectedTruck === t.id;
+              return (
+                <div
+                  key={t.id}
+                  onClick={() => setSelectedTruck(t.id)}
+                  className={`mc-fade-in-right hover-shift-x p-3 rounded-2xl cursor-pointer border transition-colors ${
+                    isSelected
+                      ? "bg-emerald-500/10 border-emerald-500/30"
+                      : "bg-slate-50 dark:bg-white/5 border-transparent hover:border-emerald-200 dark:hover:border-emerald-500/30"
+                  }`}
+                  style={{ animationDelay: `${0.05 * index}s` }}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: cfg.dot }}
+                      />
+                      <span
+                        className="text-sm text-slate-900 dark:text-white truncate"
+                        style={{ fontWeight: 600 }}
+                      >
+                        {t.id}
+                      </span>
+                    </div>
+                    <span
+                      className={`text-xs px-2 h-6 inline-flex items-center gap-1 rounded-full border ${cfg.chip}`}
+                    >
+                      <StatusIcon className="w-3 h-3" />
+                      {cfg.label}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-700 dark:text-slate-200 mt-1">{t.driver}</p>
+                  <div className="flex items-center justify-between mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {t.zone}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    Next: {t.nextStop}
+                  </p>
+                </div>
+              );
+            })}
+            {filtered.length === 0 && (
+              <div className="text-center text-sm text-slate-500 dark:text-slate-400 p-6">
+                No trucks match.
+              </div>
+            )}
+          </div>
+
+          {totalRosterPages > 1 && (
+            <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-100 dark:border-white/10">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {(rosterPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(rosterPage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={rosterPage === 1}
+                  onClick={() => setRosterPage((p) => Math.max(1, p - 1))}
+                  className="w-8 h-8 rounded-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 min-w-[4rem] text-center">
+                  {rosterPage} / {totalRosterPages}
+                </span>
+                <button
+                  disabled={rosterPage === totalRosterPages}
+                  onClick={() => setRosterPage((p) => Math.min(totalRosterPages, p + 1))}
+                  className="w-8 h-8 rounded-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </GlassCard>
+      </div>
+    </div>
+  )}
     </div>
   );
 }

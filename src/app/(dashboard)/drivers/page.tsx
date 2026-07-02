@@ -59,11 +59,11 @@ export interface Driver {
   status: DriverStatus;
   currentRoute: string;
   vehicleNumber: string;
-  completedTrips: number;
-  rating: number;
-  earnings: number;
-  onTimePercentage: number;
-  fuelEfficiency: number;
+  completedTrips: number | string;
+  rating: number | string;
+  earnings: number | string;
+  onTimePercentage: number | string;
+  fuelEfficiency: number | string;
   joinDate: string;
   avatar: string;
   lastActive: string;
@@ -92,7 +92,7 @@ export default function DriversListPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | DriverStatus>("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(8);
+  const [itemsPerPage, setItemsPerPage] = useState(9);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -128,19 +128,19 @@ export default function DriversListPage() {
       return {
         id: String(d.recyclerID || d.id),
         name,
-        phone: d.phone || "01000000000",
-        email: d.email || `${name.toLowerCase().replace(/\s+/g, "")}@smartwaste.com`,
+        phone: d.phone || "not yet from api",
+        email: d.email || "not yet from api",
         status: normalizeStatus(d.status),
-        currentRoute: d.currentRoute || "Cairo Route",
-        vehicleNumber: d.vehicleInfo || "N/A",
-        completedTrips: d.totalTripsCompleted || 0,
-        rating: d.rating ? parseFloat(Number(d.rating).toFixed(1)) : 5.0,
-        earnings: d.earnings || (d.totalTripsCompleted ? d.totalTripsCompleted * 150 : 250),
-        onTimePercentage: d.onTimePercentage || 95,
-        fuelEfficiency: d.fuelEfficiency || 12,
-        joinDate: d.joinDate ? new Date(d.joinDate).toISOString().slice(0, 10) : "2026-01-15",
+        currentRoute: d.currentRoute || "not yet from api",
+        vehicleNumber: d.vehicleInfo || "not yet from api",
+        completedTrips: d.totalTripsCompleted !== undefined && d.totalTripsCompleted !== null ? d.totalTripsCompleted : "not yet from api",
+        rating: d.rating !== undefined && d.rating !== null ? parseFloat(Number(d.rating).toFixed(1)) : "not yet from api",
+        earnings: d.earnings || "not yet from api",
+        onTimePercentage: d.onTimePercentage || "not yet from api",
+        fuelEfficiency: d.fuelEfficiency || "not yet from api",
+        joinDate: d.joinDate ? new Date(d.joinDate).toISOString().slice(0, 10) : "not yet from api",
         avatar: initials || "DR",
-        lastActive: d.lastActive || "2 hours ago",
+        lastActive: d.lastActive || "not yet from api",
       };
     });
   }, [rawDrivers]);
@@ -248,15 +248,30 @@ export default function DriversListPage() {
   );
 
   const activeDrivers = drivers.filter((d) => d.status === "active").length;
-  const avgRating = drivers.length > 0 ? (drivers.reduce((sum, d) => sum + d.rating, 0) / drivers.length).toFixed(1) : "5.0";
-  const totalEarnings = drivers.reduce((sum, d) => sum + d.earnings, 0);
-  const totalTrips = drivers.reduce((sum, d) => sum + d.completedTrips, 0);
+  const avgRating = drivers.length > 0
+    ? (
+        drivers.reduce((sum, d) => {
+          const val = typeof d.rating === "number" ? d.rating : Number(d.rating) || 0;
+          return sum + val;
+        }, 0) / drivers.length
+      ).toFixed(1)
+    : "not yet from api";
+
+  const totalEarnings = drivers.reduce((sum, d) => {
+    const val = typeof d.earnings === "number" ? d.earnings : Number(d.earnings) || 0;
+    return sum + val;
+  }, 0);
+
+  const totalTrips = drivers.reduce((sum, d) => {
+    const val = typeof d.completedTrips === "number" ? d.completedTrips : Number(d.completedTrips) || 0;
+    return sum + val;
+  }, 0);
 
   const stats = [
     { label: "Total Drivers", value: drivers.length, icon: Users, accent: "emerald", subtitle: `${activeDrivers} active now` },
     { label: "Average Rating", value: avgRating, icon: Star, accent: "amber", subtitle: "Out of 5.0" },
     { label: "Total Trips", value: totalTrips, icon: Package, accent: "violet", subtitle: "All time" },
-    { label: "Total Earnings", value: `$${(totalEarnings / 1000).toFixed(1)}k`, icon: DollarSign, accent: "teal", subtitle: "This month" },
+    { label: "Total Earnings", value: totalEarnings > 0 ? `$${(totalEarnings / 1000).toFixed(1)}k` : "not yet from api", icon: DollarSign, accent: "teal", subtitle: "This month" },
   ];
 
   if (loading && drivers.length === 0) {
@@ -429,14 +444,18 @@ export default function DriversListPage() {
                   </div>
                   <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-2xl">
                     <p className="text-xs text-slate-500 dark:text-slate-400">Earnings</p>
-                    <p className="text-lg text-slate-900 dark:text-white font-bold" style={{ fontWeight: 600 }}>${(driver.earnings / 1000).toFixed(1)}k</p>
+                    <p className="text-lg text-slate-900 dark:text-white font-bold" style={{ fontWeight: 600 }}>
+                      {typeof driver.earnings === "number" ? `$${(driver.earnings / 1000).toFixed(1)}k` : driver.earnings}
+                    </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 mb-4 pt-4 border-t border-slate-200 dark:border-white/10">
                   <div className="text-center">
                     <p className="text-xs text-slate-500 dark:text-slate-400">On-Time</p>
-                    <p className="text-sm text-emerald-600 dark:text-emerald-400 font-bold" style={{ fontWeight: 600 }}>{driver.onTimePercentage}%</p>
+                    <p className="text-sm text-emerald-600 dark:text-emerald-400 font-bold" style={{ fontWeight: 600 }}>
+                      {typeof driver.onTimePercentage === "number" ? `${driver.onTimePercentage}%` : driver.onTimePercentage}
+                    </p>
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-slate-500 dark:text-slate-400">Rating</p>
@@ -447,7 +466,9 @@ export default function DriversListPage() {
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-slate-500 dark:text-slate-400">Fuel</p>
-                    <p className="text-sm text-sky-600 dark:text-sky-400 font-bold" style={{ fontWeight: 600 }}>{driver.fuelEfficiency} km/L</p>
+                    <p className="text-sm text-sky-600 dark:text-sky-400 font-bold" style={{ fontWeight: 600 }}>
+                      {typeof driver.fuelEfficiency === "number" ? `${driver.fuelEfficiency} km/L` : driver.fuelEfficiency}
+                    </p>
                   </div>
                 </div>
 
@@ -478,8 +499,8 @@ export default function DriversListPage() {
               </SelectTrigger>
               <SelectContent align="start">
                 <SelectGroup>
-                  <SelectItem value="4">4</SelectItem>
-                  <SelectItem value="8">8</SelectItem>
+                  <SelectItem value="6">6</SelectItem>
+                  <SelectItem value="9">9</SelectItem>
                   <SelectItem value="12">12</SelectItem>
                   <SelectItem value="24">24</SelectItem>
                 </SelectGroup>
@@ -521,7 +542,7 @@ export default function DriversListPage() {
         <div className="space-y-2">
           {drivers
             .slice()
-            .sort((a, b) => b.rating - a.rating)
+            .sort((a, b) => Number(b.rating) - Number(a.rating))
             .slice(0, 5)
             .map((driver, index) => (
               <div
@@ -581,10 +602,10 @@ export default function DriversListPage() {
                 ["Email", driverToView.email],
                 ["Vehicle", driverToView.vehicleNumber],
                 ["Route", driverToView.currentRoute],
-                ["Rating", `${driverToView.rating} ★`],
+                ["Rating", typeof driverToView.rating === "number" ? `${driverToView.rating} ★` : driverToView.rating],
                 ["Trips", String(driverToView.completedTrips)],
-                ["On-Time", `${driverToView.onTimePercentage}%`],
-                ["Earnings", `$${driverToView.earnings.toLocaleString()}`],
+                ["On-Time", typeof driverToView.onTimePercentage === "number" ? `${driverToView.onTimePercentage}%` : driverToView.onTimePercentage],
+                ["Earnings", typeof driverToView.earnings === "number" ? `$${driverToView.earnings.toLocaleString()}` : driverToView.earnings],
                 ["Joined", driverToView.joinDate],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between py-1.5 border-b border-slate-100 dark:border-white/5 last:border-0">

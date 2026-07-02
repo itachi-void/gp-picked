@@ -19,6 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 type RouteStatus = "active" | "completed" | "scheduled";
 
@@ -126,8 +133,8 @@ export default function RoutesPage() {
         }
       }
 
-      const distanceVal = `${(stops * 3.2).toFixed(1)} km`;
-      const durationVal = `${stops * 20} mins`;
+      const distanceVal = "not yet from api";
+      const durationVal = "not yet from api";
 
       return {
         id: driverId,
@@ -155,6 +162,17 @@ export default function RoutesPage() {
       return mq && ms;
     });
   }, [routes, searchQuery, statusFilter]);
+
+  const ITEMS_PER_PAGE = 9;
+  const [page, setPage] = useState(1);
+
+  useEffect(() => { setPage(1); }, [searchQuery, statusFilter]);
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedRoutes = filtered.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
+  );
 
   const handleDelete = (route: Route) => {
     setRoutes((prev) => prev.filter((r) => r.id !== route.id));
@@ -256,7 +274,7 @@ export default function RoutesPage() {
         </select>
       </GlassCard>
 
-      {loading && routes.length === 0 ? (
+      {driversLoading && routes.length === 0 ? (
         <div className="flex items-center justify-center min-h-[250px]">
           <div className="animate-pulse flex flex-col items-center gap-3">
             <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
@@ -278,7 +296,7 @@ export default function RoutesPage() {
                 {filtered.length === 0 && (
                   <tr><td colSpan={7} className="py-12 text-center text-slate-500 dark:text-slate-400">No routes match your filters.</td></tr>
                 )}
-                {filtered.map((route) => {
+                {paginatedRoutes.map((route) => {
                   const sa = statusAccent[route.status] || statusAccent.scheduled;
                   return (
                     <tr key={route.id} className="border-b last:border-0 border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
@@ -338,6 +356,33 @@ export default function RoutesPage() {
               </tbody>
             </table>
           </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between p-4 bg-white/60 dark:bg-white/[0.04] border-t border-slate-200 dark:border-white/10 gap-4 flex-wrap">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {(page - 1) * ITEMS_PER_PAGE + 1}–{Math.min(page * ITEMS_PER_PAGE, filtered.length)} of {filtered.length}
+              </span>
+              <Pagination className="mx-0 w-auto">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      disabled={page === 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    />
+                  </PaginationItem>
+                  <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 px-3 select-none">
+                    Page {page} of {totalPages}
+                  </span>
+                  <PaginationItem>
+                    <PaginationNext
+                      disabled={page === totalPages}
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </GlassCard>
       )}
 
