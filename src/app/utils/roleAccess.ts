@@ -49,6 +49,7 @@ export function canAccess(role: string, path: string): boolean {
       "/verification",
       "/employee-history",
       "/employee-profile",
+      "/pickups",
       "/support"
     ];
     return employeeRoutes.some(p => path === p || path.startsWith(p + "/"));

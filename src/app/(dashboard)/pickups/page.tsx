@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import "@/app/components/motion/motion-components.css";
 import {
   Package,
@@ -37,9 +37,31 @@ const statusAccent: Record<string, string> = {
   Pending: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
   "In Progress": "bg-sky-500/10 text-sky-700 dark:text-sky-300",
   Completed: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+  Verified: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
 };
 
 const DRIVERS = ["Mike Tyson", "Omar S.", "Khaled H.", "Ahmed Hassan", "Mohamed Ali"];
+
+// Helper to map backend format to our local page format
+function mapBackendToFrontend(req: any): PickupRequest {
+  return {
+    id: req.orderNumber || `ORD-${req.requestId}`,
+    priority: req.priority || "Normal",
+    status: req.status || "Pending",
+    citizen: { name: req.userName || req.user?.fullName || "Citizen" },
+    zone: { name: req.zoneName || req.userAddress?.split(" ")[0] || "Center City" },
+    driver: req.driverName && req.driverName !== "No Driver Assigned"
+      ? { name: req.driverName } 
+      : (req.recycler?.fullName ? { name: req.recycler.fullName } : null),
+    items: req.items || [
+      {
+        plasticType: "PET",
+        expectedWeightKg: req.finalBottlesCount ? req.finalBottlesCount * 0.05 : 10,
+        expectedQuantity: req.finalBottlesCount || 50,
+      },
+    ],
+  };
+}
 
 function PickupRequestsPageContent() {
   const { role, user } = useRoleContext();
@@ -53,16 +75,76 @@ function PickupRequestsPageContent() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDriver, setBulkDriver] = useState<string>("");
 
+  // Backend state for employee view integration
+  const [backendRequests, setBackendRequests] = useState<PickupRequest[] | null>(null);
+  const [loadingBackend, setLoadingBackend] = useState(false);
+
   const isDriver = role === "Driver" || role === "Recycler" || role === "driver" || role === "recycler";
+  const isEmployee = role === "Employee" || role === "employee" || role === "HubStaff" || role === "hubstaff";
+
+  // Fetch employee specific data (In Progress + Verified by self) from backend
+  useEffect(() => {
+    if (!isEmployee) return;
+
+    const fetchEmployeeData = async () => {
+      setLoadingBackend(true);
+      try {
+        const employeeId = user?.id || 1;
+
+        // 1. Fetch in progress requests from backend
+        const resInProgress = await api.get("/PickupRequests/GetInProgressHubRequests");
+        const listInProgress = Array.isArray(resInProgress.data)
+          ? resInProgress.data
+          : (resInProgress.data && Array.isArray((resInProgress.data as any).data) 
+              ? (resInProgress.data as any).data 
+              : []);
+
+        // 2. Fetch history verified by this employee
+        const resHistory = await api.get(`/HubStaff/${employeeId}`);
+        const listHistory = resHistory.data?.pickupRequests || [];
+
+        // Map them
+        const mappedInProgress = listInProgress.map((r: any) => ({
+          ...mapBackendToFrontend(r),
+          status: "In Progress"
+        }));
+
+        const mappedHistory = listHistory.map((r: any) => ({
+          ...mapBackendToFrontend(r),
+          status: r.status || "Completed"
+        }));
+
+        // Combine lists
+        setBackendRequests([...mappedInProgress, ...mappedHistory]);
+      } catch (err) {
+        console.error("Failed to fetch employee requests from backend:", err);
+        setBackendRequests([]);
+      } finally {
+        setLoadingBackend(false);
+      }
+    };
+
+    fetchEmployeeData();
+  }, [isEmployee, user]);
 
   // Filter requests depending on role
   const displayRequests = useMemo(() => {
+    if (isEmployee) {
+      // If we loaded backend data for employee, use it; otherwise fallback to filtered mock data
+      if (backendRequests !== null) return backendRequests;
+
+      return requests.filter(
+        (r) =>
+          r.status === "In Progress" ||
+          (r.status === "Completed" && (r.verifierName === user?.name || r.verifierId === user?.id))
+      );
+    }
     if (isDriver) {
       // Drivers only see available pending requests (unassigned)
       return requests.filter((r) => r.status === "Pending" && !r.driver);
     }
     return requests;
-  }, [requests, isDriver]);
+  }, [requests, isDriver, isEmployee, backendRequests, user]);
 
   const enriched: ExtendedRow[] = useMemo(
     () =>
@@ -98,8 +180,8 @@ function PickupRequestsPageContent() {
 
   const stats = [
     { label: "Open", value: enriched.filter((e) => e.req.status === "Pending").length, accent: "amber", Icon: Clock },
-    { label: "In Progress", value: enriched.filter((e) => e.req.status === "In Progress").length, accent: "sky", Icon: Loader2 },
-    { label: "Completed Today", value: enriched.filter((e) => e.req.status === "Completed").length, accent: "emerald", Icon: CheckCircle },
+    { label: "In Progress", value: enriched.filter((e) => e.req.status === "In Progress" || e.req.status === "Inprogress").length, accent: "sky", Icon: Loader2 },
+    { label: "Completed", value: enriched.filter((e) => e.req.status === "Completed" || e.req.status === "Verified").length, accent: "emerald", Icon: CheckCircle },
     { label: "SLA Breached", value: enriched.filter((e) => e.slaMinutesLeft < 0).length, accent: "rose", Icon: AlertTriangle },
   ];
 
@@ -184,8 +266,11 @@ function PickupRequestsPageContent() {
   };
 
   const columns = useMemo(() => {
-    const cols: DataTableColumn<ExtendedRow>[] = [
-      {
+    const cols: DataTableColumn<ExtendedRow>[] = [];
+
+    // Checkbox only for admin and driver
+    if (!isEmployee) {
+      cols.push({
         key: "select",
         label: "",
         render: (e) => (
@@ -197,7 +282,10 @@ function PickupRequestsPageContent() {
             className="rounded accent-emerald-600 cursor-pointer"
           />
         ),
-      },
+      });
+    }
+
+    cols.push(
       { key: "id", label: "ID", sortable: true, accessor: (e) => e.req.id, render: (e) => <span className="text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>{e.req.id}</span> },
       {
         key: "citizen",
@@ -224,14 +312,14 @@ function PickupRequestsPageContent() {
         label: "Priority",
         sortable: true,
         accessor: (e) => e.req.priority,
-        render: (e) => <span className={`px-2 py-0.5 rounded-full text-xs ${priorityAccent[e.req.priority]}`}>{e.req.priority}</span>,
+        render: (e) => <span className={`px-2 py-0.5 rounded-full text-xs ${priorityAccent[e.req.priority] || "bg-slate-500/10 text-slate-700"}`}>{e.req.priority}</span>,
       },
       {
         key: "status",
         label: "Status",
         sortable: true,
         accessor: (e) => e.req.status,
-        render: (e) => <span className={`px-2 py-0.5 rounded-full text-xs ${statusAccent[e.req.status]}`}>{e.req.status}</span>,
+        render: (e) => <span className={`px-2 py-0.5 rounded-full text-xs ${statusAccent[e.req.status] || "bg-slate-500/10 text-slate-700"}`}>{e.req.status}</span>,
       },
       {
         key: "sla",
@@ -246,8 +334,8 @@ function PickupRequestsPageContent() {
             </span>
           );
         },
-      },
-    ];
+      }
+    );
 
     if (!isDriver) {
       cols.push({
@@ -266,7 +354,7 @@ function PickupRequestsPageContent() {
     });
 
     return cols;
-  }, [selected, isDriver]);
+  }, [selected, isDriver, isEmployee]);
 
   const formatSla = (m: number) => {
     if (m < 0) return `Breached ${Math.abs(m)}m`;
@@ -283,12 +371,19 @@ function PickupRequestsPageContent() {
           </div>
           <div>
             <h1 className="text-3xl tracking-tight text-slate-900 dark:text-white font-bold" style={{ fontWeight: 700 }}>
-              {isDriver ? "Available Pickups" : "Pickup Requests"}
+              {isDriver 
+                ? "Available Pickups" 
+                : isEmployee 
+                  ? "My Operations & In-Progress Pickups" 
+                  : "Pickup Requests"
+              }
             </h1>
             <p className="text-slate-500 dark:text-slate-400 mt-0.5">
               {isDriver 
                 ? "Select available pending pickups to add to your active route (Minimum 5 orders required)" 
-                : "Triage and assign incoming pickups from citizens"
+                : isEmployee 
+                  ? "Review all active in-progress requests waiting for verify, and history of orders verified by you"
+                  : "Triage and assign incoming pickups from citizens"
               }
             </p>
           </div>
@@ -303,140 +398,158 @@ function PickupRequestsPageContent() {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {stats.map((s, i) => {
-          const a = accentMap[s.accent];
-          const Icon = s.Icon;
-          return (
-            <div key={s.label} className="mc-card-in hover-lift" style={{ animationDelay: `${i * 0.05}s` }}>
-              <GlassCard className="p-5">
-                <div className={`w-12 h-12 rounded-2xl ${a.bg} flex items-center justify-center mb-3`}>
-                  <Icon className={`w-6 h-6 ${a.fg}`} />
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{s.label}</p>
-                <p className="text-2xl tracking-tight text-slate-900 dark:text-white mt-1 font-bold" style={{ fontWeight: 700 }}>{s.value}</p>
-              </GlassCard>
-            </div>
-          );
-        })}
-      </div>
-
-      <GlassCard className="p-4 space-y-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search by ID, citizen, zone..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 h-10 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
-          />
+      {loadingBackend && isEmployee ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+          <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">Loading pickups...</span>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Filter className="w-4 h-4 text-slate-400" />
-          {[
-            { label: "Priority", value: priority, set: setPriority, opts: ["all", "Critical", "High", "Normal", "Low"] },
-            { label: "Status", value: status, set: setStatus, opts: ["all", "Pending", "In Progress", "Completed"] },
-            { label: "Zone", value: zone, set: setZone, opts: ["all", ...zones] },
-            { label: "Material", value: material, set: setMaterial, opts: ["all", ...materials] },
-          ].map((f) => (
-            <select
-              key={f.label}
-              value={f.value}
-              onChange={(e) => f.set(e.target.value)}
-              className="h-9 px-3 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-slate-200 cursor-pointer"
-            >
-              {f.opts.map((o) => (
-                <option key={o} value={o}>{f.label}: {o}</option>
-              ))}
-            </select>
-          ))}
-        </div>
-      </GlassCard>
-
-      {/* Bulk actions for Admin and Driver */}
-      {selected.size > 0 && (
-        <div className="mc-fade-in-up">
-          {isDriver ? (
-            /* Driver Bulk Accept Actions */
-            <GlassCard className="p-4 flex flex-wrap items-center justify-between gap-3 border-emerald-500/20 bg-emerald-500/5">
-              <div className="flex items-center gap-2.5">
-                <span className="text-sm text-slate-700 dark:text-slate-200 font-semibold" style={{ fontWeight: 600 }}>
-                  Selected: {selected.size} order(s)
-                </span>
-                {selected.size < 5 && (
-                  <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
-                    (Choose at least {5 - selected.size} more to meet the 5-order minimum requirement)
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={handleDriverAccept}
-                  disabled={selected.size < 5}
-                  className={`flex items-center gap-2 px-5 h-10 rounded-full transition-all text-sm font-semibold cursor-pointer ${
-                    selected.size >= 5
-                      ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 active:scale-95"
-                      : "bg-slate-200 dark:bg-white/10 text-slate-400 dark:text-slate-600 cursor-not-allowed"
-                  }`}
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  Accept Selected Pickups
-                </button>
-                <button onClick={() => setSelected(new Set())} className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer">
-                  Clear
-                </button>
-              </div>
-            </GlassCard>
-          ) : (
-            /* Admin Bulk Assignment Actions */
-            <GlassCard className="p-4 flex flex-wrap items-center gap-3">
-              <span className="text-sm text-slate-700 dark:text-slate-200 font-semibold" style={{ fontWeight: 600 }}>{selected.size} selected</span>
-              <select
-                value={bulkDriver}
-                onChange={(e) => setBulkDriver(e.target.value)}
-                className="h-9 px-3 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 cursor-pointer"
-              >
-                <option value="">Choose driver...</option>
-                {DRIVERS.map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
-              <button
-                onClick={bulkAssign}
-                className="flex items-center gap-2 px-4 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors text-sm cursor-pointer"
-              >
-                <Truck className="w-4 h-4" /> Assign
-              </button>
-              <button onClick={() => setSelected(new Set())} className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer">Clear</button>
-            </GlassCard>
-          )}
-        </div>
-      )}
-
-      {filtered.length === 0 ? (
-        <EmptyState
-          Icon={Package}
-          title={isDriver ? "No available pending pickups" : "No pickup requests match your filters"}
-          description={isDriver 
-            ? "There are currently no pending pickups awaiting collection in your active zones."
-            : "Try adjusting your search, status, or zone filter to see results."
-          }
-          cta={{ 
-            label: "Reset filters", 
-            onClick: () => { 
-              setSearch(""); 
-              setPriority("all"); 
-              setStatus("all"); 
-              setZone("all"); 
-              setMaterial("all"); 
-            } 
-          }}
-        />
       ) : (
-        <DataTable
-          data={filtered}
-          columns={columns}
-          rowKey={(e) => e.req.id}
-        />
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {stats.map((s, i) => {
+              const a = accentMap[s.accent];
+              const Icon = s.Icon;
+              return (
+                <div key={s.label} className="mc-card-in hover-lift" style={{ animationDelay: `${i * 0.05}s` }}>
+                  <GlassCard className="p-5">
+                    <div className={`w-12 h-12 rounded-2xl ${a.bg} flex items-center justify-center mb-3`}>
+                      <Icon className={`w-6 h-6 ${a.fg}`} />
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{s.label}</p>
+                    <p className="text-2xl tracking-tight text-slate-900 dark:text-white mt-1 font-bold" style={{ fontWeight: 700 }}>{s.value}</p>
+                  </GlassCard>
+                </div>
+              );
+            })}
+          </div>
+
+          <GlassCard className="p-4 space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by ID, citizen, zone..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 h-10 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Filter className="w-4 h-4 text-slate-400" />
+              {[
+                { label: "Priority", value: priority, set: setPriority, opts: ["all", "Critical", "High", "Normal", "Low"] },
+                { label: "Status", value: status, set: setStatus, opts: ["all", "Pending", "In Progress", "Completed", "Verified"] },
+                { label: "Zone", value: zone, set: setZone, opts: ["all", ...zones] },
+                { label: "Material", value: material, set: setMaterial, opts: ["all", ...materials] },
+              ].map((f) => (
+                <select
+                  key={f.label}
+                  value={f.value}
+                  onChange={(e) => f.set(e.target.value)}
+                  className="h-9 px-3 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-slate-200 cursor-pointer"
+                >
+                  {f.opts.map((o) => (
+                    <option key={o} value={o}>{f.label}: {o}</option>
+                  ))}
+                </select>
+              ))}
+            </div>
+          </GlassCard>
+
+          {/* Bulk actions for Admin and Driver */}
+          {selected.size > 0 && (
+            <div className="mc-fade-in-up">
+              {isDriver ? (
+                /* Driver Bulk Accept Actions */
+                <GlassCard className="p-4 flex flex-wrap items-center justify-between gap-3 border-emerald-500/20 bg-emerald-500/5">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-sm text-slate-700 dark:text-slate-200 font-semibold" style={{ fontWeight: 600 }}>
+                      Selected: {selected.size} order(s)
+                    </span>
+                    {selected.size < 5 && (
+                      <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
+                        (Choose at least {5 - selected.size} more to meet the 5-order minimum requirement)
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleDriverAccept}
+                      disabled={selected.size < 5}
+                      className={`flex items-center gap-2 px-5 h-10 rounded-full transition-all text-sm font-semibold cursor-pointer ${
+                        selected.size >= 5
+                          ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 active:scale-95"
+                          : "bg-slate-200 dark:bg-white/10 text-slate-400 dark:text-slate-600 cursor-not-allowed"
+                      }`}
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      Accept Selected Pickups
+                    </button>
+                    <button onClick={() => setSelected(new Set())} className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer">
+                      Clear
+                    </button>
+                  </div>
+                </GlassCard>
+              ) : (
+                /* Admin Bulk Assignment Actions */
+                <GlassCard className="p-4 flex flex-wrap items-center gap-3">
+                  <span className="text-sm text-slate-700 dark:text-slate-200 font-semibold" style={{ fontWeight: 600 }}>{selected.size} selected</span>
+                  <select
+                    value={bulkDriver}
+                    onChange={(e) => setBulkDriver(e.target.value)}
+                    className="h-9 px-3 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 cursor-pointer"
+                  >
+                    <option value="">Choose driver...</option>
+                    {DRIVERS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                  <button
+                    onClick={bulkAssign}
+                    className="flex items-center gap-2 px-4 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors text-sm cursor-pointer"
+                  >
+                    <Truck className="w-4 h-4" /> Assign
+                  </button>
+                  <button onClick={() => setSelected(new Set())} className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer">Clear</button>
+                </GlassCard>
+              )}
+            </div>
+          )}
+
+          {filtered.length === 0 ? (
+            <EmptyState
+              Icon={Package}
+              title={
+                isDriver 
+                  ? "No available pending pickups" 
+                  : isEmployee 
+                    ? "No operations or waiting pickups found"
+                    : "No pickup requests match your filters"
+              }
+              description={
+                isDriver 
+                  ? "There are currently no pending pickups awaiting collection in your active zones."
+                  : isEmployee
+                    ? "There are no in-progress pickups in the hub and no previous verifications performed by you."
+                    : "Try adjusting your search, status, or zone filter to see results."
+              }
+              cta={{ 
+                label: "Reset filters", 
+                onClick: () => { 
+                  setSearch(""); 
+                  setPriority("all"); 
+                  setStatus("all"); 
+                  setZone("all"); 
+                  setMaterial("all"); 
+                } 
+              }}
+            />
+          ) : (
+            <DataTable
+              data={filtered}
+              columns={columns}
+              rowKey={(e) => e.req.id}
+            />
+          )}
+        </>
       )}
     </div>
   );
