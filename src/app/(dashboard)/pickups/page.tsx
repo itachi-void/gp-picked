@@ -42,7 +42,7 @@ const statusAccent: Record<string, string> = {
   Failed: "bg-rose-500/10 text-rose-700 dark:text-rose-300",
 };
 
-const DRIVERS = ["Mike Tyson", "Omar S.", "Khaled H.", "Ahmed Hassan", "Mohamed Ali"];
+const DRIVERS: string[] = [];
 
 // Helper to map backend format to our local page format
 function mapBackendToFrontend(req: any): PickupRequest {
@@ -50,16 +50,16 @@ function mapBackendToFrontend(req: any): PickupRequest {
     id: req.orderNumber || `ORD-${req.requestId}`,
     priority: req.priority || "Normal",
     status: req.status || "Pending",
-    citizen: { name: req.userName || req.user?.fullName || "Citizen" },
-    zone: { name: req.zoneName || req.userAddress?.split(" ")[0] || "Center City" },
+    citizen: { name: req.userName || req.user?.fullName || "not yet from api" },
+    zone: { name: req.zoneName || req.userAddress?.split(" ")[0] || "not yet from api" },
     driver: req.driverName && req.driverName !== "No Driver Assigned"
       ? { name: req.driverName } 
       : (req.recycler?.fullName ? { name: req.recycler.fullName } : null),
     items: req.items || [
       {
-        plasticType: "PET",
-        expectedWeightKg: req.finalBottlesCount ? req.finalBottlesCount * 0.05 : (req.totalWeight || 10),
-        expectedQuantity: req.finalBottlesCount || req.bottlesCount || 50,
+        plasticType: "Mixed",
+        expectedWeightKg: req.finalBottlesCount ? req.finalBottlesCount * 0.05 : (req.totalWeight || 0),
+        expectedQuantity: req.finalBottlesCount || req.bottlesCount || 0,
       },
     ],
     date: req.timeAgo || req.createdAt || req.requestDate || new Date().toISOString(),
@@ -254,10 +254,28 @@ function PickupRequestsPageContent() {
       r.id.toLowerCase().includes(search.toLowerCase()) ||
       r.citizen.name.toLowerCase().includes(search.toLowerCase()) ||
       r.zone.name.toLowerCase().includes(search.toLowerCase());
+
+    const matchesStatus = () => {
+      if (status === "all") return true;
+      const sFilter = status.toLowerCase().replace(" ", "_").replace("-", "_");
+      const rStatus = r.status.toLowerCase().replace(" ", "_").replace("-", "_");
+      
+      if (sFilter === "completed" || sFilter === "verified") {
+        return rStatus === "completed" || rStatus === "verified";
+      }
+      if (sFilter === "rejected" || sFilter === "failed") {
+        return rStatus === "rejected" || rStatus === "failed";
+      }
+      if (sFilter === "in_progress" || sFilter === "inprogress") {
+        return rStatus === "in_progress" || rStatus === "inprogress";
+      }
+      return rStatus === sFilter;
+    };
+
     return (
       ms &&
       (priority === "all" || r.priority === priority) &&
-      (status === "all" || r.status.toLowerCase() === status.toLowerCase()) &&
+      matchesStatus() &&
       (zone === "all" || r.zone.name === zone) &&
       (material === "all" || e.material === material)
     );

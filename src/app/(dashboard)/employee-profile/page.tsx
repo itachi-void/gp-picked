@@ -63,16 +63,15 @@ export default function EmployeeProfilePage() {
   });
 
   const name = staffProfile?.fullName || user?.name || "Employee";
-  const email = user?.email || "employee@ecovoid.io";
   const initials = name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
 
   const info = [
-    { icon: Mail, label: "Email", value: email },
-    { icon: Phone, label: "Phone", value: user?.phone || "01192100379" },
-    { icon: Building2, label: "Center", value: "EcoSnap Cairo Hub" },
-    { icon: MapPin, label: "Location", value: "Center City Area" },
-    { icon: Calendar, label: "Joined", value: "June 2026" },
-    { icon: Clock, label: "Shift", value: "Day Shift (8:00 AM - 4:00 PM)" },
+    { icon: Mail, label: "Email", value: user?.email || "not yet from api" },
+    { icon: Phone, label: "Phone", value: (user as any)?.phone || "not yet from api" },
+    { icon: Building2, label: "Center", value: "not yet from api" },
+    { icon: MapPin, label: "Location", value: "not yet from api" },
+    { icon: Calendar, label: "Joined", value: "not yet from api" },
+    { icon: Clock, label: "Shift", value: "not yet from api" },
   ];
 
   // Calculate verified bags count from active/completed requests
@@ -87,8 +86,8 @@ export default function EmployeeProfilePage() {
       value: String(bagsVerifiedCount), 
       tone: "emerald" 
     },
-    { icon: Cpu, label: "Avg. AI match", value: "91.8%", tone: "violet" },
-    { icon: Star, label: "Accuracy rating", value: "98.5%", tone: "amber" },
+    { icon: Cpu, label: "Avg. AI match", value: "not yet from api", tone: "violet" },
+    { icon: Star, label: "Accuracy rating", value: "not yet from api", tone: "amber" },
   ];
 
   const toneBg: Record<string, string> = {

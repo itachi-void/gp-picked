@@ -25,14 +25,14 @@ export function ShipmentInfo({ order }: ShipmentInfoProps) {
           </div>
           <div>
             <span className="text-[10px] text-slate-400 block">Citizen</span>
-            <span className="font-semibold text-slate-800 dark:text-slate-200">{order.userName || "Citizen"}</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200">{order.userName || "not yet from api"}</span>
           </div>
           <div className="col-span-2">
             <span className="text-[10px] text-slate-400 block flex items-center gap-1">
               <MapPin className="w-3 h-3" /> Address
             </span>
             <span className="font-medium text-xs text-slate-700 dark:text-slate-300 block leading-relaxed mt-0.5">
-              {order.userAddress || "No address provided"}
+              {order.userAddress || "not yet from api"}
             </span>
           </div>
         </div>

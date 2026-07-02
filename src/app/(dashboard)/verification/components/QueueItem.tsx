@@ -28,10 +28,10 @@ export function QueueItem({ order, isActive, onClick }: QueueItemProps) {
         </span>
       </div>
       <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-        <User className="w-3 h-3" /> {order.userName || "Citizen"}
+        <User className="w-3 h-3" /> {order.userName || "not yet from api"}
       </div>
       <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-        <Truck className="w-3 h-3" /> {order.driverName || "Driver"}
+        <Truck className="w-3 h-3" /> {order.driverName || "not yet from api"}
       </div>
       {order.timeAgo && (
         <div className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">

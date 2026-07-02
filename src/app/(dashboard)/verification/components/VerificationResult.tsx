@@ -22,12 +22,20 @@ export function VerificationResult({ result, orderId, onReset, onResolve }: Veri
     : "bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400";
 
   // Calculate similarity percentage safely (handles 0.95 or 95 formats)
-  const similarityValue = result.similarityScore !== undefined
-    ? (result.similarityScore > 1 ? result.similarityScore : result.similarityScore * 100)
-    : 95;
+  const hasScore = result.similarityScore !== undefined;
+  const score = result.similarityScore ?? 0;
+  const similarityValue = hasScore
+    ? (score > 1 ? score : score * 100)
+    : 0;
 
   // Recommendation generator based on score percentage
-  const getRecommendation = (score: number) => {
+  const getRecommendation = (score: number, hasScore: boolean) => {
+    if (!hasScore) {
+      return {
+        text: "AI Suggestion: not yet from api",
+        classes: "bg-slate-500/10 border-slate-500/25 text-slate-700 dark:text-slate-400",
+      };
+    }
     if (score >= 85) {
       return {
         text: `AI Suggestion: Strong similarity detected (${score.toFixed(1)}%). The photo content matches the pickup request details. Recommended action: ACCEPT.`,
@@ -46,7 +54,7 @@ export function VerificationResult({ result, orderId, onReset, onResolve }: Veri
     }
   };
 
-  const rec = getRecommendation(similarityValue);
+  const rec = getRecommendation(similarityValue, hasScore);
 
   return (
     <div className="mc-fade-in-up">
@@ -73,16 +81,16 @@ export function VerificationResult({ result, orderId, onReset, onResolve }: Veri
       <div className="mt-4 max-w-md mx-auto grid grid-cols-2 gap-4 bg-slate-50 dark:bg-white/5 p-5 rounded-2xl border border-slate-200 dark:border-white/5">
         <div className="space-y-1">
           <span className="text-[10px] text-slate-400 uppercase font-bold">Expected Bottles (Before)</span>
-          <p className="text-lg font-bold text-slate-800 dark:text-slate-200">{result.countBefore ?? result.finalBottlesCount} bottles</p>
+          <p className="text-lg font-bold text-slate-800 dark:text-slate-200">{result.countBefore != null ? `${result.countBefore} bottles` : "not yet from api"}</p>
         </div>
         <div className="space-y-1">
           <span className="text-[10px] text-slate-400 uppercase font-bold">Scanned Bottles (After)</span>
-          <p className="text-lg font-bold text-slate-800 dark:text-slate-200">{result.countAfter ?? result.finalBottlesCount} bottles</p>
+          <p className="text-lg font-bold text-slate-800 dark:text-slate-200">{result.countAfter != null ? `${result.countAfter} bottles` : "not yet from api"}</p>
         </div>
         <div className="space-y-1 col-span-2 border-t border-slate-200 dark:border-white/10 pt-3 flex justify-between items-center">
           <div>
             <span className="text-[10px] text-slate-400 uppercase font-bold block">Similarity Score</span>
-            <p className="text-md font-bold text-violet-600 dark:text-violet-400">{similarityValue.toFixed(1)}% match</p>
+            <p className="text-md font-bold text-violet-600 dark:text-violet-400">{hasScore ? `${similarityValue.toFixed(1)}% match` : "not yet from api"}</p>
           </div>
           <div className="text-right">
             <span className="text-[10px] text-slate-400 uppercase font-bold block">Points to Award</span>
@@ -91,7 +99,7 @@ export function VerificationResult({ result, orderId, onReset, onResolve }: Veri
         </div>
         <div className="space-y-1 col-span-2 border-t border-slate-200 dark:border-white/10 pt-3">
           <span className="text-[10px] text-slate-400 uppercase font-bold">System Status</span>
-          <p className="text-md font-semibold text-slate-800 dark:text-slate-200">{result.status || "Completed"}</p>
+          <p className="text-md font-semibold text-slate-800 dark:text-slate-200">{result.status || "not yet from api"}</p>
         </div>
       </div>
 
