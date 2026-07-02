@@ -3,7 +3,7 @@ import { HubRequest, VerifyResponse } from "../types";
 
 // جلب طلبات الجمع قيد التنفيذ للـ HubStaff
 export async function getInProgressHubRequests(): Promise<HubRequest[]> {
-  const response = await api.get<HubRequest[]>("/PickupRequests/GetInProgressHubRequests");
+  const response = await api.get<HubRequest[]>("/PickupRequests/GetPendingRequestForms");
   return response.data || [];
 }
 
