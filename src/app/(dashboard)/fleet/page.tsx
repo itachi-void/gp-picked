@@ -133,6 +133,8 @@ export default function FleetMapPage() {
   const router = useRouter();
   const { role } = useRoleContext();
   const currentRole = role?.toLowerCase() ?? "citizen";
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   const [trucks, setTrucks] = useState<FleetTruck[]>([]);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | TruckStatus>("all");
@@ -308,6 +310,16 @@ export default function FleetMapPage() {
     setIsRefreshing(false);
     toast.success("Fleet positions updated");
   };
+
+  if (!mounted) {
+    return (
+      <div className="max-w-[1600px] mx-auto p-6 space-y-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
+        </div>
+      </div>
+    );
+  }
 
   if (currentRole === "citizen" || currentRole === "user") {
     return (
