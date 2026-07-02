@@ -161,12 +161,24 @@ export default function RewardsPage() {
     });
   };
 
-  // Mock list of recent cash redemptions to make the UI look high-fidelity and complete
-  const mockHistory = [
-    { id: "TXN-9021", date: "June 28, 2026", points: 500, amount: 50, method: "Vodafone Cash", status: "Completed" },
-    { id: "TXN-8843", date: "June 15, 2026", points: 1200, amount: 120, method: "InstaPay", status: "Completed" },
-    { id: "TXN-7649", date: "May 29, 2026", points: 800, amount: 80, method: "Orange Cash", status: "Completed" },
-  ];
+  const [ownHistory, setOwnHistory] = useState<any[]>([]);
+  const [ownHistoryLoading, setOwnHistoryLoading] = useState(true);
+
+  React.useEffect(() => {
+    if (!mounted || !user?.id) return;
+    const fetchOwnHistory = async () => {
+      try {
+        const res = await api.get(`/PickupRequests/GetHistoryOfRedemption/${user.id}`);
+        const list = Array.isArray(res.data) ? res.data : [];
+        setOwnHistory(list);
+      } catch {
+        setOwnHistory([]);
+      } finally {
+        setOwnHistoryLoading(false);
+      }
+    };
+    fetchOwnHistory();
+  }, [mounted, user?.id]);
 
   if (!mounted || (walletLoading && !isAdmin)) {
     return (
@@ -585,18 +597,24 @@ export default function RewardsPage() {
               <TrendingUp className="w-4 h-4 text-teal-500" /> Recent Cashouts
             </h3>
             <div className="space-y-3">
-              {mockHistory.map((item) => (
-                <div key={item.id} className="p-3 rounded-xl bg-slate-50/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">{item.method}</span>
-                    <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">+{item.amount.toFixed(2)} EGP</span>
+              {ownHistoryLoading ? (
+                <div className="text-xs text-slate-400 animate-pulse py-2">Loading history...</div>
+              ) : ownHistory.length === 0 ? (
+                <div className="text-xs text-slate-400 py-2">No cashout history yet.</div>
+              ) : (
+                ownHistory.slice(0, 5).map((item: any, idx: number) => (
+                  <div key={item.id || idx} className="p-3 rounded-xl bg-slate-50/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">{item.method || item.provider || item.paymentMethod || "-"}</span>
+                      <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">+{Number(item.amount || item.cashAmount || 0).toFixed(2)} EGP</span>
+                    </div>
+                    <div className="flex justify-between text-[10px] text-slate-400">
+                      <span>{item.date || item.transactionDate || "-"} · {item.points || item.pointsRedeemed || 0} pts</span>
+                      <span className="text-emerald-500 font-medium">● {item.status || "Completed"}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-[10px] text-slate-400">
-                    <span>{item.date} · {item.points} pts</span>
-                    <span className="text-emerald-500 font-medium">● {item.status}</span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </GlassCard>
         </div>

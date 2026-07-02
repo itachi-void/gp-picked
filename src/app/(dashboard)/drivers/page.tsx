@@ -281,16 +281,16 @@ export default function DriversListPage() {
           <button
             onClick={() => {
               exportToCsv("drivers", filteredDrivers, [
-                { key: "id", label: "ID" },
-                { key: "name", label: "Name" },
-                { key: "email", label: "Email" },
-                { key: "phone", label: "Phone" },
-                { key: "status", label: "Status" },
-                { key: "currentRoute", label: "Route" },
-                { key: "completedTrips", label: "Trips" },
-                { key: "rating", label: "Rating" },
-                { key: "earnings", label: "Earnings" },
-                { key: "vehicleNumber", label: "Vehicle" },
+                { key: "id", label: "ID", accessor: (d: Driver) => d.id },
+                { key: "name", label: "Name", accessor: (d: Driver) => d.name },
+                { key: "email", label: "Email", accessor: (d: Driver) => d.email },
+                { key: "phone", label: "Phone", accessor: (d: Driver) => d.phone },
+                { key: "status", label: "Status", accessor: (d: Driver) => d.status },
+                { key: "currentRoute", label: "Route", accessor: (d: Driver) => d.currentRoute },
+                { key: "completedTrips", label: "Trips", accessor: (d: Driver) => d.completedTrips },
+                { key: "rating", label: "Rating", accessor: (d: Driver) => d.rating },
+                { key: "earnings", label: "Earnings", accessor: (d: Driver) => d.earnings },
+                { key: "vehicleNumber", label: "Vehicle", accessor: (d: Driver) => d.vehicleNumber },
               ]);
               toast.success(`Exported ${filteredDrivers.length} rows`);
             }}

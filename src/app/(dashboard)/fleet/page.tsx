@@ -16,14 +16,26 @@ import {
   MapPin,
   Clock,
   ShieldAlert,
+  Loader2,
 } from "lucide-react";
-import { useTheme } from "next-themes";
 import { useRoleContext } from "@/contexts/RoleContext";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { GlassCard } from "@/app/components/GlassCard";
 import { accentMap } from "@/app/utils/accent";
 import api from "@/lib/axios";
+import dynamic from "next/dynamic";
+
+// Dynamic import of Leaflet LiveMap component to bypass SSR window undefined error
+const LiveMap = dynamic(() => import("./components/LiveMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[500px] flex flex-col items-center justify-center bg-slate-100 dark:bg-white/[0.02] border border-slate-200/50 dark:border-white/5 rounded-2xl gap-3">
+      <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+      <p className="text-sm text-slate-500 dark:text-slate-400">Loading interactive map tiles...</p>
+    </div>
+  ),
+});
 
 type TruckStatus = "en-route" | "idle" | "offline";
 
@@ -34,15 +46,8 @@ interface FleetTruck {
   zone: string;
   fuel: number | string;
   nextStop: string;
-  x: number; // 0-100
-  y: number; // 0-100
-}
-
-interface Zone {
-  id: string;
-  name: string;
-  capacity: number; // 0-100
-  points: string; // SVG polygon points
+  lat: number;
+  lng: number;
 }
 
 interface GeofenceAlert {
@@ -53,13 +58,6 @@ interface GeofenceAlert {
   time: string;
   severity: "high" | "medium" | "low";
 }
-
-const zones: Zone[] = [
-  { id: "z1", name: "North", capacity: 82, points: "100,40 360,30 380,200 120,210" },
-  { id: "z2", name: "East", capacity: 64, points: "400,40 720,60 700,240 400,210" },
-  { id: "z3", name: "South", capacity: 45, points: "120,230 400,235 380,420 140,410" },
-  { id: "z4", name: "West", capacity: 91, points: "420,250 720,260 740,430 410,420" },
-];
 
 const geofenceAlerts: GeofenceAlert[] = [
   { id: "GF-1042", truckId: "not yet from api", driver: "not yet from api", zone: "not yet from api", time: "not yet from api", severity: "high" },
@@ -88,12 +86,6 @@ const statusConfig: Record<TruckStatus, { label: string; dot: string; chip: stri
   },
 };
 
-function heatColor(capacity: number, isDark: boolean) {
-  if (capacity >= 80) return isDark ? "rgba(244,63,94,0.35)" : "rgba(244,63,94,0.25)";
-  if (capacity >= 60) return isDark ? "rgba(245,158,11,0.32)" : "rgba(245,158,11,0.22)";
-  return isDark ? "rgba(16,185,129,0.28)" : "rgba(16,185,129,0.18)";
-}
-
 const normalizeStatus = (status: string): TruckStatus => {
   const s = String(status || "").toLowerCase();
   if (s.includes("active") || s.includes("a5oya") || s.includes("route")) return "en-route";
@@ -105,8 +97,6 @@ export default function FleetMapPage() {
   const router = useRouter();
   const { role } = useRoleContext();
   const currentRole = role?.toLowerCase() ?? "citizen";
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
   const [trucks, setTrucks] = useState<FleetTruck[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -120,6 +110,12 @@ export default function FleetMapPage() {
       const res = await api.get("/admin/recyclers-details");
       const list = Array.isArray(res.data) ? res.data : [];
       const mapped: FleetTruck[] = list.map((d: any, idx: number) => {
+        // Cairo center-based simulated coordinates for live visual representation
+        const baseLat = 30.0444;
+        const baseLng = 31.2357;
+        const latOffset = ((idx * 17) % 50 - 25) * 0.0018;
+        const lngOffset = ((idx * 23) % 50 - 25) * 0.0018;
+        
         return {
           id: String(d.recyclerID || d.id || `TRK-${idx}`),
           driver: d.fullName || "Driver",
@@ -127,8 +123,8 @@ export default function FleetMapPage() {
           zone: "not yet from api",
           fuel: "not yet from api",
           nextStop: "not yet from api",
-          x: Math.max(10, Math.min(90, 15 + (idx * 15) % 70)),
-          y: Math.max(10, Math.min(90, 20 + (idx * 25) % 60)),
+          lat: baseLat + latOffset,
+          lng: baseLng + lngOffset,
         };
       });
       setTrucks(mapped);
@@ -144,15 +140,15 @@ export default function FleetMapPage() {
     fetchTrucks();
   }, []);
 
-  // Live telemetry simulation ticker
+  // Telemetry simulation interval
   useEffect(() => {
     const timer = setInterval(() => {
       setTrucks((prev) =>
         prev.map((t) => {
           if (t.status === "offline") return t;
-          const nx = Math.max(2, Math.min(98, t.x + (Math.random() * 20 - 10) * 0.125));
-          const ny = Math.max(2, Math.min(98, t.y + (Math.random() * 20 - 10) * 0.2));
-          return { ...t, x: nx, y: ny };
+          const nlat = t.lat + (Math.random() * 0.0004 - 0.0002);
+          const nlng = t.lng + (Math.random() * 0.0004 - 0.0002);
+          return { ...t, lat: nlat, lng: nlng };
         })
       );
     }, 5000);
@@ -293,7 +289,7 @@ export default function FleetMapPage() {
       {loading ? (
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="animate-pulse flex flex-col items-center gap-3">
-            <RefreshCw className="w-10 h-10 text-emerald-500 animate-spin" />
+            <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
             <p className="text-emerald-600/80 font-medium">Fetching active fleet telemetry...</p>
           </div>
         </div>
@@ -324,150 +320,15 @@ export default function FleetMapPage() {
                 </div>
               </div>
 
-              <div
-                className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10"
-                style={{
-                  background: isDark
-                    ? "linear-gradient(135deg, rgba(14,165,233,0.05) 0%, rgba(16,185,129,0.05) 100%)"
-                    : "linear-gradient(135deg, rgba(186,230,253,0.4) 0%, rgba(167,243,208,0.4) 100%)",
-                }}
-              >
-                <div className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 px-2.5 h-7 rounded-full bg-emerald-500/15 border border-emerald-500/30 backdrop-blur-md" style={{ fontWeight: 600 }}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[10px] uppercase tracking-wider text-emerald-700 dark:text-emerald-300">● LIVE</span>
-                </div>
-                <svg viewBox="0 0 800 460" className="w-full h-auto block">
-                  {/* Grid */}
-                  <defs>
-                    <pattern id="fleetGrid" width="40" height="40" patternUnits="userSpaceOnUse">
-                      <path
-                        d="M 40 0 L 0 0 0 40"
-                        fill="none"
-                        stroke={isDark ? "rgba(148,163,184,0.12)" : "rgba(148,163,184,0.25)"}
-                        strokeWidth="1"
-                      />
-                    </pattern>
-                  </defs>
-                  <rect width="800" height="460" fill="url(#fleetGrid)" />
-
-                  {/* Zone polygons w/ capacity heat */}
-                  {zones.map((z) => (
-                    <g key={z.id}>
-                      <polygon
-                        points={z.points}
-                        fill={heatColor(z.capacity, isDark)}
-                        stroke={isDark ? "rgba(255,255,255,0.15)" : "rgba(15,23,42,0.15)"}
-                        strokeWidth="1.5"
-                        strokeDasharray="4 4"
-                      />
-                    </g>
-                  ))}
-
-                  {/* Zone labels */}
-                  {zones.map((z) => {
-                    const pts = z.points.split(" ").map((p) => p.split(",").map(Number));
-                    const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length;
-                    const cy = pts.reduce((s, p) => s + p[1], 0) / pts.length;
-                    return (
-                      <g key={`lbl-${z.id}`}>
-                        <text
-                          x={cx}
-                          y={cy - 6}
-                          textAnchor="middle"
-                          fill={isDark ? "rgba(226,232,240,0.85)" : "rgba(15,23,42,0.7)"}
-                          fontSize="14"
-                          fontWeight="600"
-                        >
-                          {z.name}
-                        </text>
-                        <text
-                          x={cx}
-                          y={cy + 12}
-                          textAnchor="middle"
-                          fill={isDark ? "rgba(148,163,184,0.85)" : "rgba(71,85,105,0.85)"}
-                          fontSize="11"
-                        >
-                          Capacity {z.capacity}%
-                        </text>
-                      </g>
-                    );
-                  })}
-
-                  {/* Trucks */}
-                  {filtered.map((t) => {
-                    const cx = (t.x / 100) * 800;
-                    const cy = (t.y / 100) * 460;
-                    const color = statusConfig[t.status].dot;
-                    const isSelected = selectedTruck === t.id;
-                    return (
-                      <g
-                        key={t.id}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => setSelectedTruck(t.id)}
-                      >
-                        {t.status === "en-route" && (
-                          <circle cx={cx} cy={cy} r="14" fill={color} opacity="0.25">
-                            <animate
-                              attributeName="r"
-                              values="10;22;10"
-                              dur="2s"
-                              repeatCount="indefinite"
-                            />
-                            <animate
-                              attributeName="opacity"
-                              values="0.35;0;0.35"
-                              dur="2s"
-                              repeatCount="indefinite"
-                            />
-                          </circle>
-                        )}
-                        <circle
-                          cx={cx}
-                          cy={cy}
-                          r={isSelected ? 9 : 7}
-                          fill={color}
-                          stroke="white"
-                          strokeWidth="2"
-                        />
-                        {isSelected && (
-                          <g>
-                            <rect
-                              x={cx + 10}
-                              y={cy - 22}
-                              width="140"
-                              height="44"
-                              rx="8"
-                              fill={isDark ? "rgba(10,14,20,0.92)" : "rgba(255,255,255,0.95)"}
-                              stroke={isDark ? "rgba(255,255,255,0.1)" : "rgba(148,163,184,0.3)"}
-                            />
-                            <text
-                              x={cx + 18}
-                              y={cy - 8}
-                              fill={isDark ? "#fff" : "#0f172a"}
-                              fontSize="11"
-                              fontWeight="600"
-                            >
-                              {t.id}
-                            </text>
-                            <text
-                              x={cx + 18}
-                              y={cy + 6}
-                              fill={isDark ? "#94a3b8" : "#64748b"}
-                              fontSize="10"
-                            >
-                              {t.driver}
-                            </text>
-                          </g>
-                        )}
-                      </g>
-                    );
-                  })}
-                </svg>
-              </div>
+              <LiveMap
+                trucks={filtered}
+                selectedTruckId={selectedTruck}
+                onSelectTruck={(id) => setSelectedTruck(id)}
+              />
 
               <div className="mt-4 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                 <Activity className="w-3.5 h-3.5" />
-                Heat overlay reflects zone capacity. Click a truck pin for details.
+                Live geographic view centered in Cairo, Egypt. Click a marker pin for details.
               </div>
             </GlassCard>
           </div>
