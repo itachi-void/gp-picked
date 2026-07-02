@@ -38,6 +38,8 @@ const statusAccent: Record<string, string> = {
   "In Progress": "bg-sky-500/10 text-sky-700 dark:text-sky-300",
   Completed: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
   Verified: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+  Rejected: "bg-rose-500/10 text-rose-700 dark:text-rose-300",
+  Failed: "bg-rose-500/10 text-rose-700 dark:text-rose-300",
 };
 
 const DRIVERS = ["Mike Tyson", "Omar S.", "Khaled H.", "Ahmed Hassan", "Mohamed Ali"];
@@ -82,7 +84,7 @@ function PickupRequestsPageContent() {
   const isDriver = role === "Driver" || role === "Recycler" || role === "driver" || role === "recycler";
   const isEmployee = role === "Employee" || role === "employee" || role === "HubStaff" || role === "hubstaff";
 
-  // Fetch employee specific data (In Progress + Verified by self) from backend
+  // Fetch employee specific data (In Progress + Verified/Rejected history) from backend
   useEffect(() => {
     if (!isEmployee) return;
 
@@ -91,19 +93,37 @@ function PickupRequestsPageContent() {
       try {
         const employeeId = user?.id || 1;
 
-        // 1. Fetch in progress requests from backend
-        const resInProgress = await api.get("/PickupRequests/GetInProgressHubRequests");
-        const listInProgress = Array.isArray(resInProgress.data)
-          ? resInProgress.data
-          : (resInProgress.data && Array.isArray((resInProgress.data as any).data) 
-              ? (resInProgress.data as any).data 
-              : []);
+        // 1. Fetch in progress requests from backend (independent call)
+        let listInProgress: any[] = [];
+        try {
+          const resInProgress = await api.get("/PickupRequests/GetInProgressHubRequests");
+          listInProgress = Array.isArray(resInProgress.data)
+            ? resInProgress.data
+            : (resInProgress.data && Array.isArray((resInProgress.data as any).data) 
+                ? (resInProgress.data as any).data 
+                : []);
+        } catch (e) {
+          console.error("Failed to fetch in progress hub requests:", e);
+        }
 
-        // 2. Fetch history verified by this employee
-        const resHistory = await api.get(`/HubStaff/${employeeId}`);
-        const listHistory = resHistory.data?.pickupRequests || [];
+        // 2. Fetch history verified by this employee (try /history first, fallback to profile)
+        let listHistory: any[] = [];
+        try {
+          const resHistory = await api.get(`/HubStaff/${employeeId}/history`);
+          listHistory = Array.isArray(resHistory.data)
+            ? resHistory.data
+            : (resHistory.data?.pickupRequests || resHistory.data?.requests || []);
+        } catch (e) {
+          console.error("Failed to fetch hub staff history from primary history endpoint:", e);
+          try {
+            const resProfile = await api.get(`/HubStaff/${employeeId}`);
+            listHistory = resProfile.data?.pickupRequests || [];
+          } catch (profileErr) {
+            console.error("Failed to fetch hub staff history from fallback profile endpoint:", profileErr);
+          }
+        }
 
-        // Map them
+        // Map they both
         const mappedInProgress = listInProgress.map((r: any) => ({
           ...mapBackendToFrontend(r),
           status: "In Progress"
@@ -117,7 +137,7 @@ function PickupRequestsPageContent() {
         // Combine lists
         setBackendRequests([...mappedInProgress, ...mappedHistory]);
       } catch (err) {
-        console.error("Failed to fetch employee requests from backend:", err);
+        console.error("Critical error building employee requests list:", err);
         setBackendRequests([]);
       } finally {
         setLoadingBackend(false);
@@ -172,7 +192,7 @@ function PickupRequestsPageContent() {
     return (
       ms &&
       (priority === "all" || r.priority === priority) &&
-      (status === "all" || r.status === status) &&
+      (status === "all" || r.status.toLowerCase() === status.toLowerCase()) &&
       (zone === "all" || r.zone.name === zone) &&
       (material === "all" || e.material === material)
     );
@@ -180,9 +200,9 @@ function PickupRequestsPageContent() {
 
   const stats = [
     { label: "Open", value: enriched.filter((e) => e.req.status === "Pending").length, accent: "amber", Icon: Clock },
-    { label: "In Progress", value: enriched.filter((e) => e.req.status === "In Progress" || e.req.status === "Inprogress").length, accent: "sky", Icon: Loader2 },
-    { label: "Completed", value: enriched.filter((e) => e.req.status === "Completed" || e.req.status === "Verified").length, accent: "emerald", Icon: CheckCircle },
-    { label: "SLA Breached", value: enriched.filter((e) => e.slaMinutesLeft < 0).length, accent: "rose", Icon: AlertTriangle },
+    { label: "In Progress", value: enriched.filter((e) => e.req.status.toLowerCase() === "in progress" || e.req.status.toLowerCase() === "inprogress").length, accent: "sky", Icon: Loader2 },
+    { label: "Completed", value: enriched.filter((e) => e.req.status.toLowerCase() === "completed" || e.req.status.toLowerCase() === "verified").length, accent: "emerald", Icon: CheckCircle },
+    { label: "Rejected/Failed", value: enriched.filter((e) => e.req.status.toLowerCase() === "rejected" || e.req.status.toLowerCase() === "failed").length, accent: "rose", Icon: AlertTriangle },
   ];
 
   const toggleRow = (id: string) => {
@@ -382,7 +402,7 @@ function PickupRequestsPageContent() {
               {isDriver 
                 ? "Select available pending pickups to add to your active route (Minimum 5 orders required)" 
                 : isEmployee 
-                  ? "Review all active in-progress requests waiting for verify, and history of orders verified by you"
+                  ? "Review all active in-progress requests waiting for verify, and history of orders verified/rejected by you"
                   : "Triage and assign incoming pickups from citizens"
               }
             </p>
@@ -438,7 +458,7 @@ function PickupRequestsPageContent() {
               <Filter className="w-4 h-4 text-slate-400" />
               {[
                 { label: "Priority", value: priority, set: setPriority, opts: ["all", "Critical", "High", "Normal", "Low"] },
-                { label: "Status", value: status, set: setStatus, opts: ["all", "Pending", "In Progress", "Completed", "Verified"] },
+                { label: "Status", value: status, set: setStatus, opts: ["all", "Pending", "In Progress", "Completed", "Verified", "Rejected", "Failed"] },
                 { label: "Zone", value: zone, set: setZone, opts: ["all", ...zones] },
                 { label: "Material", value: material, set: setMaterial, opts: ["all", ...materials] },
               ].map((f) => (
