@@ -45,6 +45,7 @@ export const moreGroups: NavGroup[] = [
       { to: "/centers-list", label: "Centers List",  icon: Building2,     roles: ["admin", "manager", "employee"] },
       { to: "/communities",  label: "Communities",         icon: MapIcon,       roles: ["admin", "manager"] },
       { to: "/partners",     label: "Partners",      icon: CreditCard,    roles: ["admin", "manager"] },
+      { to: "/drivers",      label: "Drivers",       icon: Users,         roles: ["admin", "manager"] },
     ],
   },
   {

@@ -76,6 +76,11 @@ export default function DriversListPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | DriverStatus>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterStatus]);
   const [driverToView, setDriverToView] = useState<Driver | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -213,6 +218,13 @@ export default function DriversListPage() {
     return matchesSearch && matchesStatus;
   });
 
+  const itemsPerPage = 8;
+  const totalPages = Math.ceil(filteredDrivers.length / itemsPerPage);
+  const paginatedDrivers = filteredDrivers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const activeDrivers = drivers.filter((d) => d.status === "active").length;
   const avgRating = drivers.length > 0 ? (drivers.reduce((sum, d) => sum + d.rating, 0) / drivers.length).toFixed(1) : "5.0";
   const totalEarnings = drivers.reduce((sum, d) => sum + d.earnings, 0);
@@ -341,7 +353,7 @@ export default function DriversListPage() {
         />
       ) : (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredDrivers.map((driver, index) => {
+        {paginatedDrivers.map((driver, index) => {
           const sa = statusAccent[driver.status] || statusAccent.active;
           return (
             <div
@@ -432,6 +444,28 @@ export default function DriversListPage() {
           );
         })}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between p-4 bg-white/60 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-2xl">
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            className="px-4 py-2 text-sm font-semibold bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full text-slate-700 dark:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-white/10 transition-all cursor-pointer"
+          >
+            Previous
+          </button>
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            className="px-4 py-2 text-sm font-semibold bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full text-slate-700 dark:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-white/10 transition-all cursor-pointer"
+          >
+            Next
+          </button>
+        </div>
+      )}
       )}
 
       <GlassCard className="p-6">
