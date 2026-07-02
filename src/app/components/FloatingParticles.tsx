@@ -7,31 +7,31 @@ import { loadSlim } from "@tsparticles/slim";
 export default function FloatingParticles() {
   const [ready, setReady] = useState(false);
 
-  // 1. الطبقة الثابتة الهادئة (لا تتأثر بالماوس نهائياً - ألوان فاتحة شفافة مريحة للعين)
+  // 1. الطبقة الثابتة الهادئة والشفافة (لا تتأثر بالماوس - ألوان مريحة للعين وخفيفة)
   const staticOptions = useMemo(
     () => ({
       fullScreen: { enable: false },
       background: { color: { value: "transparent" } },
       interactivity: {
         events: {
-          onHover: { enable: false }, // ملغاة تماماً لمنع الحركة عند مرور الماوس
+          onHover: { enable: false },
           onClick: { enable: false }
         }
       },
       particles: {
-        number: { value: 45 },
-        color: { value: ["#a7f3d0", "#bae6fd", "#ccfbf1"] },
+        number: { value: 35 },
+        color: { value: ["#a7f3d0", "#bae6fd", "#fef3c7"] }, // ألوان هادئة ومريحة
         paint: {
           fill: {
             enable: true,
-            color: { value: ["#a7f3d0", "#bae6fd", "#ccfbf1"] },
+            color: { value: ["#a7f3d0", "#bae6fd", "#fef3c7"] },
           },
         },
         size: { value: { min: 1, max: 4 } },
-        opacity: { value: 0.18 }, // شفافة وخفيفة جداً
+        opacity: { value: 0.22 },
         move: {
           enable: true,
-          speed: 0.35, // حركة هادئة وبطيئة للغاية
+          speed: 0.3,
           random: true,
           outModes: { default: "bounce" as const },
         },
@@ -42,7 +42,7 @@ export default function FloatingParticles() {
     [],
   );
 
-  // 2. الطبقة المتوسطة (تتأثر بالماوس - ألوان مريحة للعين)
+  // 2. الطبقة المتوسطة (تتأثر بالماوس - ألوان مريحة وعميقة)
   const bgOptions = useMemo(
     () => ({
       fullScreen: { enable: false },
@@ -50,23 +50,23 @@ export default function FloatingParticles() {
       interactivity: {
         events: { onHover: { enable: true, mode: "repulse" } },
         modes: {
-          repulse: { distance: 150, duration: 0.8, speed: 0.3 },
+          repulse: { distance: 130, duration: 0.8, speed: 0.2 },
         },
       },
       particles: {
-        number: { value: 35 }, // تقليل العدد لراحة العين
-        color: { value: ["#059669", "#0d9488", "#0284c7"] },
+        number: { value: 45 },
+        color: { value: ["#0284c7", "#0d9488"] }, // أزرق هادئ وتيل مريح
         paint: {
           fill: {
             enable: true,
-            color: { value: ["#059669", "#0d9488", "#0284c7"] },
+            color: { value: ["#0284c7", "#0d9488"] },
           },
         },
         size: { value: { min: 2, max: 5 } },
         opacity: { value: 0.45 },
         move: {
           enable: true,
-          speed: 0.55,
+          speed: 0.5,
           random: true,
           outModes: { default: "bounce" as const },
         },
@@ -77,7 +77,7 @@ export default function FloatingParticles() {
     [],
   );
 
-  // 3. طبقة المقدمة التفاعلية (تتأثر بالماوس - ألوان مريحة متناسقة)
+  // 3. طبقة المقدمة التفاعلية (تتأثر بالماوس - ألوان خضراء وذهبية هادئة مريحة للعين)
   const fgOptions = useMemo(
     () => ({
       fullScreen: { enable: false },
@@ -85,28 +85,28 @@ export default function FloatingParticles() {
       interactivity: {
         events: { onHover: { enable: true, mode: ["repulse", "slow"] } },
         modes: {
-          repulse: { distance: 180, duration: 1.2, factor: 8, speed: 0.5 },
-          slow: { radius: 220, factor: 0.4 },
+          repulse: { distance: 160, duration: 1.0, factor: 6, speed: 0.4 },
+          slow: { radius: 200, factor: 0.4 },
         },
       },
       particles: {
-        number: { value: 35 }, // تقليل العدد لراحة العين
-        color: { value: ["#047857", "#0f766e", "#0369a1"] },
+        number: { value: 45 },
+        color: { value: ["#10b981", "#059669", "#d97706"] }, // درجات الأخضر المريح والذهبي الدافئ
         paint: {
           fill: {
             enable: true,
-            color: { value: ["#047857", "#0f766e", "#0369a1"] },
+            color: { value: ["#10b981", "#059669", "#d97706"] },
           },
         },
-        size: { value: { min: 3, max: 9 } },
-        opacity: { value: { min: 0.65, max: 0.85 } },
+        size: { value: { min: 3, max: 8 } },
+        opacity: { value: { min: 0.6, max: 0.85 } },
         move: {
           enable: true,
           speed: 1.0,
           random: true,
           outModes: { default: "bounce" as const },
         },
-        shape: { type: ["circle", "square", "star", "triangle", "polygon"] },
+        shape: { type: ["circle", "square", "star", "triangle"] },
       },
       detectRetina: true,
     }),
@@ -121,7 +121,7 @@ export default function FloatingParticles() {
       }}
     >
       {ready && (
-        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
           <Particles
             id="tsparticles-static"
             className="absolute inset-0 w-full h-full pointer-events-none"
