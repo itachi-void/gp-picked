@@ -6,6 +6,9 @@ export interface HubRequest {
   timeAgo: string;
   status: string;
   userAddress: string;
+  user?: { fullName: string };
+  recycler?: { fullName: string };
+  address?: string;
 }
 
 export interface VerifyResponse {

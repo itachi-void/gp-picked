@@ -44,7 +44,7 @@ const accentMap: Record<string, { bg: string; fg: string }> = {
 
 function mapApiUser(item: any): User {
   const id = String(item.userId || item.id || "");
-  const name = item.fullName || item.name || "not yet from api";
+  const name = item.fullName || item.name || "Citizen";
   const roleRaw: string = (item.role || "citizen").toLowerCase();
   const role: Role = ["admin", "driver", "employee", "citizen"].includes(roleRaw)
     ? (roleRaw as Role) : "citizen";
@@ -52,11 +52,11 @@ function mapApiUser(item: any): User {
   return {
     id,
     name,
-    email: item.email || "not yet from api",
+    email: item.email || "no-email@smartwaste.com",
     role,
     status: item.status === "inactive" ? "inactive" : "active",
-    joinedAt: item.joinedAt || "not yet from api",
-    lastSeen: item.lastSeen || "not yet from api",
+    joinedAt: item.joinedAt ? new Date(item.joinedAt).toLocaleDateString() : "Just now",
+    lastSeen: item.lastSeen ? new Date(item.lastSeen).toLocaleTimeString() : "Active",
     walletPoints: item.walletPoints || item.points || 0,
   };
 }

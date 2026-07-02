@@ -50,8 +50,8 @@ function mapBackendToFrontend(req: any): PickupRequest {
     id: req.orderNumber || `ORD-${req.requestId}`,
     priority: req.priority || "Normal",
     status: req.status || "Pending",
-    citizen: { name: req.userName || req.user?.fullName || "not yet from api" },
-    zone: { name: req.zoneName || req.userAddress?.split(" ")[0] || "not yet from api" },
+    citizen: { name: req.userName || req.user?.fullName || "Citizen" },
+    zone: { name: req.zoneName || req.userAddress?.split(" ")[0] || "Cairo" },
     driver: req.driverName && req.driverName !== "No Driver Assigned"
       ? { name: req.driverName } 
       : (req.recycler?.fullName ? { name: req.recycler.fullName } : null),

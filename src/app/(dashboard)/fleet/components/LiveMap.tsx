@@ -126,10 +126,6 @@ export default function LiveMap({
                       <span className="font-medium text-slate-700">{t.zone}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Fuel:</span>
-                      <span className="font-medium text-slate-700">{t.fuel}</span>
-                    </div>
-                    <div className="flex justify-between">
                       <span>Next Stop:</span>
                       <span className="font-medium text-slate-700">{t.nextStop}</span>
                     </div>

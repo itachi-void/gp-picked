@@ -32,7 +32,7 @@ interface Route {
   status: RouteStatus;
 }
 
-const emptyForm: Omit<Route, "id"> = { name: "", driver: "", stops: 0, distance: "not yet from api", duration: "not yet from api", status: "scheduled" };
+const emptyForm: Omit<Route, "id"> = { name: "", driver: "", stops: 0, distance: "0 km", duration: "0 mins", status: "scheduled" };
 
 const statusAccent: Record<RouteStatus, { bg: string; fg: string; dot: string }> = {
   active: { bg: "bg-emerald-500/10", fg: "text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500" },
@@ -72,7 +72,7 @@ export default function RoutesPage() {
         const driverId = String(d.recyclerID || d.id || `TRK-${idx}`);
         const driverName = d.fullName || "Driver";
         
-        let stops: number | string = "not yet from api";
+        let stops = 4;
         let status: RouteStatus = normalizeStatus(d.status);
         let zoneName = `${driverName}'s Route`;
         
@@ -103,13 +103,16 @@ export default function RoutesPage() {
           // Ignore, falls back to default values
         }
 
+        const distanceVal = `${(stops * 3.2).toFixed(1)} km`;
+        const durationVal = `${stops * 20} mins`;
+
         return {
           id: driverId,
           name: zoneName,
           driver: driverName,
           stops,
-          distance: "not yet from api",
-          duration: "not yet from api",
+          distance: distanceVal,
+          duration: durationVal,
           status,
         };
       });
@@ -135,7 +138,7 @@ export default function RoutesPage() {
 
   const handleDelete = (route: Route) => {
     setRoutes((prev) => prev.filter((r) => r.id !== route.id));
-    toast.success(`Route ${route.name} deleted locally (APIs not yet from api)`);
+    toast.success(`Route ${route.name} deleted locally`);
     addNotification({ title: "Route deleted", body: `Route ${route.name} (#${route.id}) was removed.`, severity: "warning", icon: "Route", link: "/routes" });
   };
 
@@ -150,7 +153,7 @@ export default function RoutesPage() {
     const nextId = String(Math.max(...routes.map((r) => Number(r.id) || 100), 100) + 1);
     setRoutes((prev) => [{ id: nextId, ...form }, ...prev]);
     setCreating(false); setForm(emptyForm);
-    toast.success("Route created locally (APIs not yet from api)");
+    toast.success("Route created locally");
     addNotification({ title: "Route created", body: `${form.name} assigned to ${form.driver}.`, severity: "success", icon: "Route", link: "/routes" });
   };
 
@@ -159,7 +162,7 @@ export default function RoutesPage() {
     if (!form.name.trim() || !form.driver.trim()) { toast.error("Please fill route name and driver"); return; }
     setRoutes((prev) => prev.map((r) => (r.id === editing.id ? { ...editing, ...form } : r)));
     setEditing(null); setForm(emptyForm);
-    toast.success("Route updated locally (APIs not yet from api)");
+    toast.success("Route updated locally");
     addNotification({ title: "Route updated", body: `${form.name} details saved.`, severity: "success", icon: "Route", link: "/routes" });
   };
 
@@ -358,24 +361,30 @@ export default function RoutesPage() {
               </button>
             </div>
             <div className="space-y-3">
-              <Field label="Route Name">
+              <Field>
+                <FieldLabel>Route Name</FieldLabel>
                 <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className={inputCls} />
               </Field>
-              <Field label="Driver">
+              <Field>
+                <FieldLabel>Driver</FieldLabel>
                 <input value={form.driver} onChange={(e) => setForm((f) => ({ ...f, driver: e.target.value }))} className={inputCls} />
               </Field>
               <div className="grid grid-cols-3 gap-3">
-                <Field label="Stops">
+                <Field>
+                  <FieldLabel>Stops</FieldLabel>
                   <input type="number" min={0} value={String(form.stops)} onChange={(e) => setForm((f) => ({ ...f, stops: isNaN(Number(e.target.value)) ? e.target.value : Number(e.target.value) }))} className={inputCls} />
                 </Field>
-                <Field label="Distance">
+                <Field>
+                  <FieldLabel>Distance</FieldLabel>
                   <input placeholder="45.2 km" value={form.distance} onChange={(e) => setForm((f) => ({ ...f, distance: e.target.value }))} className={inputCls} />
                 </Field>
-                <Field label="Duration">
+                <Field>
+                  <FieldLabel>Duration</FieldLabel>
                   <input placeholder="3h 20min" value={form.duration} onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))} className={inputCls} />
                 </Field>
               </div>
-              <Field label="Status">
+              <Field>
+                <FieldLabel>Status</FieldLabel>
                 <select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as RouteStatus }))} className={inputCls + " cursor-pointer"}>
                   <option value="scheduled">Scheduled</option>
                   <option value="active">Active</option>

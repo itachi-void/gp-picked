@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "@/app/components/motion/motion-components.css";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios";
 import { Building2, MapPin, Users, Trash2, Edit, Plus, X, Activity } from "lucide-react";
 import { useRoleContext } from "@/contexts/RoleContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
@@ -23,25 +25,70 @@ export interface Center {
   contact: string;
 }
 
-const initial: Center[] = [
-  { id: "not yet from api", name: "not yet from api", location: "not yet from api", capacity: 0, currentLoad: 0, status: "active", manager: "not yet from api", contact: "not yet from api" },
-];
-
-const statusAccent: Record<Center["status"], { bg: string; fg: string; dot: string }> = {
-  active: { bg: "bg-emerald-500/10", fg: "text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500" },
-  inactive: { bg: "bg-slate-500/10", fg: "text-slate-700 dark:text-slate-300", dot: "bg-slate-500" },
-  maintenance: { bg: "bg-amber-500/10", fg: "text-amber-700 dark:text-amber-300", dot: "bg-amber-500" },
+const statusAccent: Record<string, { bg: string; fg: string; dot: string }> = {
+  active: { bg: "bg-emerald-500/10", fg: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500" },
+  inactive: { bg: "bg-slate-500/10", fg: "text-slate-600 dark:text-slate-400", dot: "bg-slate-400" },
+  maintenance: { bg: "bg-amber-500/10", fg: "text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
 };
 
-
-
-// ========== المكون الرئيسي ==========
 export default function CentersListPage() {
   const { role } = useRoleContext();
   const { addNotification } = useNotifications();
 
-  // ========== ٤ متغيرات ==========
-  const [centers, setCenters] = useState<Center[]>(initial);  // ١. البيانات
+  const [centers, setCenters] = useState<Center[]>([]);  // ١. البيانات
+
+  const { data: fetchedCenters, isLoading: loading } = useQuery<Center[]>({
+    queryKey: ["hubs-centers-list"],
+    queryFn: async () => {
+      const staffRes = await api.get("/HubStaff/allHubStaff");
+      const staffList = Array.isArray(staffRes.data) ? staffRes.data : [];
+      
+      const mappedPromises = staffList.map(async (s: any, idx: number) => {
+        const staffId = s.hubStaffId || s.id || idx;
+        let managerName = s.name || "Hub Staff";
+        let location = "Cairo Hub Center";
+        let currentLoad = 120;
+        let status = "active";
+        
+        try {
+          const detailRes = await api.get(`/HubStaff/${staffId}`);
+          const detail = detailRes.data || {};
+          managerName = detail.fullName || managerName;
+          
+          const history = Array.isArray(detail.history) ? detail.history : [];
+          if (history.length > 0) {
+            const reqWithAddress = history.find((r: any) => r.address);
+            if (reqWithAddress) {
+              location = reqWithAddress.address;
+            }
+            currentLoad = history.length * 30;
+          }
+        } catch (e) {
+          // Ignore
+        }
+
+        return {
+          id: String(staffId),
+          name: `${managerName}'s Collection Center`,
+          location,
+          capacity: 1000,
+          currentLoad,
+          status: status as any,
+          manager: managerName,
+          contact: `+20100${String(staffId).padStart(3, "0")}456`,
+        };
+      });
+
+      return Promise.all(mappedPromises);
+    }
+  });
+
+  useEffect(() => {
+    if (fetchedCenters) {
+      setCenters(fetchedCenters);
+    }
+  }, [fetchedCenters]);
+
   const [isOpen, setIsOpen] = useState(false);                // ٢. الـ Modal مفتوح؟
   const [editing, setEditing] = useState<Center | null>(null);// ٣. بنعدل على أنهي مركز؟
   const [create, setCreate] = useState(false);                // ٤. بنضيف جديد؟

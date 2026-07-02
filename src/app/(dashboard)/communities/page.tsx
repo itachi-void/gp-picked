@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import "@/app/components/motion/motion-components.css";
 import {
   Search,
@@ -18,9 +18,12 @@ import {
   Award,
   Target,
   Sparkles,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { GlassCard } from "@/app/components/GlassCard";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios";
 
 interface Community {
   id: string;
@@ -38,10 +41,6 @@ interface Community {
   image?: string;
 }
 
-const mockCommunities: Community[] = [
-  { id: "not yet from api", name: "not yet from api", type: "neighborhood", distance: 0, members: 0, bottles: 0, status: "active", rating: 0, lat: 0, lng: 0, owner: "not yet from api", activeUntil: "not yet from api", image: "not yet from api" },
-];
-
 const typeAccent: Record<string, string> = {
   school: "text-sky-600 dark:text-sky-400",
   neighborhood: "text-amber-600 dark:text-amber-400",
@@ -53,7 +52,7 @@ export default function CommunitiesMapPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(
-    mockCommunities[0],
+    null,
   );
 
   const [showFilters, setShowFilters] = useState(false);
@@ -73,7 +72,47 @@ export default function CommunitiesMapPage() {
     null,
   );
 
-  const filteredCommunities = mockCommunities
+  const { data: pickupRequests = [] } = useQuery<any[]>({
+    queryKey: ["pickup-requests-zones"],
+    queryFn: async () => {
+      const res = await api.get("/recycler/pickup-requests/search?status=pending");
+      return Array.isArray(res.data) ? res.data : [];
+    }
+  });
+
+  const zoneCommunities: Community[] = useMemo(() => {
+    const zoneMap = new Map<string, { members: Set<string>; count: number }>();
+    (pickupRequests as any[]).forEach((req) => {
+      const zone = req.zone || "Unknown";
+      if (!zoneMap.has(zone)) zoneMap.set(zone, { members: new Set(), count: 0 });
+      const entry = zoneMap.get(zone)!;
+      if (req.citizenName) entry.members.add(req.citizenName);
+      entry.count++;
+    });
+    return Array.from(zoneMap.entries()).map(([zone, data], idx) => ({
+      id: `zone-${idx}`,
+      name: zone,
+      type: "neighborhood" as const,
+      distance: 0,
+      members: data.members.size,
+      bottles: data.count,
+      status: "active" as const,
+      rating: 0,
+      lat: 0,
+      lng: 0,
+      owner: Array.from(data.members)[0] || "Community Leader",
+      activeUntil: "Based on recent activity",
+      image: undefined,
+    }));
+  }, [pickupRequests]);
+
+  useEffect(() => {
+    if (zoneCommunities.length > 0 && !selectedCommunity) {
+      setSelectedCommunity(zoneCommunities[0]);
+    }
+  }, [zoneCommunities]);
+
+  const filteredCommunities = zoneCommunities
     .filter(
       (c) =>
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
@@ -97,6 +136,17 @@ export default function CommunitiesMapPage() {
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-0.5">
             Discover and join recycling communities nearby
+          </p>
+        </div>
+      </div>
+
+      <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-4 flex items-start gap-3">
+        <Eye className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+        <div>
+          <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Future Community Suggestion</p>
+          <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+            These zones are suggested based on current pickup activity. Each zone shows active citizens and request volume.
+            Real community management features are coming soon.
           </p>
         </div>
       </div>
@@ -365,7 +415,7 @@ export default function CommunitiesMapPage() {
                   zoom: 14,
                 }));
                 setSelectedCommunity(
-                  filteredCommunities[0] || mockCommunities[0],
+                  filteredCommunities[0],
                 );
                 toast.success("Centered on your location");
               }}

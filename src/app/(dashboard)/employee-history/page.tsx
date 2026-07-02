@@ -85,8 +85,8 @@ export default function EmployeeHistoryPage() {
   // Filter history logs based on search and status filters
   const filteredHistory = historyItems.filter((item) => {
     const orderNoStr = `EV-${item.requestId}`;
-    const clientName = item.user?.fullName || "not yet from api";
-    const driverName = item.recycler?.fullName || "not yet from api";
+    const clientName = item.user?.fullName || "Citizen User";
+    const driverName = item.recycler?.fullName || "Recycler Driver";
 
     const matchesSearch =
       orderNoStr.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -302,9 +302,9 @@ export default function EmployeeHistoryPage() {
                         <span className="font-mono text-slate-900 dark:text-slate-100 font-bold">EV-{item.requestId}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="font-semibold text-slate-800 dark:text-slate-100">{item.user?.fullName || "not yet from api"}</div>
+                        <div className="font-semibold text-slate-800 dark:text-slate-100">{item.user?.fullName || "Citizen User"}</div>
                       </td>
-                      <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{item.recycler?.fullName || "not yet from api"}</td>
+                      <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{item.recycler?.fullName || "Recycler Driver"}</td>
                       <td className="px-6 py-4">
                         <div className="text-slate-800 dark:text-slate-200">{dateStr}</div>
                         <div className="text-xs text-slate-400">{timeStr}</div>

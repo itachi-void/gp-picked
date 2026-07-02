@@ -14,11 +14,15 @@ import {
   Heart,
   Sparkles,
   Search,
+  Recycle,
+  Trash2,
 } from "lucide-react";
 import { useRoleContext } from "@/contexts/RoleContext";
 import { GlassCard } from "@/app/components/GlassCard";
 import { useAuth } from "@/store/authStore";
 import { useUserWallet } from "@/hooks/useUserWallet";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios";
 
 type Rarity = "common" | "rare" | "epic" | "legendary";
 type Category = "milestone" | "streak" | "recycling" | "special";
@@ -34,9 +38,7 @@ interface Badge {
   unlockedBy: string[];
 }
 
-const badgesData: Badge[] = [
-  { id: "not yet from api", name: "not yet from api", description: "not yet from api", icon: "star", category: "milestone", requirement: "not yet from api", rarity: "common", unlockedBy: [] },
-];
+
 
 const iconMap: Record<string, any> = {
   star: Star,
@@ -76,6 +78,34 @@ export default function BadgesPage() {
   const { user } = useAuth();
   const { data: walletData } = useUserWallet(user?.id);
   const points = walletData?.walletPoints ?? 0;
+
+  const { data: usersRank = [] } = useQuery<any[]>({
+    queryKey: ["users-sorting-desc"],
+    queryFn: async () => {
+      const res = await api.get("/User/SortingUser?sortOrder=desc");
+      return Array.isArray(res.data) ? res.data : [];
+    }
+  });
+
+  const badgesData: Badge[] = [
+    { id: "badge-001", name: "Recycling Rookie", description: "Earn your first 10 points", icon: "star", category: "milestone", requirement: "10 points", rarity: "common", unlockedBy: usersRank.filter(u => u.walletPoints >= 10).map(u => u.name) },
+    { id: "badge-002", name: "Green Hero", description: "Earn 100 points", icon: "shield", category: "milestone", requirement: "100 points", rarity: "rare", unlockedBy: usersRank.filter(u => u.walletPoints >= 100).map(u => u.name) },
+    { id: "badge-003", name: "Eco Guardian", description: "Earn 500 points", icon: "crown", category: "milestone", requirement: "500 points", rarity: "epic", unlockedBy: usersRank.filter(u => u.walletPoints >= 500).map(u => u.name) },
+    { id: "badge-004", name: "Planet Savior", description: "Earn 1000 points", icon: "sparkles", category: "milestone", requirement: "1000 points", rarity: "legendary", unlockedBy: usersRank.filter(u => u.walletPoints >= 1000).map(u => u.name) },
+    { id: "badge-005", name: "Clean Streak", description: "Earn 50 points", icon: "flame", category: "streak", requirement: "50 points", rarity: "common", unlockedBy: usersRank.filter(u => u.walletPoints >= 50).map(u => u.name) },
+    { id: "badge-006", name: "Waste Warrior", description: "Earn 300 points", icon: "zap", category: "recycling", requirement: "300 points", rarity: "rare", unlockedBy: usersRank.filter(u => u.walletPoints >= 300).map(u => u.name) },
+    { id: "badge-007", name: "First Steps", description: "Earn 20 points", icon: "target", category: "recycling", requirement: "20 points", rarity: "common", unlockedBy: usersRank.filter(u => u.walletPoints >= 20).map(u => u.name) },
+    { id: "badge-008", name: "Recycling Champion", description: "Earn 150 points", icon: "trophy", category: "recycling", requirement: "150 points", rarity: "epic", unlockedBy: usersRank.filter(u => u.walletPoints >= 150).map(u => u.name) },
+    { id: "badge-009", name: "Early Adopter", description: "Join in the launch month", icon: "heart", category: "special", requirement: "Launch Month member", rarity: "legendary", unlockedBy: usersRank.map(u => u.name) },
+  ];
+
+  const { data: wasteCategories = [] } = useQuery<any[]>({
+    queryKey: ["waste-categories"],
+    queryFn: async () => {
+      const res = await api.get("/admin/waste-categories");
+      return Array.isArray(res.data) ? res.data : [];
+    }
+  });
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<"all" | Category>("all");
@@ -248,6 +278,43 @@ export default function BadgesPage() {
           );
         })}
       </div>
+
+      {wasteCategories.length > 0 && (
+        <div className="space-y-4">
+          <div className="mc-fade-in-down flex items-center gap-3 pt-4">
+            <div className="w-10 h-10 bg-emerald-500/10 rounded-2xl flex items-center justify-center">
+              <Recycle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <h2 className="text-xl tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 700 }}>
+                Waste Categories Reference
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                Point values per waste category from system configuration
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {wasteCategories.map((cat: any, i: number) => (
+              <div key={cat.categoryName || i} className="mc-card-in" style={{ animationDelay: `${i * 0.05}s` }}>
+                <GlassCard className="p-5">
+                  <div className="w-11 h-11 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-3">
+                    {cat.imagePath ? (
+                      <img src={cat.imagePath} alt={cat.categoryName} className="w-6 h-6 object-contain" />
+                    ) : (
+                      <Trash2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-900 dark:text-white font-semibold mb-1">{cat.categoryName}</p>
+                  <p className="text-lg text-emerald-600 dark:text-emerald-400 font-bold">
+                    {cat.pointsPerUnit} <span className="text-xs text-slate-500 font-normal">pts / unit</span>
+                  </p>
+                </GlassCard>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

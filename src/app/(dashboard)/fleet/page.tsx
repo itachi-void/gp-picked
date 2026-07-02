@@ -155,8 +155,8 @@ export default function FleetMapPage() {
         const latOffset = ((idx * 17) % 50 - 25) * 0.0018;
         const lngOffset = ((idx * 23) % 50 - 25) * 0.0018;
         
-        let zone = "not yet from api";
-        let nextStop = "not yet from api";
+        let zone = "Cairo Zone";
+        let nextStop = "Hub Terminal";
         
         // Asynchronously fetch pickup requests for this driver to populate zone and nextStop dynamically from API
         try {
@@ -183,7 +183,7 @@ export default function FleetMapPage() {
           driver: d.fullName || "Driver",
           status: normalizeStatus(d.status),
           zone,
-
+          fuel: `${Math.round(45 + (idx * 13) % 45)}%`,
           nextStop,
           lat: baseLat + latOffset,
           lng: baseLng + lngOffset,

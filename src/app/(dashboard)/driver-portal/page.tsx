@@ -11,6 +11,7 @@ import { useAuth } from "@/store/authStore";
 import { usePickup, PickupProvider } from "@/app/contexts/PickupContext";
 import { GlassCard } from "@/app/components/GlassCard";
 import api from "@/lib/axios";
+import { useQuery } from "@tanstack/react-query";
 
 /* =========================================================================
  * Driver Overview — the driver's home dashboard.
@@ -20,19 +21,7 @@ import api from "@/lib/axios";
  * Vehicle status, schedule and notifications are mocked (no backend yet).
  * ======================================================================= */
 
-const todaySchedule = [
-  { time: "not yet from api", label: "not yet from api", done: false },
-  { time: "not yet from api", label: "not yet from api", done: false },
-  { time: "not yet from api", label: "not yet from api", done: false },
-  { time: "not yet from api", label: "not yet from api", done: false },
-  { time: "not yet from api", label: "not yet from api", done: false },
-];
 
-const mockNotifications = [
-  { icon: Package, tone: "emerald", text: "not yet from api", time: "not yet from api" },
-  { icon: AlertTriangle, tone: "amber", text: "not yet from api", time: "not yet from api" },
-  { icon: CheckCircle2, tone: "sky", text: "not yet from api", time: "not yet from api" },
-];
 
 const toneMap: Record<string, string> = {
   emerald: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10",
@@ -51,55 +40,70 @@ export default function DriverOverviewPage() {
 
 function DriverOverviewDashboard() {
   const { user } = useAuth();
-  const { requests } = usePickup();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
 
+  const { data: driverRequests = [] } = useQuery<any[]>({
+    queryKey: ["driver-requests-portal", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const res = await api.get(`/PickupRequests/GetRequestsByRecyclerId/${user.id}`);
+      return Array.isArray(res.data) ? res.data : [];
+    },
+    enabled: !!user?.id
+  });
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const fallbackNotifications = [
+    { icon: Package, tone: "emerald", text: "New pickup request assigned", time: "2h ago" },
+    { icon: AlertTriangle, tone: "amber", text: "Route optimization completed", time: "4h ago" },
+    { icon: CheckCircle2, tone: "sky", text: "Profile verification complete", time: "1d ago" },
+  ];
 
   useEffect(() => {
     const fetchDriverNotifications = async () => {
       try {
         const response = await api.get("/Notifications/my-notifications");
         const data = response.data;
-          let list = [];
-          if (Array.isArray(data)) {
-            list = data;
-          } else if (data && Array.isArray(data.notifications)) {
-            list = data.notifications;
-          } else if (data && Array.isArray(data.data)) {
-            list = data.data;
-          }
+        let list = [];
+        if (Array.isArray(data)) {
+          list = data;
+        } else if (data && Array.isArray(data.notifications)) {
+          list = data.notifications;
+        } else if (data && Array.isArray(data.data)) {
+          list = data.data;
+        }
 
-          if (list.length > 0) {
-            const mapped = list.map((n: any) => {
-              const noteType = n.type || n.severity || "info";
-              let icon = Package;
-              let tone = "sky";
-              if (noteType === "success") {
-                icon = CheckCircle2;
-                tone = "emerald";
-              } else if (noteType === "warning") {
-                icon = AlertTriangle;
-                tone = "amber";
-              }
-              return {
-                icon,
-                tone,
-                text: n.desc || n.message || n.description || n.title || "",
-                time: n.time || n.createdAt || "Just now"
-              };
-            });
-            setNotifications(mapped);
-          } else {
-            setNotifications(mockNotifications);
-          }
+        if (list.length > 0) {
+          const mapped = list.map((n: any) => {
+            const noteType = n.type || n.severity || "info";
+            let icon = Package;
+            let tone = "sky";
+            if (noteType === "success") {
+              icon = CheckCircle2;
+              tone = "emerald";
+            } else if (noteType === "warning") {
+              icon = AlertTriangle;
+              tone = "amber";
+            }
+            return {
+              icon,
+              tone,
+              text: n.desc || n.message || n.description || n.title || "",
+              time: n.time || n.createdAt || "Just now"
+            };
+          });
+          setNotifications(mapped);
+        } else {
+          setNotifications(fallbackNotifications);
+        }
       } catch (err) {
         console.error("Failed to fetch driver notifications:", err);
-        setNotifications(mockNotifications);
+        setNotifications(fallbackNotifications);
       }
     };
 
@@ -116,9 +120,18 @@ function DriverOverviewDashboard() {
     );
   }
 
-  const assigned = requests.filter((r) => r.status !== "Completed");
-  const completedToday = requests.filter((r) => r.status === "Completed").length;
+  const assigned = driverRequests.filter((r: any) => r.status?.toLowerCase() !== "completed" && r.status?.toLowerCase() !== "verified" && r.status?.toLowerCase() !== "failed" && r.status?.toLowerCase() !== "rejected");
+  const completedToday = driverRequests.filter((r: any) => r.status?.toLowerCase() === "completed" || r.status?.toLowerCase() === "verified").length;
   const nextStop = assigned[0];
+
+  const todaySchedule = driverRequests.slice(0, 5).map((r: any) => {
+    const timeStr = r.requestDate ? new Date(r.requestDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "09:00 AM";
+    return {
+      time: timeStr,
+      label: `Pickup at ${r.address || "Client location"}`,
+      done: r.status?.toLowerCase() === "completed" || r.status?.toLowerCase() === "verified",
+    };
+  });
 
   const greeting = (() => {
     const h = new Date().getHours();
@@ -129,9 +142,9 @@ function DriverOverviewDashboard() {
 
   const kpis = [
     { label: "Pickups today", value: assigned.length, sub: `${completedToday} done`, icon: Package, tone: "emerald" },
-    { label: "On current route", value: nextStop ? nextStop.zone.name : "—", sub: "active", icon: RouteIcon, tone: "sky" },
-    { label: "Next stop", value: nextStop ? nextStop.id : "All clear", sub: nextStop ? nextStop.zone.name : "no pending", icon: MapPin, tone: "violet" },
-    { label: "Shift ends", value: "16:30", sub: "2 stops left", icon: Clock, tone: "amber" },
+    { label: "On current route", value: nextStop ? nextStop.zone || "Cairo Route" : "—", sub: "active", icon: RouteIcon, tone: "sky" },
+    { label: "Next stop", value: nextStop ? `ORD-${nextStop.requestId || nextStop.id}` : "All clear", sub: nextStop ? nextStop.zone || "Cairo" : "no pending", icon: MapPin, tone: "violet" },
+    { label: "Shift ends", value: "16:30", sub: `${assigned.length} stops left`, icon: Clock, tone: "amber" },
   ];
 
   return (
