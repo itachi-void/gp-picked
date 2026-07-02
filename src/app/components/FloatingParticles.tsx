@@ -1,52 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Particles, { initParticlesEngine } from "@tsparticles/react";
+import { loadSlim } from "@tsparticles/slim";
 
 export default function FloatingParticles() {
-  const [Particles, setParticles] = useState<any>(null);
-  const [ready, setReady] = useState(false);
-  const containerRef = useRef<any>(null);
+  const [init, setInit] = useState(false);
 
-  // حمّل المكتبة والمحرك بشكل ديناميكي
+  // Initialize the particles engine once
   useEffect(() => {
-    let mounted = true;
-
-    const loadParticles = async () => {
-      try {
-        // Dynamic imports for better code splitting
-        const [particlesModule, engineModule, slimModule] = await Promise.all([
-          import("@tsparticles/react"),
-          import("@tsparticles/engine"),
-          import("@tsparticles/slim"),
-        ]);
-
-        if (!mounted) return;
-
-        // Initialize the engine
-        await particlesModule.initParticlesEngine(async (engine) => {
-          await slimModule.loadSlim(engine);
-        });
-
-        if (!mounted) return;
-
-        setParticles(() => particlesModule.default);
-        setReady(true);
-      } catch (error) {
-        console.error("Failed to load particles:", error);
-        setReady(false);
-      }
-    };
-
-    loadParticles();
-
-    return () => {
-      mounted = false;
-      setReady(false);
-      setParticles(null);
-    };
+    initParticlesEngine(async (engine) => {
+      await loadSlim(engine);
+    }).then(() => {
+      setInit(true);
+    });
   }, []);
 
-  // طبقة الخلفية الهادئة
+  // background options
   const bgOptions = useMemo(
     () => ({
       fullScreen: { enable: true, zIndex: 1 },
@@ -69,7 +39,7 @@ export default function FloatingParticles() {
     [],
   );
 
-  // طبقة المقدّمة الناعمة
+  // foreground options
   const fgOptions = useMemo(
     () => ({
       fullScreen: { enable: true, zIndex: 2 },
@@ -99,7 +69,7 @@ export default function FloatingParticles() {
     [],
   );
 
-  if (!ready || !Particles) return null;
+  if (!init) return null;
 
   return (
     <>
