@@ -31,6 +31,22 @@ import { GlassCard } from "@/app/components/GlassCard";
 import { accentMap } from "@/app/utils/accent";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import api from "@/lib/axios";
+import { Field, FieldLabel } from "@/components/ui/field";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export type DriverStatus = "active" | "available" | "inactive" | "on-leave";
 
@@ -77,10 +93,11 @@ export default function DriversListPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | DriverStatus>("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(8);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterStatus]);
+  }, [searchTerm, filterStatus, itemsPerPage]);
   const [driverToView, setDriverToView] = useState<Driver | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -218,7 +235,6 @@ export default function DriversListPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const itemsPerPage = 8;
   const totalPages = Math.ceil(filteredDrivers.length / itemsPerPage);
   const paginatedDrivers = filteredDrivers.slice(
     (currentPage - 1) * itemsPerPage,
@@ -447,24 +463,43 @@ export default function DriversListPage() {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between p-4 bg-white/60 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-2xl">
-          <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            className="px-4 py-2 text-sm font-semibold bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full text-slate-700 dark:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-white/10 transition-all cursor-pointer"
-          >
-            Previous
-          </button>
-          <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            className="px-4 py-2 text-sm font-semibold bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full text-slate-700 dark:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-white/10 transition-all cursor-pointer"
-          >
-            Next
-          </button>
+        <div className="flex items-center justify-between p-4 bg-white/60 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-2xl gap-4 flex-wrap">
+          <Field orientation="horizontal" className="w-fit">
+            <FieldLabel htmlFor="select-rows-per-page">Drivers per page</FieldLabel>
+            <Select value={String(itemsPerPage)} onValueChange={(val) => { setItemsPerPage(Number(val)); setCurrentPage(1); }}>
+              <SelectTrigger className="w-20" id="select-rows-per-page">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="start">
+                <SelectGroup>
+                  <SelectItem value="4">4</SelectItem>
+                  <SelectItem value="8">8</SelectItem>
+                  <SelectItem value="12">12</SelectItem>
+                  <SelectItem value="24">24</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
+
+          <Pagination className="mx-0 w-auto">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                />
+              </PaginationItem>
+              <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 px-3 select-none">
+                Page {currentPage} of {totalPages}
+              </span>
+              <PaginationItem>
+                <PaginationNext
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
         </>
