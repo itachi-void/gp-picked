@@ -45,7 +45,6 @@ interface FleetTruck {
   driver: string;
   status: TruckStatus;
   zone: string;
-  fuel: number | string;
   nextStop: string;
   lat: number;
   lng: number;
@@ -184,7 +183,7 @@ export default function FleetMapPage() {
           driver: d.fullName || "Driver",
           status: normalizeStatus(d.status),
           zone,
-          fuel: "not yet from api",
+
           nextStop,
           lat: baseLat + latOffset,
           lng: baseLng + lngOffset,
@@ -210,18 +209,12 @@ export default function FleetMapPage() {
         const raw = JSON.parse(event.data);
         const lat = Number(raw.Latitude || raw.latitude);
         const lng = Number(raw.Longitude || raw.longitude);
-        const capacity = raw.Capacity !== undefined ? raw.Capacity : raw.capacity;
         
         if (!isNaN(lat) && !isNaN(lng)) {
           setTrucks((prev) =>
             prev.map((t) => {
               if (t.id === selectedTruck) {
-                return {
-                  ...t,
-                  lat,
-                  lng,
-                  fuel: capacity !== undefined ? `${capacity}%` : t.fuel,
-                };
+                return { ...t, lat, lng };
               }
               return t;
             })
@@ -522,10 +515,6 @@ export default function FleetMapPage() {
                         <span className="flex items-center gap-1">
                           <MapPin className="w-3 h-3" />
                           {t.zone}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Fuel className="w-3 h-3" />
-                          {t.fuel}
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">

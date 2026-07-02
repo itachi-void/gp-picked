@@ -12,7 +12,6 @@ interface FleetTruck {
   driver: string;
   status: TruckStatus;
   zone: string;
-  fuel: number | string;
   nextStop: string;
   lat: number;
   lng: number;

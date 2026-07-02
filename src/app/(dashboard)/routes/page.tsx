@@ -62,7 +62,7 @@ export default function RoutesPage() {
 
   const canManage = !(currentRole === "citizen" || currentRole === "driver" || currentRole === "recycler");
 
-  const { data: fetchedRoutes = [], isLoading: loading } = useQuery<Route[]>({
+  const { data: fetchedRoutes, isLoading: loading } = useQuery<Route[]>({
     queryKey: ["routes-list"],
     queryFn: async () => {
       const res = await api.get("/admin/recyclers-details");
