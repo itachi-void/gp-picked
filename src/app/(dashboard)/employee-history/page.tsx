@@ -12,30 +12,29 @@ import {
 } from "lucide-react";
 import "@/app/components/motion/motion-components.css";
 
-interface UserInfo {
-  fullName: string;
-  email: string;
-}
-
-interface RecyclerInfo {
-  fullName: string;
-}
-
-interface PickupRequest {
-  requestId: number;
-  status: string;
-  finalBottlesCount: number | null;
-  finalPoints: number;
+interface VerifiedRequest {
+  requestID: number;
+  userID: number;
   requestDate: string;
-  user?: UserInfo | null;
-  recycler?: RecyclerInfo | null;
+  verificationDate: string;
+  status: string;
+  finalPoints: number;
+  finalBottlesCount: number;
+  verificationImageUrl: string;
 }
 
-interface HubStaffProfile {
-  staffId: number;
-  fullName: string;
-  role: string;
-  pickupRequests: PickupRequest[];
+interface HubStaffHistoryResponse {
+  requestID: number;
+  userID: number;
+  requestDate: string | null;
+  verificationDate: string | null;
+  status: string | null;
+  finalPoints: number | null;
+  finalBottlesCount: number | null;
+  verificationImageUrl: string | null;
+  totalVerifiedRequests: number;
+  totalBottlesVerified: number;
+  verifiedRequests: VerifiedRequest[];
 }
 
 export default function EmployeeHistoryPage() {
@@ -46,40 +45,40 @@ export default function EmployeeHistoryPage() {
 
   const employeeId = user?.id || 1;
 
-  const { data: staffProfile, isLoading } = useQuery<HubStaffProfile>({
-    queryKey: ["hubStaffProfile", employeeId],
+  const { data: historyData, isLoading } = useQuery<HubStaffHistoryResponse>({
+    queryKey: ["hubStaffHistory", employeeId],
     queryFn: async () => {
       try {
-        const response = await api.get<HubStaffProfile>(`/HubStaff/${employeeId}`);
-        if (response.data && response.data.pickupRequests && response.data.pickupRequests.length > 0) {
+        const response = await api.get<HubStaffHistoryResponse>(`/HubStaff/${employeeId}/history`);
+        if (response.data && response.data.verifiedRequests?.length > 0) {
           return response.data;
         }
       } catch (e) {
-        console.error(`Failed to fetch profile for employee ID ${employeeId}:`, e);
+        console.error(`Failed to fetch history for employee ID ${employeeId}:`, e);
       }
 
       // Fallback to ID 1 if current ID fails or has no history
       if (employeeId !== 1) {
         try {
-          const fallbackResponse = await api.get<HubStaffProfile>(`/HubStaff/1`);
+          const fallbackResponse = await api.get<HubStaffHistoryResponse>(`/HubStaff/1/history`);
           return fallbackResponse.data;
         } catch (err) {
-          console.error("Failed to fetch fallback profile for employee ID 1:", err);
+          console.error("Failed to fetch fallback history for employee ID 1:", err);
         }
       }
 
-      return { staffId: employeeId, fullName: user?.name || "Employee", role: "HubStaff", pickupRequests: [] };
+      return { requestID: 0, userID: 0, requestDate: null, verificationDate: null, status: null, finalPoints: null, finalBottlesCount: null, verificationImageUrl: null, totalVerifiedRequests: 0, totalBottlesVerified: 0, verifiedRequests: [] };
     },
     enabled: !!employeeId,
   });
 
-  const historyItems = staffProfile?.pickupRequests || [];
+  const historyItems: VerifiedRequest[] = historyData?.verifiedRequests || [];
 
   // Filter history logs based on search and status filters
   const filteredHistory = historyItems.filter((item) => {
-    const orderNoStr = `EV-${item.requestId}`;
-    const clientName = item.user?.fullName || "N/A";
-    const driverName = item.recycler?.fullName || "N/A";
+    const orderNoStr = `EV-${item.requestID}`;
+    const clientName = `User #${item.userID || ""}`;
+    const driverName = "";
 
     const matchesSearch =
       orderNoStr.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -101,12 +100,12 @@ export default function EmployeeHistoryPage() {
   });
 
   // Calculate statistics from the backend response
-  const totalCount = historyItems.length;
+  const totalCount = historyData?.totalVerifiedRequests || historyItems.length;
   const approvedCount = historyItems.filter(
-    (item) => item.status.toLowerCase() === "completed" || item.status.toLowerCase() === "verified"
+    (item) => item.status.toLowerCase() === "verified" || item.status.toLowerCase() === "completed"
   ).length;
   const rejectedCount = historyItems.filter(
-    (item) => item.status.toLowerCase() === "failed" || item.status.toLowerCase() === "rejected"
+    (item) => item.status.toLowerCase() === "rejected" || item.status.toLowerCase() === "failed"
   ).length;
 
   if (isLoading) {
@@ -290,30 +289,30 @@ export default function EmployeeHistoryPage() {
                   const itemStatus = item.status.toLowerCase();
 
                   return (
-                    <tr key={item.requestId} className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
+                    <tr key={item.requestID} className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
                       <td className="px-6 py-4">
-                        <span className="font-mono text-slate-900 dark:text-slate-100 font-bold">EV-{item.requestId}</span>
+                        <span className="font-mono text-slate-900 dark:text-slate-100 font-bold">EV-{item.requestID}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="font-semibold text-slate-800 dark:text-slate-100">{item.user?.fullName || "N/A"}</div>
+                        <div className="font-semibold text-slate-800 dark:text-slate-100">User #{item.userID || "N/A"}</div>
                       </td>
-                      <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{item.recycler?.fullName || "N/A"}</td>
+                      <td className="px-6 py-4 text-slate-600 dark:text-slate-300">—</td>
                       <td className="px-6 py-4">
                         <div className="text-slate-800 dark:text-slate-200">{dateStr}</div>
                         <div className="text-xs text-slate-400">{timeStr}</div>
                       </td>
                       <td className="px-6 py-4 text-center font-semibold text-slate-800 dark:text-slate-100">
-                        {item.finalBottlesCount !== null ? item.finalBottlesCount : "-"}
+                        {item.finalBottlesCount != null ? item.finalBottlesCount : "-"}
                       </td>
                       <td className="px-6 py-4 text-center font-bold text-slate-900 dark:text-slate-100">
                         +{item.finalPoints}
                       </td>
                       <td className="px-6 py-4">
-                        {itemStatus === "completed" || itemStatus === "verified" ? (
+                        {itemStatus === "verified" || itemStatus === "completed" ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                             <CheckCircle2 className="w-3 h-3" /> Verified
                           </span>
-                        ) : itemStatus === "failed" || itemStatus === "rejected" ? (
+                        ) : itemStatus === "rejected" || itemStatus === "failed" ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-600 dark:text-red-400">
                             <XCircle className="w-3 h-3" /> Rejected
                           </span>

@@ -129,26 +129,13 @@ function PickupRequestsPageContent() {
         for (const id of idsToTry) {
           try {
             const resHistory = await api.get(`/HubStaff/${id}/history`);
-            const data = Array.isArray(resHistory.data)
-              ? resHistory.data
-              : (resHistory.data?.pickupRequests || resHistory.data?.requests || []);
+            const data = resHistory.data?.verifiedRequests || [];
             if (data && data.length > 0) {
               listHistory = data;
               break;
             }
           } catch (e) {
             console.error(`Failed to fetch history for employee ID ${id}:`, e);
-          }
-
-          try {
-            const resProfile = await api.get(`/HubStaff/${id}`);
-            const data = resProfile.data?.pickupRequests || [];
-            if (data && data.length > 0) {
-              listHistory = data;
-              break;
-            }
-          } catch (profileErr) {
-            console.error(`Failed to fetch profile for employee ID ${id}:`, profileErr);
           }
         }
 
