@@ -11,6 +11,16 @@ interface VerificationResultProps {
 }
 
 export function VerificationResult({ result, orderId, onReset, onResolve }: VerificationResultProps) {
+  const isError =
+    result.message?.toLowerCase().includes("error") ||
+    result.message?.toLowerCase().includes("mismatch") ||
+    result.status?.toLowerCase().includes("mismatch");
+
+  const IconComponent = isError ? XCircle : CheckCircle;
+  const alertClasses = isError
+    ? "bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400"
+    : "bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400";
+
   return (
     <div className="mc-fade-in-up">
       <div className="text-center py-4">
@@ -22,8 +32,8 @@ export function VerificationResult({ result, orderId, onReset, onResolve }: Veri
       </div>
 
       {result.message && (
-        <div className="mt-2 max-w-md mx-auto p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold text-center flex items-center justify-center gap-1.5">
-          <XCircle className="w-4 h-4" /> {result.message}
+        <div className={`mt-2 max-w-md mx-auto p-3.5 rounded-xl border text-xs font-bold text-center flex items-center justify-center gap-1.5 ${alertClasses}`}>
+          <IconComponent className="w-4 h-4" /> {result.message}
         </div>
       )}
 
