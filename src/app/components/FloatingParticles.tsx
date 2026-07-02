@@ -7,25 +7,31 @@ import { loadSlim } from "@tsparticles/slim";
 export default function FloatingParticles() {
   const [ready, setReady] = useState(false);
 
-  // 1. الطبقة الثابتة الهادئة (لا تتأثر بالماوس - ألوان فاتحة وخفيفة)
+  // 1. الطبقة الثابتة الهادئة (لا تتأثر بالماوس نهائياً - ألوان فاتحة شفافة مريحة للعين)
   const staticOptions = useMemo(
     () => ({
       fullScreen: { enable: false },
       background: { color: { value: "transparent" } },
+      interactivity: {
+        events: {
+          onHover: { enable: false }, // ملغاة تماماً لمنع الحركة عند مرور الماوس
+          onClick: { enable: false }
+        }
+      },
       particles: {
-        number: { value: 80 },
-        color: { value: ["#38bdf8", "#4ade80", "#fef08a"] },
+        number: { value: 45 },
+        color: { value: ["#a7f3d0", "#bae6fd", "#ccfbf1"] },
         paint: {
           fill: {
             enable: true,
-            color: { value: ["#38bdf8", "#4ade80", "#fef08a"] },
+            color: { value: ["#a7f3d0", "#bae6fd", "#ccfbf1"] },
           },
         },
         size: { value: { min: 1, max: 4 } },
-        opacity: { value: 0.22 },
+        opacity: { value: 0.18 }, // شفافة وخفيفة جداً
         move: {
           enable: true,
-          speed: 0.35,
+          speed: 0.35, // حركة هادئة وبطيئة للغاية
           random: true,
           outModes: { default: "bounce" as const },
         },
@@ -36,7 +42,7 @@ export default function FloatingParticles() {
     [],
   );
 
-  // 2. الطبقة المتوسطة (تتأثر بالماوس - ألوان أغمق)
+  // 2. الطبقة المتوسطة (تتأثر بالماوس - ألوان مريحة للعين)
   const bgOptions = useMemo(
     () => ({
       fullScreen: { enable: false },
@@ -48,19 +54,19 @@ export default function FloatingParticles() {
         },
       },
       particles: {
-        number: { value: 90 },
-        color: { value: ["#0284c7", "#16a34a"] },
+        number: { value: 35 }, // تقليل العدد لراحة العين
+        color: { value: ["#059669", "#0d9488", "#0284c7"] },
         paint: {
           fill: {
             enable: true,
-            color: { value: ["#0284c7", "#16a34a"] },
+            color: { value: ["#059669", "#0d9488", "#0284c7"] },
           },
         },
         size: { value: { min: 2, max: 5 } },
-        opacity: { value: 0.55 },
+        opacity: { value: 0.45 },
         move: {
           enable: true,
-          speed: 0.6,
+          speed: 0.55,
           random: true,
           outModes: { default: "bounce" as const },
         },
@@ -71,7 +77,7 @@ export default function FloatingParticles() {
     [],
   );
 
-  // 3. طبقة المقدمة التفاعلية (تتأثر بالماوس - ألوان داكنة وقوية)
+  // 3. طبقة المقدمة التفاعلية (تتأثر بالماوس - ألوان مريحة متناسقة)
   const fgOptions = useMemo(
     () => ({
       fullScreen: { enable: false },
@@ -84,19 +90,19 @@ export default function FloatingParticles() {
         },
       },
       particles: {
-        number: { value: 90 },
-        color: { value: ["#15803d", "#d97706", "#b91c1c"] },
+        number: { value: 35 }, // تقليل العدد لراحة العين
+        color: { value: ["#047857", "#0f766e", "#0369a1"] },
         paint: {
           fill: {
             enable: true,
-            color: { value: ["#15803d", "#d97706", "#b91c1c"] },
+            color: { value: ["#047857", "#0f766e", "#0369a1"] },
           },
         },
-        size: { value: { min: 3, max: 10 } },
-        opacity: { value: { min: 0.75, max: 0.95 } },
+        size: { value: { min: 3, max: 9 } },
+        opacity: { value: { min: 0.65, max: 0.85 } },
         move: {
           enable: true,
-          speed: 1.2,
+          speed: 1.0,
           random: true,
           outModes: { default: "bounce" as const },
         },
