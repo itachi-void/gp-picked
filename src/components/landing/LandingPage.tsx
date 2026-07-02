@@ -242,7 +242,7 @@ export default function LandingPage() {
               </button>
             </div>
 
-            <div className="animate-fade-in-up mt-8 flex flex-col items-center gap-3" style={{ animationDelay: "0.8s" }}>
+            {/* <div className="animate-fade-in-up mt-8 flex flex-col items-center gap-3" style={{ animationDelay: "0.8s" }}>
               <p className="text-xs uppercase tracking-[3px] text-slate-400 font-bold">
                 Try the Lamp concepts
               </p>
@@ -264,7 +264,7 @@ export default function LandingPage() {
                   </Link>
                 ))}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>
