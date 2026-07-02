@@ -1,22 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Particles, { initParticlesEngine } from "@tsparticles/react";
+import React, { useMemo, useState } from "react";
+import Particles, { ParticlesProvider } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
 
 export default function FloatingParticles() {
-  const [init, setInit] = useState(false);
+  const [ready, setReady] = useState(false);
 
-  // Initialize the particles engine once
-  useEffect(() => {
-    initParticlesEngine(async (engine) => {
-      await loadSlim(engine);
-    }).then(() => {
-      setInit(true);
-    });
-  }, []);
-
-  // background options
+  // طبقة الخلفية الهادئة
   const bgOptions = useMemo(
     () => ({
       fullScreen: { enable: true, zIndex: 1 },
@@ -39,7 +30,7 @@ export default function FloatingParticles() {
     [],
   );
 
-  // foreground options
+  // طبقة المقدّمة الناعمة
   const fgOptions = useMemo(
     () => ({
       fullScreen: { enable: true, zIndex: 2 },
@@ -69,20 +60,27 @@ export default function FloatingParticles() {
     [],
   );
 
-  if (!init) return null;
-
   return (
-    <>
-      <Particles
-        id="tsparticles-bg"
-        className="pointer-events-none soft-layer"
-        options={bgOptions}
-      />
-      <Particles
-        id="tsparticles-fg"
-        className="pointer-events-none soft-layer"
-        options={fgOptions}
-      />
-    </>
+    <ParticlesProvider
+      init={async (engine) => {
+        await loadSlim(engine);
+        setReady(true);
+      }}
+    >
+      {ready && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <Particles
+            id="tsparticles-bg"
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            options={bgOptions}
+          />
+          <Particles
+            id="tsparticles-fg"
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            options={fgOptions}
+          />
+        </div>
+      )}
+    </ParticlesProvider>
   );
 }
