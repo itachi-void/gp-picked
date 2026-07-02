@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Shield, Truck, UserCircle2, Users, Mail, Calendar, MoreHorizontal } from "lucide-react";
 import { GlassCard } from "@/app/components/GlassCard";
 import api from "@/lib/axios";
+import { useRoleContext } from "@/contexts/RoleContext";
+import { useRouter } from "next/navigation";
 
 type Role = "admin" | "driver" | "citizen" | "employee";
 
@@ -60,8 +62,17 @@ function mapApiUser(item: any): User {
 }
 
 export default function UsersPage() {
+  const { role } = useRoleContext();
+  const router = useRouter();
+  useEffect(() => {
+    if (role && !["Admin", "Manager"].includes(role)) {
+      router.replace("/overview");
+    }
+  }, [role, router]);
+
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<Role | "all">("all");
+  if (role && !["Admin", "Manager"].includes(role)) return null;
 
   const { data: rawData = [], isLoading } = useQuery<any[]>({
     queryKey: ["adminUsers"],

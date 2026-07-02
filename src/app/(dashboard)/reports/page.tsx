@@ -31,7 +31,7 @@ import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import { exportToCsv } from "@/app/utils/exportCsv";
 import { GlassCard } from "@/app/components/GlassCard";
-import PremiumDownloadButton from "@/app/components/PremiumDownloadButton";
+import PremiumDownloadButton from "@/app/components/auth/PremiumDownloadButton";
 import { accentMap } from "@/app/utils/accent";
 import EmptyState from "@/app/components/EmptyState";
 import api from "@/lib/axios";
