@@ -10,7 +10,7 @@ export default function FloatingParticles() {
   // طبقة الخلفية الهادئة
   const bgOptions = useMemo(
     () => ({
-      fullScreen: { enable: true, zIndex: 1 },
+      fullScreen: { enable: false },
       background: { color: { value: "transparent" } },
       particles: {
         number: { value: 70 },
@@ -33,7 +33,7 @@ export default function FloatingParticles() {
   // طبقة المقدّمة الناعمة
   const fgOptions = useMemo(
     () => ({
-      fullScreen: { enable: true, zIndex: 2 },
+      fullScreen: { enable: false },
       background: { color: { value: "transparent" } },
       interactivity: {
         events: { onHover: { enable: true, mode: ["repulse", "slow"] } },
