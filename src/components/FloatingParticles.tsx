@@ -7,25 +7,25 @@ import { loadSlim } from "@tsparticles/slim";
 export default function FloatingParticles() {
   const [ready, setReady] = useState(false);
 
-  // طبقة الخلفية الهادئة
-  const bgOptions = useMemo(
+  // 1. الطبقة الثابتة الهادئة (لا تتأثر بالماوس - ألوان فاتحة وخفيفة)
+  const staticOptions = useMemo(
     () => ({
       fullScreen: { enable: false },
       background: { color: { value: "transparent" } },
       particles: {
-        number: { value: 150 },
-        color: { value: ["#0ea5e9", "#22c55e"] },
+        number: { value: 80 },
+        color: { value: ["#38bdf8", "#4ade80", "#fef08a"] },
         paint: {
           fill: {
             enable: true,
-            color: { value: ["#0ea5e9", "#22c55e"] },
+            color: { value: ["#38bdf8", "#4ade80", "#fef08a"] },
           },
         },
         size: { value: { min: 1, max: 4 } },
-        opacity: { value: 0.35 },
+        opacity: { value: 0.22 },
         move: {
           enable: true,
-          speed: 0.4,
+          speed: 0.35,
           random: true,
           outModes: { default: "bounce" as const },
         },
@@ -36,7 +36,42 @@ export default function FloatingParticles() {
     [],
   );
 
-  // طبقة المقدّمة الناعمة
+  // 2. الطبقة المتوسطة (تتأثر بالماوس - ألوان أغمق)
+  const bgOptions = useMemo(
+    () => ({
+      fullScreen: { enable: false },
+      background: { color: { value: "transparent" } },
+      interactivity: {
+        events: { onHover: { enable: true, mode: "repulse" } },
+        modes: {
+          repulse: { distance: 150, duration: 0.8, speed: 0.3 },
+        },
+      },
+      particles: {
+        number: { value: 90 },
+        color: { value: ["#0284c7", "#16a34a"] },
+        paint: {
+          fill: {
+            enable: true,
+            color: { value: ["#0284c7", "#16a34a"] },
+          },
+        },
+        size: { value: { min: 2, max: 5 } },
+        opacity: { value: 0.55 },
+        move: {
+          enable: true,
+          speed: 0.6,
+          random: true,
+          outModes: { default: "bounce" as const },
+        },
+        shape: { type: ["circle", "triangle"] },
+      },
+      detectRetina: true,
+    }),
+    [],
+  );
+
+  // 3. طبقة المقدمة التفاعلية (تتأثر بالماوس - ألوان داكنة وقوية)
   const fgOptions = useMemo(
     () => ({
       fullScreen: { enable: false },
@@ -49,19 +84,19 @@ export default function FloatingParticles() {
         },
       },
       particles: {
-        number: { value: 150 },
-        color: { value: ["#22c55e", "#f59e0b", "#ef4444"] },
+        number: { value: 90 },
+        color: { value: ["#15803d", "#d97706", "#b91c1c"] },
         paint: {
           fill: {
             enable: true,
-            color: { value: ["#22c55e", "#f59e0b", "#ef4444"] },
+            color: { value: ["#15803d", "#d97706", "#b91c1c"] },
           },
         },
         size: { value: { min: 3, max: 10 } },
-        opacity: { value: { min: 0.7, max: 1 } },
+        opacity: { value: { min: 0.75, max: 0.95 } },
         move: {
           enable: true,
-          speed: 1.3,
+          speed: 1.2,
           random: true,
           outModes: { default: "bounce" as const },
         },
@@ -81,6 +116,11 @@ export default function FloatingParticles() {
     >
       {ready && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-30">
+          <Particles
+            id="tsparticles-static"
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            options={staticOptions}
+          />
           <Particles
             id="tsparticles-bg"
             className="absolute inset-0 w-full h-full pointer-events-none"
