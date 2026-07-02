@@ -53,12 +53,7 @@ interface Report {
 
 const initialReportsData: Report[] = [];
 
-const reportTemplates = [
-  { name: "Collection Summary", type: "collection" as const, icon: BarChart3, accent: "emerald", description: "Overview of collection activities" },
-  { name: "Financial Report", type: "financial" as const, icon: PieChart, accent: "teal", description: "Revenue and expense analysis" },
-  { name: "Performance Metrics", type: "performance" as const, icon: TrendingUp, accent: "violet", description: "KPIs and performance tracking" },
-  { name: "Compliance Report", type: "compliance" as const, icon: FileText, accent: "amber", description: "Regulatory compliance status" },
-];
+const reportTemplates: { name: string; type: "collection" | "financial" | "performance" | "compliance"; icon: any; accent: string; description: string }[] = [];
 
 export default function ReportsPage() {
   const { resolvedTheme } = useTheme();
@@ -602,7 +597,10 @@ export default function ReportsPage() {
                 <div>
                   <label className="block text-sm text-slate-700 dark:text-slate-300 mb-2 font-semibold" style={{ fontWeight: 600 }}>Report Type</label>
                   <div className="grid grid-cols-2 gap-3">
-                    {reportTemplates.map((template) => {
+                    {reportTemplates.length === 0 ? (
+                      <div className="col-span-2 text-center py-8 text-slate-400 text-sm">not yet from api</div>
+                    ) : (
+                    reportTemplates.map((template) => {
                       const Icon = template.icon;
                       const isSelected = reportForm.type === template.type;
                       const a = accentMap[template.accent] || { bg: "bg-emerald-500/10", fg: "text-emerald-600" };
@@ -627,7 +625,8 @@ export default function ReportsPage() {
                           </div>
                         </button>
                       );
-                    })}
+                    })
+                    )}
                   </div>
                 </div>
 

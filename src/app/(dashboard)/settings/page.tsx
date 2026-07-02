@@ -30,6 +30,7 @@ import { useNotifications } from "@/app/contexts/NotificationContext";
 import { exportToCsv } from "@/app/utils/exportCsv";
 import { GlassCard } from "@/app/components/GlassCard";
 import { accentMap } from "@/app/utils/accent";
+import api from "@/lib/axios";
 
 type Tab = "profile" | "notifications" | "security" | "appearance" | "data";
 
@@ -53,8 +54,8 @@ export default function SettingsPage() {
   const [profile, setProfile] = useLocalStorage<ProfileSettings>("ecovoid_settings_profile", {
     name: user?.name ?? "Admin User",
     email: user?.email ?? "admin@ecovoid.io",
-    phone: "+20 100 555 1212",
-    location: "Cairo, Egypt",
+    phone: "not yet from api",
+    location: "not yet from api",
   });
   const [notifications, setNotifications] = useLocalStorage<NotificationSettings>(
     "ecovoid_settings_notifications",
@@ -67,15 +68,82 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Show preview first
     const reader = new FileReader();
     reader.onload = () => {
       setAvatar(reader.result as string);
-      toast.success("Photo updated");
     };
     reader.readAsDataURL(file);
+
+    // Call API
+    const userId = user?.id || 1;
+    const formData = new FormData();
+    formData.append("ProfilePicture", file);
+
+    try {
+      await api.put(`/User/UpdateProfilePicture/${userId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      toast.success("Profile picture updated successfully");
+      addNotification({
+        title: "Profile photo updated",
+        body: "Your profile picture was changed.",
+        severity: "success",
+        icon: "User",
+        link: "/settings",
+      });
+    } catch (err: any) {
+      console.error("Failed to upload profile picture:", err);
+      toast.error(err.response?.data?.message || "Failed to upload photo");
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user) {
+      toast.error("User session not found");
+      return;
+    }
+    const userId = user.id || 1;
+    const isRecycler = String(user.role).toLowerCase() === "driver" || String(user.role).toLowerCase() === "recycler";
+
+    try {
+      if (isRecycler) {
+        const payload = {
+          fullName: profile.name,
+          phone: profile.phone.replace(/\s+/g, ""),
+          vehicleInfo: "Truck ID 1", // Vehicle info fallback
+        };
+        await api.put(`/Recycler/update/${userId}`, payload);
+      } else {
+        const payload = {
+          id: userId,
+          fullName: profile.name,
+          address: profile.location.length >= 30 ? profile.location : profile.location.padEnd(30, " "),
+        };
+        await api.put(`/User/UpdateUser/${userId}`, payload);
+      }
+      
+      // Save local storage
+      setProfile(profile);
+
+      toast.success("Profile updated successfully");
+      addNotification({
+        title: "Profile updated",
+        body: "Your profile details were updated.",
+        severity: "success",
+        icon: "User",
+        link: "/settings",
+      });
+    } catch (err: any) {
+      console.error("Failed to update profile details:", err);
+      toast.error(err.response?.data?.message || "Failed to update profile details");
+    }
   };
 
   const handleUpdatePassword = () => {
@@ -264,7 +332,7 @@ export default function SettingsPage() {
 
               <div className="flex gap-2">
                 <button
-                  onClick={() => toast.success("Settings saved")}
+                  onClick={handleSaveProfile}
                   className="flex items-center gap-2 px-5 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-sm transition-colors cursor-pointer"
                 >
                   <Save className="w-4 h-4" /> Save
@@ -274,8 +342,8 @@ export default function SettingsPage() {
                     setProfile({
                       name: user?.name ?? "Admin User",
                       email: user?.email ?? "admin@ecovoid.io",
-                      phone: "+20 100 555 1212",
-                      location: "Cairo, Egypt",
+                      phone: "not yet from api",
+                      location: "not yet from api",
                     });
                     toast.info("Reset to defaults");
                   }}

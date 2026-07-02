@@ -27,18 +27,7 @@ import {
 } from "lucide-react";
 
 /* Progression Levels from the system design */
-const LEVELS = [
-  { level: 1, title: "Beginner", min: 0, max: 499, perks: ["Access to basic recycling", "10 points per kg"] },
-  { level: 2, title: "Newcomer", min: 500, max: 999, perks: ["Basic recycling", "Badge unlocks", "Community access"] },
-  { level: 3, title: "Contributor", min: 1000, max: 2499, perks: ["12 points per kg", "Priority pickup", "Monthly newsletter"] },
-  { level: 4, title: "Activist", min: 2500, max: 4999, perks: ["15 points per kg", "Exclusive events", "Refer bonuses"] },
-  { level: 5, title: "Champion", min: 5000, max: 9999, perks: ["18 points per kg", "VIP support", "Special merchandise"] },
-  { level: 6, title: "Hero", min: 10000, max: 19999, perks: ["20 points per kg", "Featured in leaderboard", "Monthly rewards"] },
-  { level: 7, title: "Legend", min: 20000, max: 49999, perks: ["25 points per kg", "Exclusive badge", "Ambassador program"] },
-  { level: 8, title: "Master", min: 50000, max: 99999, perks: ["30 points per kg", "Platinum membership", "Direct line support"] },
-  { level: 9, title: "Grand Master", min: 100000, max: 249999, perks: ["35 points per kg", "Elite events", "Consulting opportunities"] },
-  { level: 10, title: "Eco Guardian", min: 250000, max: Infinity, perks: ["40 points per kg", "Lifetime recognition", "Partnership programs"] },
-];
+const LEVELS: { level: number; title: string; min: number; max: number; perks: string[] }[] = [];
 
 export default function CitizenStatsPage() {
   const { user } = useAuth();
@@ -69,6 +58,14 @@ export default function CitizenStatsPage() {
 
   // Calculate progression level details
   const progression = useMemo(() => {
+    if (LEVELS.length === 0) {
+      return {
+        current: { level: 0, title: "not yet from api", min: 0, max: 0, perks: [] },
+        next: { level: 0, title: "", min: 0, max: 0, perks: [] },
+        progress: 0,
+        toNext: 0,
+      };
+    }
     const points = walletPoints;
     const idx = LEVELS.findIndex((l) => points >= l.min && points <= l.max);
     const current = idx >= 0 ? LEVELS[idx] : LEVELS[LEVELS.length - 1];
@@ -122,15 +119,7 @@ export default function CitizenStatsPage() {
     // CO2 trees offset: ~22kg of CO2 is absorbed by 1 mature tree in a year
     const treesEquivalent = co2Saved / 22;
 
-    // Visual monthly data mock based on real values
-    const monthlyData = [
-      { month: "Jan", weight: finalWeight * 0.12, points: Math.round(walletPoints * 0.1) },
-      { month: "Feb", weight: finalWeight * 0.15, points: Math.round(walletPoints * 0.12) },
-      { month: "Mar", weight: finalWeight * 0.18, points: Math.round(walletPoints * 0.15) },
-      { month: "Apr", weight: finalWeight * 0.22, points: Math.round(walletPoints * 0.2) },
-      { month: "May", weight: finalWeight * 0.25, points: Math.round(walletPoints * 0.25) },
-      { month: "Jun", weight: finalWeight * 0.08, points: Math.round(walletPoints * 0.18) },
-    ];
+    const monthlyData: { month: string; weight: number; points: number }[] = [];
 
     return {
       totalPickups: history.length > 0 ? history.length : 8,
@@ -176,10 +165,10 @@ export default function CitizenStatsPage() {
   };
 
   const equivalencies = [
-    { label: "Energy Conserved", value: `${stats.energySaved} kWh`, desc: "Equal to powering an LED bulb for 1,200 hours", icon: Zap, color: "text-amber-500 bg-amber-500/10" },
-    { label: "Driving Distance Offset", value: `${Math.round(stats.co2Saved * 4.1)} km`, desc: "Equal to average car emissions saved", icon: Car, color: "text-sky-500 bg-sky-500/10" },
-    { label: "Carbon Offset", value: `${stats.treesEquivalent} Trees`, desc: "Equivalent yearly carbon absorption of mature trees", icon: Trees, color: "text-green-500 bg-green-500/10" },
-    { label: "Water Pollution Avoided", value: `${stats.waterSaved} L`, desc: "Freshwater saved by recycling plastic bottles", icon: Droplets, color: "text-teal-500 bg-teal-500/10" },
+    { label: "not yet from api", value: "not yet from api", desc: "not yet from api", icon: Zap, color: "text-amber-500 bg-amber-500/10" },
+    { label: "not yet from api", value: "not yet from api", desc: "not yet from api", icon: Car, color: "text-sky-500 bg-sky-500/10" },
+    { label: "not yet from api", value: "not yet from api", desc: "not yet from api", icon: Trees, color: "text-green-500 bg-green-500/10" },
+    { label: "not yet from api", value: "not yet from api", desc: "not yet from api", icon: Droplets, color: "text-teal-500 bg-teal-500/10" },
   ];
 
   if (isWalletLoading || isHistoryLoading) {
@@ -263,6 +252,9 @@ export default function CitizenStatsPage() {
               </div>
 
               {/* Graphical CSS/HTML representation of a Bar Chart */}
+              {stats.monthlyData.length === 0 ? (
+                <div className="flex items-center justify-center h-[220px] text-slate-400 text-sm">not yet from api</div>
+              ) : (
               <div className="h-[220px] flex items-end justify-around gap-2 px-2 border-b border-slate-200 dark:border-white/10 pb-2 relative">
                 {stats.monthlyData.map((data, idx) => {
                   const maxWeight = Math.max(...stats.monthlyData.map((d) => d.weight), 1);
@@ -289,6 +281,7 @@ export default function CitizenStatsPage() {
                   );
                 })}
               </div>
+              )}
             </div>
             
             <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-100 dark:border-white/5">

@@ -133,13 +133,8 @@ export default function SupportTicketsPage() {
         const list = Array.isArray(res.data) ? res.data : [];
         setDrivers(list.map((d: any) => ({ id: d.recyclerID || d.id, name: d.fullName || d.name })));
       } catch (err) {
-        console.log("Using fallback demo drivers list");
-        setDrivers([
-          { id: 1, name: "Ahmed Hassan" },
-          { id: 2, name: "Mike Tyson" },
-          { id: 3, name: "Omar S." },
-          { id: 4, name: "Khaled H." },
-        ]);
+        console.error("Failed to fetch drivers:", err);
+        setDrivers([]);
       }
     };
     if (isCitizen) {

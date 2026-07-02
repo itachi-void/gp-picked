@@ -19,20 +19,12 @@ import { SupportCard } from "./components/SupportCard";
 import { RankCard } from "./components/RankCard";
 
 /* Citizen levels mirror the public progression tiers. */
-const LEVELS = [
-  { level: 1, title: "Beginner", min: 0, max: 499 },
-  { level: 2, title: "Newcomer", min: 500, max: 999 },
-  { level: 3, title: "Contributor", min: 1000, max: 2499 },
-  { level: 4, title: "Activist", min: 2500, max: 4999 },
-  { level: 5, title: "Champion", min: 5000, max: 9999 },
-  { level: 6, title: "Hero", min: 10000, max: 19999 },
-  { level: 7, title: "Legend", min: 20000, max: 49999 },
-  { level: 8, title: "Master", min: 50000, max: 99999 },
-  { level: 9, title: "Grand Master", min: 100000, max: 249999 },
-  { level: 10, title: "Eco Guardian", min: 250000, max: Infinity },
-];
+const LEVELS: { level: number; title: string; min: number; max: number }[] = [];
 
 function levelFor(points: number) {
+  if (LEVELS.length === 0) {
+    return { current: { level: 0, title: "not yet from api", min: 0, max: 0 }, next: { level: 0, title: "", min: 0, max: 0 }, progress: 0, toNext: 0 };
+  }
   const idx = LEVELS.findIndex((l) => points >= l.min && points <= l.max);
   const current = idx >= 0 ? LEVELS[idx] : LEVELS[LEVELS.length - 1];
   const next = LEVELS[Math.min(idx + 1, LEVELS.length - 1)];

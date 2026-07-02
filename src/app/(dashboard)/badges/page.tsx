@@ -16,13 +16,16 @@ import {
   Search,
   Recycle,
   Trash2,
+  Plus,
+  X,
 } from "lucide-react";
 import { useRoleContext } from "@/contexts/RoleContext";
 import { GlassCard } from "@/app/components/GlassCard";
 import { useAuth } from "@/store/authStore";
 import { useUserWallet } from "@/hooks/useUserWallet";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios";
+import { toast } from "sonner";
 
 type Rarity = "common" | "rare" | "epic" | "legendary";
 type Category = "milestone" | "streak" | "recycling" | "special";
@@ -101,13 +104,89 @@ export default function BadgesPage() {
     { id: "badge-009", name: "Early Adopter", description: "Join in the launch month", icon: "heart", category: "special", requirement: "Launch Month member", rarity: "legendary", unlockedBy: usersRank.map(u => u.name) },
   ];
 
-  const { data: wasteCategories = [] } = useQuery<any[]>({
+  const [showCatForm, setShowCatForm] = useState(false);
+  const emptyCatForm = { categoryId: "", categoryName: "", pointsPerUnit: "", unitType: "", imagePathFile: null as File | null };
+  const [catForm, setCatForm] = useState(emptyCatForm);
+
+  const { data: wasteCategories = [], refetch: refetchCategories } = useQuery<any[]>({
     queryKey: ["waste-categories"],
     queryFn: async () => {
       const res = await api.get("/admin/waste-categories");
       return Array.isArray(res.data) ? res.data : [];
     }
   });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (categoryId: number) => {
+      await api.delete("/admin/delete-waste-category", {
+        params: { wasteCategoryId: categoryId },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Waste category deleted successfully");
+      refetchCategories();
+    },
+    onError: (err: any) => {
+      console.error("Failed to delete waste category:", err);
+      toast.error(err.response?.data?.message || "Failed to delete waste category");
+    },
+  });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: async (formData: typeof catForm) => {
+      const multipartData = new FormData();
+      multipartData.append("CategoryId", formData.categoryId);
+      multipartData.append("CategoryName", formData.categoryName);
+      multipartData.append("PointsPerUnit", formData.pointsPerUnit);
+      multipartData.append("UnitType", formData.unitType);
+      if (formData.imagePathFile) {
+        multipartData.append("ImagePath", formData.imagePathFile);
+      }
+
+      await api.post("/admin/create-waste-category", multipartData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Waste category created successfully");
+      refetchCategories();
+      setShowCatForm(false);
+      setCatForm(emptyCatForm);
+    },
+    onError: (err: any) => {
+      console.error("Failed to create waste category:", err);
+      toast.error(err.response?.data?.message || "Failed to create waste category");
+    },
+  });
+
+  const handleDeleteCategory = (categoryId: number) => {
+    if (confirm("Are you sure you want to delete this waste category?")) {
+      deleteCategoryMutation.mutate(categoryId);
+    }
+  };
+
+  const handleCreateCategorySubmit = () => {
+    if (!catForm.categoryId) {
+      toast.error("Category ID is required");
+      return;
+    }
+    if (!catForm.categoryName.trim()) {
+      toast.error("Category Name is required");
+      return;
+    }
+    if (!catForm.pointsPerUnit) {
+      toast.error("Points Per Unit is required");
+      return;
+    }
+    if (!catForm.unitType.trim()) {
+      toast.error("Unit Type is required");
+      return;
+    }
+
+    createCategoryMutation.mutate(catForm);
+  };
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<"all" | Category>("all");
@@ -283,23 +362,43 @@ export default function BadgesPage() {
 
       {wasteCategories.length > 0 && (
         <div className="space-y-4">
-          <div className="mc-fade-in-down flex items-center gap-3 pt-4">
-            <div className="w-10 h-10 bg-emerald-500/10 rounded-2xl flex items-center justify-center">
-              <Recycle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+          <div className="mc-fade-in-down flex items-center justify-between pt-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-500/10 rounded-2xl flex items-center justify-center">
+                <Recycle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <h2 className="text-xl tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 700 }}>
+                  Waste Categories Reference
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                  Point values per waste category from system configuration
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 700 }}>
-                Waste Categories Reference
-              </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                Point values per waste category from system configuration
-              </p>
-            </div>
+            {user?.role === "Admin" && (
+              <button
+                onClick={() => setShowCatForm(true)}
+                className="flex items-center gap-1.5 px-4 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-xs font-bold transition-colors cursor-pointer"
+                style={{ fontWeight: 600 }}
+              >
+                <Plus className="w-4 h-4" /> Add Category
+              </button>
+            )}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {wasteCategories.map((cat: any, i: number) => (
               <div key={cat.categoryName || i} className="mc-card-in" style={{ animationDelay: `${i * 0.05}s` }}>
-                <GlassCard className="p-5">
+                <GlassCard className="p-5 relative group">
+                  {user?.role === "Admin" && (
+                    <button
+                      onClick={() => handleDeleteCategory(cat.categoryId)}
+                      className="absolute top-2 right-2 p-1.5 rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-600 hover:text-white opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                      title="Delete Category"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                   <div className="w-11 h-11 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-3">
                     {cat.imagePath ? (
                       <img src={cat.imagePath} alt={cat.categoryName} className="w-6 h-6 object-contain" />
@@ -314,6 +413,73 @@ export default function BadgesPage() {
                 </GlassCard>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Create Category Modal */}
+      {showCatForm && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#0a0e14] rounded-3xl p-6 max-w-md w-full border border-slate-200 dark:border-white/10 mc-scale-up">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg tracking-tight text-slate-900 dark:text-white font-bold" style={{ fontWeight: 600 }}>Add Waste Category</h2>
+              <button onClick={() => setShowCatForm(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer">
+                <X className="w-5 h-5 text-slate-500" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <label className="block">
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Category ID</span>
+                <input
+                  type="number"
+                  value={catForm.categoryId}
+                  onChange={(e) => setCatForm({ ...catForm, categoryId: e.target.value })}
+                  placeholder="Integer category code (e.g. 5)"
+                  className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+                />
+              </label>
+              <label className="block">
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Category Name</span>
+                <input
+                  value={catForm.categoryName}
+                  onChange={(e) => setCatForm({ ...catForm, categoryName: e.target.value })}
+                  placeholder="e.g. Metal"
+                  className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+                />
+              </label>
+              <label className="block">
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Points Per Unit</span>
+                <input
+                  type="number"
+                  value={catForm.pointsPerUnit}
+                  onChange={(e) => setCatForm({ ...catForm, pointsPerUnit: e.target.value })}
+                  placeholder="Points awarded (e.g. 15)"
+                  className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+                />
+              </label>
+              <label className="block">
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Unit Type</span>
+                <input
+                  value={catForm.unitType}
+                  onChange={(e) => setCatForm({ ...catForm, unitType: e.target.value })}
+                  placeholder="e.g. kg or Item"
+                  className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+                />
+              </label>
+              <label className="block">
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Image Icon</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setCatForm({ ...catForm, imagePathFile: e.target.files?.[0] || null })}
+                  className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                />
+              </label>
+            </div>
+            <div className="mt-6 flex items-center justify-end gap-2">
+              <button onClick={() => setShowCatForm(false)} className="h-10 px-5 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 cursor-pointer">Cancel</button>
+              <button onClick={handleCreateCategorySubmit} className="h-10 px-5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm cursor-pointer font-bold animate-pulse-subtle" style={{ fontWeight: 600 }}>Create Category</button>
+            </div>
           </div>
         </div>
       )}

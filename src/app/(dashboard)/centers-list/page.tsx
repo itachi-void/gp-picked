@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import "@/app/components/motion/motion-components.css";
-import { useQuery, useQueries } from "@tanstack/react-query";
+import { useQuery, useQueries, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { Building2, MapPin, Users, Trash2, Edit, Plus, X, Activity } from "lucide-react";
 import { useRoleContext } from "@/contexts/RoleContext";
@@ -23,6 +23,7 @@ export interface Center {
   status: "active" | "inactive" | "maintenance";
   manager: string;
   contact: string;
+  password?: string;
 }
 
 const statusAccent: Record<string, { bg: string; fg: string; dot: string }> = {
@@ -37,11 +38,42 @@ export default function CentersListPage() {
 
   const [centers, setCenters] = useState<Center[]>([]);  // ١. البيانات
 
-  const { data: rawStaff = [], isLoading: staffLoading } = useQuery<any[]>({
+  const { data: rawStaff = [], isLoading: staffLoading, refetch: refetchStaff } = useQuery<any[]>({
     queryKey: ["hub-staff-all"],
     queryFn: async () => {
       const res = await api.get("/HubStaff/allHubStaff");
       return Array.isArray(res.data) ? res.data : [];
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await api.delete("/admin/delete-hub-staff", {
+        params: { hubStaffId: id },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Hub staff member deleted successfully");
+      refetchStaff();
+    },
+    onError: (err: any) => {
+      console.error("Failed to delete hub staff:", err);
+      toast.error(err.response?.data?.message || "Failed to delete hub staff");
+    },
+  });
+
+  const addMutation = useMutation({
+    mutationFn: async (formData: { fullName: string; passwordHash: string }) => {
+      await api.post("/admin/create-hub-staff", formData);
+    },
+    onSuccess: () => {
+      toast.success("Hub staff center created successfully");
+      refetchStaff();
+      closeModal();
+    },
+    onError: (err: any) => {
+      console.error("Failed to create hub staff:", err);
+      toast.error(err.response?.data?.message || "Failed to create hub staff");
     },
   });
 
@@ -152,30 +184,39 @@ export default function CentersListPage() {
   // ========== حفظ ==========
   const handleSave = () => {
     if (editing) {
-      // تعديل
-setCenters(
-  centers.map(c =>                    // ١. لف على كل المراكز
-    c.id === editing.id ? form : c    // ٢. لو المركز ده هو اللي بنعدل عليه؟
-  )                                    //    - أيوه → استخدم form (البيانات الجديدة)
-)   
-      toast.success("Center updated");
-      addNotification({ title: "Center updated", body: `${form.name} details saved.`, severity: "success", icon: "Building2", link: "/centers" });
+      setCenters(
+        centers.map(c =>
+          c.id === editing.id ? form : c
+        )
+      );
+      toast.success("Center details updated locally");
+      closeModal();
     } else if (create) {
-      // إنشاء
-      if (!form.name.trim()) { toast.error("Name required"); return; }
-      setCenters([...centers, { ...form, id: `CEN-${Date.now()}` }]);
-      toast.success("Center created");
-      addNotification({ title: "Center created", body: `${form.name} was added.`, severity: "success", icon: "Building2", link: "/centers" });
+      if (!form.manager.trim()) {
+        toast.error("Manager name is required (Hub Staff FullName)");
+        return;
+      }
+      if (form.manager.length < 5 || form.manager.length > 30) {
+        toast.error("Manager name must be between 5 and 30 characters");
+        return;
+      }
+      if (!form.password || form.password.length < 8) {
+        toast.error("Password must be at least 8 characters");
+        return;
+      }
+
+      addMutation.mutate({
+        fullName: form.manager,
+        passwordHash: form.password,
+      });
     }
-    closeModal();
   };
 
   // ========== حذف ==========
   const handleDelete = (id: string) => {
-    const c = centers.find((x) => x.id === id);
-    setCenters(centers.filter((x) => x.id !== id));
-    toast.success(`Deleted ${c?.name}`);
-    addNotification({ title: "Center deleted", body: `${c?.name ?? "Center"} was removed.`, severity: "warning", icon: "Trash2", link: "/centers" });
+    if (confirm("Are you sure you want to delete this collection center staff member?")) {
+      deleteMutation.mutate(Number(id));
+    }
   };
 
   return (
@@ -312,6 +353,18 @@ setCenters(
               </button>
             </div>
             <CenterForm form={form} setForm={setForm} />
+            {create && (
+              <label className="block mt-3">
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1 font-semibold" style={{ fontWeight: 600 }}>Password</span>
+                <input
+                  type="password"
+                  value={form.password || ""}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  placeholder="Min 8 chars, 1 uppercase, 1 symbol"
+                  className="w-full px-3 h-10 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+                />
+              </label>
+            )}
             <div className="mt-6 flex justify-end gap-2">
               <button onClick={closeModal} className="px-4 h-10 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 cursor-pointer">
                 Cancel

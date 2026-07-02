@@ -23,7 +23,7 @@ const demoChips = [
     bg: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
   },
   {
-    name: "asdfg",
+    name: "Alhassan",
     password: "1df@zAfA",
     role: "Driver" as const,
     displayName: "Driver",

@@ -14,35 +14,11 @@ import { accentMap } from "@/app/utils/accent";
 import { tooltipStyle } from "@/app/utils/chartTheme";
 import api from "@/lib/axios";
 
-const milestones = [
-  { q: "Q1", label: "Launch zone expansion", done: true },
-  { q: "Q2", label: "1M kg plastic diverted", done: true },
-  { q: "Q3", label: "EU compliance certification", done: false, current: true },
-  { q: "Q4", label: "Net positive impact report", done: false },
-];
+const milestones: { q: string; label: string; done: boolean; current?: boolean }[] = [];
 
-const stackedData = [
-  { m: "Jan", Plastic: 80, Glass: 50, Metal: 30, Paper: 40 },
-  { m: "Feb", Plastic: 90, Glass: 55, Metal: 32, Paper: 42 },
-  { m: "Mar", Plastic: 100, Glass: 60, Metal: 35, Paper: 48 },
-  { m: "Apr", Plastic: 110, Glass: 62, Metal: 36, Paper: 50 },
-  { m: "May", Plastic: 120, Glass: 70, Metal: 40, Paper: 55 },
-  { m: "Jun", Plastic: 130, Glass: 72, Metal: 42, Paper: 58 },
-  { m: "Jul", Plastic: 140, Glass: 78, Metal: 45, Paper: 62 },
-  { m: "Aug", Plastic: 150, Glass: 82, Metal: 47, Paper: 66 },
-  { m: "Sep", Plastic: 160, Glass: 88, Metal: 50, Paper: 70 },
-  { m: "Oct", Plastic: 165, Glass: 90, Metal: 52, Paper: 72 },
-  { m: "Nov", Plastic: 175, Glass: 95, Metal: 55, Paper: 78 },
-  { m: "Dec", Plastic: 185, Glass: 100, Metal: 58, Paper: 82 },
-];
+const stackedData: { m: string; Plastic: number; Glass: number; Metal: number; Paper: number }[] = [];
 
-const topZones = [
-  { zone: "Central", impact: 412 },
-  { zone: "East", impact: 360 },
-  { zone: "North", impact: 295 },
-  { zone: "South", impact: 250 },
-  { zone: "West", impact: 218 },
-];
+const topZones: { zone: string; impact: number }[] = [];
 
 export default function SustainabilityPage() {
   useRoleContext();
@@ -82,11 +58,11 @@ export default function SustainabilityPage() {
   ];
 
   const annualGoals = [
-    { label: "CO₂ avoided", target: "2,000 t", pct: Math.min(100, Math.round((co2Avoided / 2000) * 100)), accent: "emerald" },
-    { label: "Plastic diverted", target: "500,000 kg", pct: Math.min(100, Math.round((plasticDiverted / 500000) * 100)), accent: "teal" },
-    { label: "Paper saved", target: "200,000 kg", pct: Math.min(100, Math.round((paperSaved / 200000) * 100)), accent: "lime" },
-    { label: "E-waste recycled", target: "30,000 kg", pct: Math.min(100, Math.round((eWasteRecycled / 30000) * 100)), accent: "violet" },
-    { label: "Water saved", target: "7M L", pct: Math.min(100, Math.round(((waterSaved * 1000000) / 7000000) * 100)), accent: "sky" },
+    { label: "CO₂ avoided", target: "not yet from api", pct: Math.min(100, Math.round((co2Avoided / 2000) * 100)), accent: "emerald" },
+    { label: "Plastic diverted", target: "not yet from api", pct: Math.min(100, Math.round((plasticDiverted / 500000) * 100)), accent: "teal" },
+    { label: "Paper saved", target: "not yet from api", pct: Math.min(100, Math.round((paperSaved / 200000) * 100)), accent: "lime" },
+    { label: "E-waste recycled", target: "not yet from api", pct: Math.min(100, Math.round((eWasteRecycled / 30000) * 100)), accent: "violet" },
+    { label: "Water saved", target: "not yet from api", pct: Math.min(100, Math.round(((waterSaved * 1000000) / 7000000) * 100)), accent: "sky" },
   ];
 
   if (loading) {
@@ -172,6 +148,9 @@ export default function SustainabilityPage() {
       <GlassCard className="p-6">
         <h3 className="text-lg tracking-tight text-slate-900 dark:text-white mb-1">Quarterly Milestones</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">2026 sustainability roadmap</p>
+        {milestones.length === 0 ? (
+          <div className="flex items-center justify-center h-32 text-slate-400 text-sm">not yet from api</div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {milestones.map((m, i) => (
             <div key={m.q} className="mc-card-in" style={{ animationDelay: `${i * 0.08}s` }}>
@@ -185,12 +164,16 @@ export default function SustainabilityPage() {
             </div>
           ))}
         </div>
+        )}
       </GlassCard>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <GlassCard className="p-6">
           <h3 className="text-lg tracking-tight text-slate-900 dark:text-white mb-1">Monthly CO₂ Saved by Material</h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Stacked tons over the year</p>
+          {stackedData.length === 0 ? (
+            <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">not yet from api</div>
+          ) : (
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={stackedData}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
@@ -204,11 +187,15 @@ export default function SustainabilityPage() {
               <Area type="monotone" dataKey="Paper" stackId="1" stroke="#84cc16" fill="#84cc16" fillOpacity={0.6} />
             </AreaChart>
           </ResponsiveContainer>
+          )}
         </GlassCard>
 
         <GlassCard className="p-6">
           <h3 className="text-lg tracking-tight text-slate-900 dark:text-white mb-1">Top 5 Zones by Impact</h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">CO₂ avoided (tons)</p>
+          {topZones.length === 0 ? (
+            <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">not yet from api</div>
+          ) : (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={topZones}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
@@ -218,6 +205,7 @@ export default function SustainabilityPage() {
               <Bar dataKey="impact" fill="#10b981" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+          )}
         </GlassCard>
       </div>
     </div>

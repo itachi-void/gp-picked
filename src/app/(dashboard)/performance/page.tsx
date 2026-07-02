@@ -65,40 +65,13 @@ function AnimatedCounter({ end, duration = 1.5, suffix = "" }: { end: number; du
   return <>{count.toLocaleString()}{suffix}</>;
 }
 
-const initialWeeklyData = [
-  { day: "Mon", collected: 245, processed: 230, revenue: 1850 },
-  { day: "Tue", collected: 312, processed: 298, revenue: 2340 },
-  { day: "Wed", collected: 278, processed: 265, revenue: 2100 },
-  { day: "Thu", collected: 398, processed: 375, revenue: 2980 },
-  { day: "Fri", collected: 445, processed: 420, revenue: 3350 },
-  { day: "Sat", collected: 520, processed: 495, revenue: 3920 },
-  { day: "Sun", collected: 380, processed: 360, revenue: 2850 },
-];
+const initialWeeklyData: { day: string; collected: number; processed: number; revenue: number }[] = [];
 
-const monthlyData = [
-  { month: "Jan", efficiency: 85, satisfaction: 92, revenue: 45000 },
-  { month: "Feb", efficiency: 88, satisfaction: 90, revenue: 48000 },
-  { month: "Mar", efficiency: 92, satisfaction: 94, revenue: 52000 },
-  { month: "Apr", efficiency: 89, satisfaction: 91, revenue: 49500 },
-  { month: "May", efficiency: 94, satisfaction: 95, revenue: 55000 },
-  { month: "Jun", efficiency: 96, satisfaction: 96, revenue: 58000 },
-];
+const monthlyData: { month: string; efficiency: number; satisfaction: number; revenue: number }[] = [];
 
-const categoryData = [
-  { name: "Glass", value: 35, color: "#10b981" },
-  { name: "Plastic", value: 28, color: "#14b8a6" },
-  { name: "Metal", value: 22, color: "#8b5cf6" },
-  { name: "Paper", value: 15, color: "#f59e0b" },
-];
+const categoryData: { name: string; value: number; color: string }[] = [];
 
-const radarData = [
-  { metric: "Efficiency", value: 94 },
-  { metric: "Quality", value: 88 },
-  { metric: "Speed", value: 92 },
-  { metric: "Satisfaction", value: 96 },
-  { metric: "Safety", value: 90 },
-  { metric: "Innovation", value: 85 },
-];
+const radarData: { metric: string; value: number }[] = [];
 
 const progressMap: Record<string, string> = {
   emerald: "bg-emerald-500",
@@ -316,6 +289,9 @@ export default function PerformanceDashboardPage() {
                 </div>
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Collection vs Processing</p>
+              {displayedTrendData.length === 0 ? (
+                <div className="flex items-center justify-center h-[280px] text-slate-400 text-sm">not yet from api</div>
+              ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <AreaChart data={displayedTrendData}>
                   <defs>
@@ -337,6 +313,7 @@ export default function PerformanceDashboardPage() {
                   <Area type="monotone" dataKey="processed" stroke="#14b8a6" fill="url(#perfProcessed)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
+              )}
             </GlassCard>
 
             <GlassCard className="p-6">
@@ -345,6 +322,9 @@ export default function PerformanceDashboardPage() {
                 <h3 className="text-base tracking-tight text-slate-900 dark:text-white font-semibold">Revenue Trend</h3>
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Weekly revenue analysis</p>
+              {displayedTrendData.length === 0 ? (
+                <div className="flex items-center justify-center h-[280px] text-slate-400 text-sm">not yet from api</div>
+              ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <RechartsLine data={displayedTrendData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
@@ -355,6 +335,7 @@ export default function PerformanceDashboardPage() {
                   <Line type="monotone" dataKey="revenue" stroke="#8b5cf6" strokeWidth={3} dot={{ fill: "#8b5cf6", r: 5 }} activeDot={{ r: 7 }} />
                 </RechartsLine>
               </ResponsiveContainer>
+              )}
             </GlassCard>
 
             <GlassCard className="p-6">
@@ -363,6 +344,9 @@ export default function PerformanceDashboardPage() {
                 <h3 className="text-base tracking-tight text-slate-900 dark:text-white font-semibold">Material Distribution</h3>
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">By category</p>
+              {categoryData.length === 0 ? (
+                <div className="flex items-center justify-center h-[260px] text-slate-400 text-sm">not yet from api</div>
+              ) : (
               <ResponsiveContainer width="100%" height={260}>
                 <RechartsPie>
                   <Pie
@@ -379,14 +363,19 @@ export default function PerformanceDashboardPage() {
                   <Tooltip contentStyle={tooltipStyle(isDark)} />
                 </RechartsPie>
               </ResponsiveContainer>
+              )}
               <div className="grid grid-cols-2 gap-2 mt-4">
-                {categoryData.map((cat) => (
+                {categoryData.length === 0 ? (
+                  <div className="col-span-2 text-center text-sm text-slate-400">not yet from api</div>
+                ) : (
+                categoryData.map((cat) => (
                   <div key={cat.name} className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-white/5 rounded-xl">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
                     <span className="text-sm text-slate-700 dark:text-slate-200">{cat.name}</span>
                     <span className="text-sm text-slate-500 dark:text-slate-400 ml-auto">{cat.value}%</span>
                   </div>
-                ))}
+                ))
+                )}
               </div>
             </GlassCard>
 
@@ -396,6 +385,9 @@ export default function PerformanceDashboardPage() {
                 <h3 className="text-base tracking-tight text-slate-900 dark:text-white font-semibold">Performance Overview</h3>
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Multi-dimensional analysis</p>
+              {radarData.length === 0 ? (
+                <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">not yet from api</div>
+              ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <RadarChart data={radarData}>
                   <PolarGrid stroke="rgba(148,163,184,0.3)" />
@@ -405,6 +397,7 @@ export default function PerformanceDashboardPage() {
                   <Tooltip contentStyle={tooltipStyle(isDark)} />
                 </RadarChart>
               </ResponsiveContainer>
+              )}
             </GlassCard>
           </div>
 
@@ -438,6 +431,9 @@ export default function PerformanceDashboardPage() {
               </div>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Efficiency, satisfaction & revenue</p>
+            {monthlyData.length === 0 ? (
+              <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">not yet from api</div>
+            ) : (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
@@ -453,13 +449,14 @@ export default function PerformanceDashboardPage() {
                 )}
               </BarChart>
             </ResponsiveContainer>
+            )}
           </GlassCard>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { title: "Top Performer", value: "Route #12", description: "98% efficiency this week", icon: Award, accent: "emerald" },
-              { title: "Most Improved", value: "Center East", description: "+15% from last month", icon: TrendingUp, accent: "teal" },
-              { title: "Needs Attention", value: "Route #5", description: "Below target efficiency", icon: AlertCircle, accent: "amber" },
+              { title: "Insight", value: "not yet from api", description: "not yet from api", icon: Award, accent: "emerald" },
+              { title: "Insight", value: "not yet from api", description: "not yet from api", icon: TrendingUp, accent: "teal" },
+              { title: "Insight", value: "not yet from api", description: "not yet from api", icon: AlertCircle, accent: "amber" },
             ].map((insight, index) => {
               const Icon = insight.icon;
               const a = accentMap[insight.accent] || { bg: "bg-emerald-500/10", fg: "text-emerald-600" };

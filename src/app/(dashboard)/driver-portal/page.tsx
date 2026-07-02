@@ -18,7 +18,7 @@ import { useQuery } from "@tanstack/react-query";
  *   • Today's pickup count          • Current route
  *   • Today's schedule              • Vehicle status
  *   • Quick notifications           • Jump to Pickups / Routes
- * Vehicle status, schedule and notifications are mocked (no backend yet).
+ * Vehicle status data (fuel, load, distance) is not yet available from API.
  * ======================================================================= */
 
 
@@ -144,7 +144,7 @@ function DriverOverviewDashboard() {
     { label: "Pickups today", value: assigned.length, sub: `${completedToday} done`, icon: Package, tone: "emerald" },
     { label: "On current route", value: nextStop ? nextStop.zone || "Cairo Route" : "—", sub: "active", icon: RouteIcon, tone: "sky" },
     { label: "Next stop", value: nextStop ? `ORD-${nextStop.requestId || nextStop.id}` : "All clear", sub: nextStop ? nextStop.zone || "Cairo" : "no pending", icon: MapPin, tone: "violet" },
-    { label: "Shift ends", value: "16:30", sub: `${assigned.length} stops left`, icon: Clock, tone: "amber" },
+    { label: "Shift ends", value: "—", sub: "not yet from api", icon: Clock, tone: "amber" },
   ];
 
   return (
@@ -244,10 +244,11 @@ function DriverOverviewDashboard() {
             <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">TRK-204</span>
           </div>
           <div className="space-y-3">
-            <VehicleStat icon={Fuel} label="Fuel" value={68} unit="%" tone="emerald" />
-            <VehicleStat icon={Gauge} label="Load capacity" value={42} unit="%" tone="sky" />
-            <VehicleStat icon={Navigation} label="Distance today" value={37} unit="km" raw tone="violet" />
+            <VehicleStat icon={Fuel} label="Fuel" value={0} unit="%" tone="emerald" />
+            <VehicleStat icon={Gauge} label="Load capacity" value={0} unit="%" tone="sky" />
+            <VehicleStat icon={Navigation} label="Distance today" value={0} unit="km" raw tone="violet" />
           </div>
+          <p className="text-[10px] text-slate-400 text-center mt-1 italic">not yet from api</p>
           <button onClick={() => router.push("/fleet")} className="mt-4 w-full text-xs text-cyan-600 dark:text-cyan-400 flex items-center justify-center gap-1 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:border-cyan-300 transition-colors cursor-pointer" style={{ fontWeight: 600 }}>
             View on Fleet map <ArrowRight className="w-3 h-3" />
           </button>
