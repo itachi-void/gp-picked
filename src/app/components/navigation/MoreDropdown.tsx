@@ -56,7 +56,7 @@ export function MoreDropdown() {
       if (!rect) return;
       
       const cols = Math.min(visibleGroups.length, 3) || 1;
-      const width = Math.min(cols * 240, window.innerWidth - 16);
+      const width = Math.min(cols * 270, window.innerWidth - 16);
       
       let left = rect.right - width;
       left = Math.max(8, Math.min(left, window.innerWidth - width - 8));
@@ -100,11 +100,22 @@ export function MoreDropdown() {
       </button>
 
       {open && createPortal(
-        <div
-          ref={menuRef}
-          className="fixed bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden z-[200] p-5 mc-scale-in"
-          style={{ top: menuPos.top, left: menuPos.left, width: menuPos.width }}
-        >
+        <>
+          <style>{`
+            @keyframes menuScaleIn {
+              from { opacity: 0; transform: scale(0.95); }
+              to { opacity: 1; transform: scale(1); }
+            }
+            .menu-scale-in {
+              animation: menuScaleIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+              transform-origin: top right;
+            }
+          `}</style>
+          <div
+            ref={menuRef}
+            className="fixed bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl z-[200] p-5 menu-scale-in"
+            style={{ top: menuPos.top, left: menuPos.left, width: menuPos.width }}
+          >
           <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800 mb-4">
             <span className="text-[10px] font-extrabold uppercase tracking-[2px] text-gray-400 dark:text-gray-500">
               Operations & Control
@@ -143,7 +154,8 @@ export function MoreDropdown() {
           <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-center">
             <PremiumAuthButton variant="logout" label="Sign Out" onLogout={handleLogout} />
           </div>
-        </div>,
+        </div>
+        </>,
         document.body
       )}
     </div>
