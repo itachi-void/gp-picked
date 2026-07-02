@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EcoVoid - Smart Systems",
-  description: "Smart Waste Management and Sustainability Platform",
+  title: "EcoSnap - Smart Systems",
+  description: "EcoSnap - Recycle today, save tomorrow",
 };
 
 export default function RootLayout({
