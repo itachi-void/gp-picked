@@ -68,7 +68,7 @@ export default function FloatingParticles() {
       }}
     >
       {ready && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-30">
           <Particles
             id="tsparticles-bg"
             className="absolute inset-0 w-full h-full pointer-events-none"
