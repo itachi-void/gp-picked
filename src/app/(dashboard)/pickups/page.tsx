@@ -218,7 +218,7 @@ function PickupRequestsPageContent() {
   });
 
   const stats = [
-    { label: "Open", value: enriched.filter((e) => e.req.status === "Pending").length, accent: "amber", Icon: Clock },
+    { label: "Pending", value: enriched.filter((e) => e.req.status.toLowerCase() === "pending").length, accent: "amber", Icon: Clock },
     { label: "In Progress", value: enriched.filter((e) => e.req.status.toLowerCase() === "in progress" || e.req.status.toLowerCase() === "inprogress").length, accent: "sky", Icon: Loader2 },
     { label: "Completed", value: enriched.filter((e) => e.req.status.toLowerCase() === "completed" || e.req.status.toLowerCase() === "verified").length, accent: "emerald", Icon: CheckCircle },
     { label: "Rejected/Failed", value: enriched.filter((e) => e.req.status.toLowerCase() === "rejected" || e.req.status.toLowerCase() === "failed").length, accent: "rose", Icon: AlertTriangle },
