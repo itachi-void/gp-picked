@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Cpu, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 import { GlassCard } from "@/app/components/GlassCard";
 import { HubRequest, VerifyResponse, Step } from "../types";
 import { useVerifyShipment } from "../hooks/useVerifyShipment";
@@ -79,6 +80,16 @@ export function VerificationPanel({ order, onResolve }: VerificationPanelProps) 
   };
 
   const handleResolve = (id: number, resultType: "verified" | "rejected") => {
+    if (resultType === "verified") {
+      const awardedPoints = result?.finalPoints ?? 0;
+      toast.success(
+        `تم تحويل ${awardedPoints} نقطة بنجاح إلى حساب المواطن ${order.userName} (رقم العملية: ${order.requestId})`
+      );
+    } else {
+      toast.error(
+        `تم رفض العملية رقم ${order.requestId} للمواطن ${order.userName}`
+      );
+    }
     onResolve(id, resultType);
     reset();
   };

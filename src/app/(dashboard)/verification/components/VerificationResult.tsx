@@ -21,6 +21,33 @@ export function VerificationResult({ result, orderId, onReset, onResolve }: Veri
     ? "bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400"
     : "bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400";
 
+  // Calculate similarity percentage safely (handles 0.95 or 95 formats)
+  const similarityValue = result.similarityScore !== undefined
+    ? (result.similarityScore > 1 ? result.similarityScore : result.similarityScore * 100)
+    : 95;
+
+  // Recommendation generator based on score percentage
+  const getRecommendation = (score: number) => {
+    if (score >= 85) {
+      return {
+        text: `AI Suggestion: Strong similarity detected (${score.toFixed(1)}%). The photo content matches the pickup request details. Recommended action: ACCEPT.`,
+        classes: "bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-400",
+      };
+    } else if (score >= 60) {
+      return {
+        text: `AI Suggestion: Moderate similarity detected (${score.toFixed(1)}%). Some discrepancy in bottle counts or contents. Recommended action: REVIEW & CHECK visually.`,
+        classes: "bg-amber-500/10 border-amber-500/25 text-amber-700 dark:text-amber-400",
+      };
+    } else {
+      return {
+        text: `AI Suggestion: Low similarity detected (${score.toFixed(1)}%). High discrepancy in bottle count or contents. Recommended action: REJECT shipment.`,
+        classes: "bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-400",
+      };
+    }
+  };
+
+  const rec = getRecommendation(similarityValue);
+
   return (
     <div className="mc-fade-in-up">
       <div className="text-center py-4">
@@ -37,14 +64,30 @@ export function VerificationResult({ result, orderId, onReset, onResolve }: Veri
         </div>
       )}
 
+      {/* AI Recommendation Alert */}
+      <div className={`mt-3 max-w-md mx-auto p-3.5 rounded-xl border text-xs font-semibold text-center ${rec.classes}`}>
+        {rec.text}
+      </div>
+
+      {/* Metrics Grid */}
       <div className="mt-4 max-w-md mx-auto grid grid-cols-2 gap-4 bg-slate-50 dark:bg-white/5 p-5 rounded-2xl border border-slate-200 dark:border-white/5">
         <div className="space-y-1">
-          <span className="text-[10px] text-slate-400 uppercase font-bold">Detected Bottles</span>
-          <p className="text-lg font-bold text-slate-800 dark:text-slate-200">{result.finalBottlesCount} bottles</p>
+          <span className="text-[10px] text-slate-400 uppercase font-bold">Expected Bottles (Before)</span>
+          <p className="text-lg font-bold text-slate-800 dark:text-slate-200">{result.countBefore ?? result.finalBottlesCount} bottles</p>
         </div>
         <div className="space-y-1">
-          <span className="text-[10px] text-slate-400 uppercase font-bold">Points to Award</span>
-          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{result.finalPoints} pts</p>
+          <span className="text-[10px] text-slate-400 uppercase font-bold">Scanned Bottles (After)</span>
+          <p className="text-lg font-bold text-slate-800 dark:text-slate-200">{result.countAfter ?? result.finalBottlesCount} bottles</p>
+        </div>
+        <div className="space-y-1 col-span-2 border-t border-slate-200 dark:border-white/10 pt-3 flex justify-between items-center">
+          <div>
+            <span className="text-[10px] text-slate-400 uppercase font-bold block">Similarity Score</span>
+            <p className="text-md font-bold text-violet-600 dark:text-violet-400">{similarityValue.toFixed(1)}% match</p>
+          </div>
+          <div className="text-right">
+            <span className="text-[10px] text-slate-400 uppercase font-bold block">Points to Award</span>
+            <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">+{result.finalPoints} pts</p>
+          </div>
         </div>
         <div className="space-y-1 col-span-2 border-t border-slate-200 dark:border-white/10 pt-3">
           <span className="text-[10px] text-slate-400 uppercase font-bold">System Status</span>
