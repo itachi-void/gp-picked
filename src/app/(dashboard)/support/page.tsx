@@ -97,6 +97,9 @@ export default function SupportTicketsPage() {
       if (isAdmin) {
         const res = await api.get("/admin/list-tickets-for-admin");
         list = Array.isArray(res.data) ? res.data : [];
+      } else if (isEmployee) {
+        // Employees do not have a dedicated tickets endpoint in Swagger, return empty list
+        list = [];
       } else if (isDriver) {
         const res = await api.get(`/Recycler/tickets/${userId}`);
         list = Array.isArray(res.data) ? res.data : [];
