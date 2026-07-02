@@ -352,6 +352,7 @@ export default function DriversListPage() {
           cta={canManage ? { label: "Add driver", onClick: openAdd } : undefined}
         />
       ) : (
+        <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {paginatedDrivers.map((driver, index) => {
           const sa = statusAccent[driver.status] || statusAccent.active;
@@ -466,6 +467,7 @@ export default function DriversListPage() {
           </button>
         </div>
       )}
+        </>
       )}
 
       <GlassCard className="p-6">
