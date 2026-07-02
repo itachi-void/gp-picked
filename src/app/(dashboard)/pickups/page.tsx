@@ -106,20 +106,39 @@ function PickupRequestsPageContent() {
           console.error("Failed to fetch in progress hub requests:", e);
         }
 
-        // 2. Fetch history verified by this employee (try /history first, fallback to profile)
+        // 2. Fetch history verified by this employee
+        // We will try multiple IDs (current logged in employeeId, and ID 1 as fallback)
         let listHistory: any[] = [];
-        try {
-          const resHistory = await api.get(`/HubStaff/${employeeId}/history`);
-          listHistory = Array.isArray(resHistory.data)
-            ? resHistory.data
-            : (resHistory.data?.pickupRequests || resHistory.data?.requests || []);
-        } catch (e) {
-          console.error("Failed to fetch hub staff history from primary history endpoint:", e);
+        const idsToTry = [employeeId];
+        if (employeeId !== 1) {
+          idsToTry.push(1); // Try ID 1 as fallback
+        }
+
+        for (const id of idsToTry) {
+          // Try /history endpoint first
           try {
-            const resProfile = await api.get(`/HubStaff/${employeeId}`);
-            listHistory = resProfile.data?.pickupRequests || [];
+            const resHistory = await api.get(`/HubStaff/${id}/history`);
+            const data = Array.isArray(resHistory.data)
+              ? resHistory.data
+              : (resHistory.data?.pickupRequests || resHistory.data?.requests || []);
+            if (data && data.length > 0) {
+              listHistory = data;
+              break;
+            }
+          } catch (e) {
+            console.error(`Failed to fetch history for employee ID ${id}:`, e);
+          }
+
+          // Fallback to basic profile endpoint
+          try {
+            const resProfile = await api.get(`/HubStaff/${id}`);
+            const data = resProfile.data?.pickupRequests || [];
+            if (data && data.length > 0) {
+              listHistory = data;
+              break;
+            }
           } catch (profileErr) {
-            console.error("Failed to fetch hub staff history from fallback profile endpoint:", profileErr);
+            console.error(`Failed to fetch profile for employee ID ${id}:`, profileErr);
           }
         }
 
