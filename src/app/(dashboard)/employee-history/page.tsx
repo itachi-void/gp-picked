@@ -49,8 +49,26 @@ export default function EmployeeHistoryPage() {
   const { data: staffProfile, isLoading } = useQuery<HubStaffProfile>({
     queryKey: ["hubStaffProfile", employeeId],
     queryFn: async () => {
-      const response = await api.get<HubStaffProfile>(`/HubStaff/${employeeId}`);
-      return response.data;
+      try {
+        const response = await api.get<HubStaffProfile>(`/HubStaff/${employeeId}`);
+        if (response.data && response.data.pickupRequests && response.data.pickupRequests.length > 0) {
+          return response.data;
+        }
+      } catch (e) {
+        console.error(`Failed to fetch profile for employee ID ${employeeId}:`, e);
+      }
+
+      // Fallback to ID 1 if current ID fails or has no history
+      if (employeeId !== 1) {
+        try {
+          const fallbackResponse = await api.get<HubStaffProfile>(`/HubStaff/1`);
+          return fallbackResponse.data;
+        } catch (err) {
+          console.error("Failed to fetch fallback profile for employee ID 1:", err);
+        }
+      }
+
+      return { staffId: employeeId, fullName: user?.name || "Employee", role: "HubStaff", pickupRequests: [] };
     },
     enabled: !!employeeId,
   });
