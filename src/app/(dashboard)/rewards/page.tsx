@@ -29,6 +29,17 @@ export default function RewardsPage() {
   const { data: walletData, isLoading: walletLoading } = useUserWallet(user?.id);
   const redeemMutation = useRedeemPoints();
 
+  const rawRole = user?.role?.toLowerCase() ?? "citizen";
+  const role = (rawRole === "hubstaff" || rawRole === "employee") 
+    ? "employee" 
+    : (rawRole === "recycler" || rawRole === "driver") 
+      ? "driver" 
+      : (rawRole === "user" || rawRole === "citizen") 
+        ? "citizen" 
+        : rawRole;
+
+  const isAdmin = role === "admin" || role === "manager";
+
   const [mounted, setMounted] = useState(false);
 
   React.useEffect(() => {
@@ -157,13 +168,152 @@ export default function RewardsPage() {
     { id: "TXN-7649", date: "May 29, 2026", points: 800, amount: 80, method: "Orange Cash", status: "Completed" },
   ];
 
-  if (!mounted || walletLoading) {
+  if (!mounted || (walletLoading && !isAdmin)) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-pulse flex flex-col items-center gap-3">
           <Coins className="w-10 h-10 text-emerald-500 animate-bounce" />
           <p className="text-emerald-600/80 font-medium text-lg">Loading rewards balance...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (isAdmin) {
+    const totalPointsRedeemed = globalHistory.reduce((sum, item) => sum + (item.points || 0), 0);
+    const totalCashOutflow = globalHistory.reduce((sum, item) => sum + (item.amountEgp || 0), 0);
+    const totalRedemptionsCount = globalHistory.length;
+    const avgCashout = totalRedemptionsCount > 0 ? totalCashOutflow / totalRedemptionsCount : 0;
+
+    return (
+      <div className="max-w-[1600px] mx-auto p-6 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 700 }}>
+              Eco Rewards Management 🎁
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">
+              Monitor, track, and manage all citizen points redemptions and cashouts.
+            </p>
+          </div>
+        </div>
+
+        {/* KPIs Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <GlassCard className="p-5">
+            <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-3 text-emerald-600 dark:text-emerald-400">
+              <Coins className="w-6 h-6" />
+            </div>
+            <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{totalPointsRedeemed.toLocaleString()}</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">Total Points Redeemed</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">lifetime conversion</p>
+          </GlassCard>
+
+          <GlassCard className="p-5">
+            <div className="w-12 h-12 bg-sky-500/10 rounded-2xl flex items-center justify-center mb-3 text-sky-600 dark:text-sky-400">
+              <Banknote className="w-6 h-6 animate-pulse" />
+            </div>
+            <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{totalCashOutflow.toLocaleString()} EGP</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">Total Cash Outflow</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">disbursed to mobile wallets</p>
+          </GlassCard>
+
+          <GlassCard className="p-5">
+            <div className="w-12 h-12 bg-violet-500/10 rounded-2xl flex items-center justify-center mb-3 text-violet-600 dark:text-violet-400">
+              <ArrowRightLeft className="w-6 h-6" />
+            </div>
+            <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{totalRedemptionsCount}</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">Total Redemptions</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">processed transactions</p>
+          </GlassCard>
+
+          <GlassCard className="p-5">
+            <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center mb-3 text-amber-600 dark:text-amber-400">
+              <DollarSign className="w-6 h-6" />
+            </div>
+            <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{avgCashout.toFixed(2)} EGP</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">Average Cashout Size</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">per redemption txn</p>
+          </GlassCard>
+        </div>
+
+        {/* Global Redemptions Feed */}
+        <GlassCard className="p-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+            <div>
+              <h2 className="text-lg text-slate-900 dark:text-white flex items-center gap-2 font-bold" style={{ fontWeight: 600 }}>
+                <TrendingUp className="w-5 h-5 text-emerald-500 animate-pulse" /> Platform Redemptions Feed (All Users)
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Live redemption logs for all eco-citizens on the network.
+              </p>
+            </div>
+            
+            {/* Search bar */}
+            <div className="relative w-full md:w-64">
+              <input
+                type="text"
+                placeholder="Search by user name..."
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+                className="w-full px-4 py-2 bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
+              />
+            </div>
+          </div>
+
+          {globalLoading ? (
+            <div className="py-12 flex flex-col items-center justify-center gap-2 text-slate-400">
+              <span className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+              <p className="text-xs">Aggregating redemption histories from all users...</p>
+            </div>
+          ) : filteredGlobalHistory.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs">
+              No redemptions found on the platform yet.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200/50 dark:border-white/5 text-slate-500 font-semibold">
+                    <th className="py-3 px-4">User</th>
+                    <th className="py-3 px-4">Redemption ID</th>
+                    <th className="py-3 px-4">Points</th>
+                    <th className="py-3 px-4">Amount (EGP)</th>
+                    <th className="py-3 px-4">Date</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4">Details</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                  {filteredGlobalHistory.map((item: any, idx: number) => (
+                    <tr key={item.redemptionId || idx} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.01] transition-colors">
+                      <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white">{item.userName}</td>
+                      <td className="py-3 px-4 font-mono text-slate-400">#{item.redemptionId}</td>
+                      <td className="py-3 px-4 text-amber-600 dark:text-amber-400 font-bold">{item.points} pts</td>
+                      <td className="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold">{item.amountEgp?.toFixed(2)} EGP</td>
+                      <td className="py-3 px-4 text-slate-500">
+                        {item.transactionDate ? new Date(item.transactionDate).toLocaleDateString(undefined, {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit"
+                        }) : "—"}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
+                          {item.status || "Completed"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-slate-400 max-w-xs truncate">{item.details || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </GlassCard>
       </div>
     );
   }

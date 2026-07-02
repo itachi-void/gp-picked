@@ -254,28 +254,10 @@ function PickupRequestsPageContent() {
       r.id.toLowerCase().includes(search.toLowerCase()) ||
       r.citizen.name.toLowerCase().includes(search.toLowerCase()) ||
       r.zone.name.toLowerCase().includes(search.toLowerCase());
-
-    const matchesStatus = () => {
-      if (status === "all") return true;
-      const sFilter = status.toLowerCase().replace(" ", "_").replace("-", "_");
-      const rStatus = r.status.toLowerCase().replace(" ", "_").replace("-", "_");
-      
-      if (sFilter === "completed" || sFilter === "verified") {
-        return rStatus === "completed" || rStatus === "verified";
-      }
-      if (sFilter === "rejected" || sFilter === "failed") {
-        return rStatus === "rejected" || rStatus === "failed";
-      }
-      if (sFilter === "in_progress" || sFilter === "inprogress") {
-        return rStatus === "in_progress" || rStatus === "inprogress";
-      }
-      return rStatus === sFilter;
-    };
-
     return (
       ms &&
       (priority === "all" || r.priority === priority) &&
-      matchesStatus() &&
+      (status === "all" || r.status.toLowerCase() === status.toLowerCase()) &&
       (zone === "all" || r.zone.name === zone) &&
       (material === "all" || e.material === material)
     );
