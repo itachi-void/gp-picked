@@ -58,10 +58,11 @@ function mapBackendToFrontend(req: any): PickupRequest {
     items: req.items || [
       {
         plasticType: "PET",
-        expectedWeightKg: req.finalBottlesCount ? req.finalBottlesCount * 0.05 : 10,
-        expectedQuantity: req.finalBottlesCount || 50,
+        expectedWeightKg: req.finalBottlesCount ? req.finalBottlesCount * 0.05 : (req.totalWeight || 10),
+        expectedQuantity: req.finalBottlesCount || req.bottlesCount || 50,
       },
     ],
+    date: req.timeAgo || req.createdAt || req.requestDate || new Date().toISOString(),
   };
 }
 
@@ -85,7 +86,7 @@ function PickupRequestsPageContent() {
   const isDriver = role === "Driver" || role === "Recycler" || role === "driver" || role === "recycler";
   const isEmployee = role === "Employee" || role === "employee" || role === "HubStaff" || role === "hubstaff";
 
-  // Fetch employee specific data (In Progress + Verified/Rejected history) from backend
+  // Fetch employee specific data (Pending + In Progress + Verified/Rejected history) from backend
   useEffect(() => {
     if (!isEmployee) return;
 
@@ -94,7 +95,18 @@ function PickupRequestsPageContent() {
       try {
         const employeeId = user?.id || 1;
 
-        // 1. Fetch in progress requests from backend (independent call)
+        // 1. Fetch pending requests from backend (independent call)
+        let listPending: any[] = [];
+        try {
+          const resPending = await api.get("/PickupRequests/GetPendingRequestForms");
+          listPending = Array.isArray(resPending.data)
+            ? resPending.data
+            : (resPending.data && Array.isArray((resPending.data as any).data) ? (resPending.data as any).data : []);
+        } catch (e) {
+          console.error("Failed to fetch pending requests:", e);
+        }
+
+        // 2. Fetch in progress requests from backend (independent call)
         let listInProgress: any[] = [];
         try {
           const resInProgress = await api.get("/PickupRequests/GetInProgressHubRequests");
@@ -107,7 +119,7 @@ function PickupRequestsPageContent() {
           console.error("Failed to fetch in progress hub requests:", e);
         }
 
-        // 2. Fetch history verified by this employee
+        // 3. Fetch history verified by this employee
         let listHistory: any[] = [];
         const idsToTry = [employeeId];
         if (employeeId !== 1) {
@@ -140,9 +152,14 @@ function PickupRequestsPageContent() {
           }
         }
 
+        const mappedPending = listPending.map((r: any) => ({
+          ...mapBackendToFrontend(r),
+          status: r.status || "Pending"
+        }));
+
         const mappedInProgress = listInProgress.map((r: any) => ({
           ...mapBackendToFrontend(r),
-          status: "In Progress"
+          status: r.status || "In Progress"
         }));
 
         const mappedHistory = listHistory.map((r: any) => ({
@@ -150,7 +167,8 @@ function PickupRequestsPageContent() {
           status: r.status || "Completed"
         }));
 
-        setBackendRequests([...mappedInProgress, ...mappedHistory]);
+        // Combine lists
+        setBackendRequests([...mappedPending, ...mappedInProgress, ...mappedHistory]);
       } catch (err) {
         console.error("Critical error building employee requests list:", err);
         setBackendRequests([]);
@@ -221,10 +239,21 @@ function PickupRequestsPageContent() {
         const material = r.items[0]?.plasticType ?? "Mixed";
         const weight = r.items.reduce((a, b) => a + b.expectedWeightKg, 0);
         const slaBase: Record<string, number> = { Critical: 30, High: 120, Normal: 360, Low: 1440 };
-        const elapsedM = (i + 1) * 25;
+        
+        let elapsedM = (i + 1) * 25;
+        if (r.date) {
+          const diffMs = new Date().getTime() - new Date(r.date).getTime();
+          if (!isNaN(diffMs)) {
+            elapsedM = Math.max(0, Math.floor(diffMs / (1000 * 60)));
+          }
+        }
+        
         const slaMinutesLeft = slaBase[r.priority] - elapsedM;
-        const requestedAt = `${elapsedM}m ago`;
-        return { req: r, material, weight, slaMinutesLeft, requestedAt };
+        const requestedAt = r.date && r.date.includes("ago") 
+          ? r.date 
+          : (elapsedM < 60 ? `${elapsedM}m ago` : `${Math.floor(elapsedM / 60)}h ago`);
+        
+        return { req: r, material, weight, slaMinutesLeft, requestedAt, elapsedMinutes: elapsedM };
       }),
     [displayRequests]
   );
@@ -419,6 +448,8 @@ function PickupRequestsPageContent() {
     cols.push({
       key: "requested",
       label: "Requested",
+      sortable: true,
+      accessor: (e) => e.elapsedMinutes,
       render: (e) => <span className="text-xs text-slate-500 dark:text-slate-400">{e.requestedAt}</span>,
     });
 
@@ -630,6 +661,7 @@ interface ExtendedRow {
   weight: number;
   slaMinutesLeft: number;
   requestedAt: string;
+  elapsedMinutes: number;
 }
 
 export default function PickupRequestsPage() {

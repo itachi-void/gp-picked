@@ -11,11 +11,14 @@ export interface PickupItem {
 export interface PickupRequest {
   id: string;
   priority: "Critical" | "High" | "Normal" | "Low";
-  status: "Pending" | "In Progress" | "Completed";
+  status: "Pending" | "In Progress" | "Completed" | "Verified" | "Rejected" | "Failed";
   citizen: { name: string };
   zone: { name: string };
   driver: { name: string } | null;
   items: PickupItem[];
+  date?: string;
+  verifierName?: string;
+  verifierId?: number;
 }
 
 const seed: PickupRequest[] = [
