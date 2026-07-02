@@ -21,17 +21,17 @@ import api from "@/lib/axios";
  * ======================================================================= */
 
 const todaySchedule = [
-  { time: "08:00", label: "Shift start · Depot check-in", done: true },
-  { time: "09:30", label: "Zone A — 4 pickups", done: true },
-  { time: "12:00", label: "Lunch break", done: false },
-  { time: "13:00", label: "Zone C — 3 pickups", done: false },
-  { time: "16:30", label: "Return to center · Handover", done: false },
+  { time: "not yet from api", label: "not yet from api", done: false },
+  { time: "not yet from api", label: "not yet from api", done: false },
+  { time: "not yet from api", label: "not yet from api", done: false },
+  { time: "not yet from api", label: "not yet from api", done: false },
+  { time: "not yet from api", label: "not yet from api", done: false },
 ];
 
 const mockNotifications = [
-  { icon: Package, tone: "emerald", text: "New pickup assigned in Zone C", time: "5m ago" },
-  { icon: AlertTriangle, tone: "amber", text: "Traffic on El-Nasr Rd — reroute suggested", time: "18m ago" },
-  { icon: CheckCircle2, tone: "sky", text: "Pickup ORD-4821 verified at center", time: "1h ago" },
+  { icon: Package, tone: "emerald", text: "not yet from api", time: "not yet from api" },
+  { icon: AlertTriangle, tone: "amber", text: "not yet from api", time: "not yet from api" },
+  { icon: CheckCircle2, tone: "sky", text: "not yet from api", time: "not yet from api" },
 ];
 
 const toneMap: Record<string, string> = {

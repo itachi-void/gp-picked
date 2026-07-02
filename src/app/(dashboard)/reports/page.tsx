@@ -51,12 +51,7 @@ interface Report {
   apiEndpoint?: string;
 }
 
-const initialReportsData: Report[] = [
-  { id: "RPT-001", name: "Monthly Collection Summary", type: "collection", status: "completed", createdDate: "2026-03-10", generatedBy: "Admin User", fileSize: "2.4 MB", format: "CSV", apiEndpoint: "/admin/list-users-for-admin" },
-  { id: "RPT-002", name: "Financial Performance Q1", type: "financial", status: "completed", createdDate: "2026-03-09", generatedBy: "Manager User", fileSize: "1.8 MB", format: "CSV", apiEndpoint: "/admin/Total-Earing" },
-  { id: "RPT-003", name: "Driver Performance Analysis", type: "performance", status: "completed", createdDate: "2026-03-08", generatedBy: "Admin User", fileSize: "1.2 MB", format: "CSV", apiEndpoint: "/admin/recycler-with-total-trip" },
-  { id: "RPT-004", name: "Environmental Compliance", type: "compliance", status: "completed", createdDate: "2026-03-07", generatedBy: "System", fileSize: "3.2 MB", format: "CSV", apiEndpoint: "/admin/waste-categories" },
-];
+const initialReportsData: Report[] = [];
 
 const reportTemplates = [
   { name: "Collection Summary", type: "collection" as const, icon: BarChart3, accent: "emerald", description: "Overview of collection activities" },

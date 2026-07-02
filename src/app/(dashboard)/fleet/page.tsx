@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { GlassCard } from "@/app/components/GlassCard";
 import { accentMap } from "@/app/utils/accent";
 import api from "@/lib/axios";
+import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 
 // Dynamic import of Leaflet LiveMap component to bypass SSR window undefined error
@@ -59,11 +60,46 @@ interface GeofenceAlert {
   severity: "high" | "medium" | "low";
 }
 
-const geofenceAlerts: GeofenceAlert[] = [
-  { id: "GF-1042", truckId: "not yet from api", driver: "not yet from api", zone: "not yet from api", time: "not yet from api", severity: "high" },
-  { id: "GF-1041", truckId: "not yet from api", driver: "not yet from api", zone: "not yet from api", time: "not yet from api", severity: "medium" },
-  { id: "GF-1040", truckId: "not yet from api", driver: "not yet from api", zone: "not yet from api", time: "not yet from api", severity: "low" },
-];
+function generateAlerts(trucks: FleetTruck[]): GeofenceAlert[] {
+  const alerts: GeofenceAlert[] = [];
+  const now = new Date();
+  const fmt = (d: Date) => d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  trucks.forEach((t, idx) => {
+    if (t.status === "offline") {
+      alerts.push({
+        id: `GFA-OFF-${idx}`,
+        truckId: t.id,
+        driver: t.driver,
+        zone: t.zone,
+        time: fmt(new Date(now.getTime() - idx * 300000)),
+        severity: "high",
+      });
+    } else if (t.status === "idle") {
+      alerts.push({
+        id: `GFA-IDL-${idx}`,
+        truckId: t.id,
+        driver: t.driver,
+        zone: t.zone,
+        time: fmt(new Date(now.getTime() - idx * 600000)),
+        severity: "medium",
+      });
+    }
+  });
+
+  if (alerts.length === 0 && trucks.length > 0) {
+    alerts.push({
+      id: "GFA-OK",
+      truckId: trucks[0].id,
+      driver: trucks[0].driver,
+      zone: trucks[0].zone,
+      time: fmt(now),
+      severity: "low",
+    });
+  }
+
+  return alerts;
+}
 
 const statusConfig: Record<TruckStatus, { label: string; dot: string; chip: string; icon: any }> = {
   "en-route": {
@@ -98,15 +134,14 @@ export default function FleetMapPage() {
   const { role } = useRoleContext();
   const currentRole = role?.toLowerCase() ?? "citizen";
   const [trucks, setTrucks] = useState<FleetTruck[]>([]);
-  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | TruckStatus>("all");
   const [selectedTruck, setSelectedTruck] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchTrucks = async (silent = false) => {
-    if (!silent) setLoading(true);
-    try {
+  const { isLoading: loading, refetch } = useQuery<FleetTruck[]>({
+    queryKey: ["fleet-trucks"],
+    queryFn: async () => {
       const res = await api.get("/admin/recyclers-details");
       const list = Array.isArray(res.data) ? res.data : [];
       
@@ -154,19 +189,11 @@ export default function FleetMapPage() {
         };
       });
 
-      const mapped = await Promise.all(mappedPromises);
-      setTrucks(mapped);
-    } catch (err) {
-      console.error("Failed to fetch fleet trucks:", err);
-      toast.error("Failed to load live fleet list");
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTrucks();
-  }, []);
+      const result = await Promise.all(mappedPromises);
+      setTrucks(result);
+      return result;
+    },
+  });
 
   // EventSource stream connection for live selected driver location tracking
   useEffect(() => {
@@ -239,6 +266,8 @@ export default function FleetMapPage() {
     });
   }, [query, statusFilter, trucks]);
 
+  const geofenceAlerts = useMemo(() => generateAlerts(filtered), [filtered]);
+
   const kpis = [
     {
       label: "Active Trucks",
@@ -275,7 +304,7 @@ export default function FleetMapPage() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     toast.info("Pinging fleet telemetry…");
-    await fetchTrucks(true);
+    await refetch();
     setIsRefreshing(false);
     toast.success("Fleet positions updated");
   };

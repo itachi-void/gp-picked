@@ -31,6 +31,7 @@ import { GlassCard } from "@/app/components/GlassCard";
 import { accentMap } from "@/app/utils/accent";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import api from "@/lib/axios";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Pagination,
@@ -88,8 +89,6 @@ export default function DriversListPage() {
   const currentRole = role?.toLowerCase() ?? "citizen";
   const { addNotification } = useNotifications();
 
-  const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | DriverStatus>("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -98,6 +97,7 @@ export default function DriversListPage() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterStatus, itemsPerPage]);
+  
   const [driverToView, setDriverToView] = useState<Driver | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -107,12 +107,12 @@ export default function DriversListPage() {
 
   const canManage = !(currentRole === "citizen" || currentRole === "driver" || currentRole === "recycler");
 
-  const fetchDrivers = async () => {
-    setLoading(true);
-    try {
+  const { data: drivers = [], isLoading: loading, refetch } = useQuery<Driver[]>({
+    queryKey: ["recyclers-details"],
+    queryFn: async () => {
       const res = await api.get("/admin/recyclers-details");
       const list = Array.isArray(res.data) ? res.data : [];
-      const mapped: Driver[] = list.map((d: any) => {
+      return list.map((d: any) => {
         const name = d.fullName || "Driver User";
         const initials = name
           .split(" ")
@@ -139,18 +139,62 @@ export default function DriversListPage() {
           lastActive: d.lastActive || "2 hours ago",
         };
       });
-      setDrivers(mapped);
-    } catch (err) {
-      console.error("Failed to fetch drivers from backend:", err);
-      toast.error("Failed to load drivers from API");
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
-  useEffect(() => {
-    fetchDrivers();
-  }, []);
+  const addMutation = useMutation({
+    mutationFn: async (formData: typeof form) => {
+      const password = "SmartWaste@123";
+      await api.post(`/admin/create-recycler?FullName=${encodeURIComponent(formData.name)}&Phone=${formData.phone}&PasswordHash=${encodeURIComponent(password)}&Email=${encodeURIComponent(formData.email)}`);
+    },
+    onSuccess: (_, formData) => {
+      addNotification({ title: "Driver added", body: `${formData.name} joined the fleet.`, severity: "success", icon: "UserCheck", link: "/drivers" });
+      toast.success(`Added ${formData.name}`);
+      refetch();
+      closeForm();
+    },
+    onError: (err: any) => {
+      console.error("Failed to add driver:", err);
+      toast.error(err.response?.data?.message || "Failed to add driver on server");
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, formData }: { id: string; formData: typeof form }) => {
+      await api.put(`/Recycler/update/${id}`, {
+        fullName: formData.name,
+        phone: formData.phone,
+        vehicleInfo: formData.vehicleNumber || "N/A"
+      });
+      await api.put(`/admin/update-recycler-status?recyclerId=${id}&newStatus=${formData.status}`);
+    },
+    onSuccess: (_, variables) => {
+      addNotification({ title: "Driver updated", body: `${variables.formData.name} was updated.`, severity: "info", icon: "UserCheck", link: "/drivers" });
+      toast.success(`Updated ${variables.formData.name}`);
+      refetch();
+      closeForm();
+    },
+    onError: (err: any) => {
+      console.error("Failed to update driver:", err);
+      toast.error(err.response?.data?.message || "Failed to update driver on server");
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/admin/delete-recycler?recyclerId=${id}`);
+    },
+    onSuccess: (_, id) => {
+      addNotification({ title: "Driver removed", body: `${form.name} was removed.`, severity: "warning", icon: "UserCheck", link: "/drivers" });
+      toast.success(`Deleted ${form.name}`);
+      refetch();
+      closeForm();
+    },
+    onError: (err: any) => {
+      console.error("Failed to delete driver:", err);
+      toast.error(err.response?.data?.message || "Failed to delete driver on server");
+    }
+  });
 
   const openAdd = () => { setEditingId(null); setForm(emptyForm); setShowForm(true); };
   const openEdit = (d: Driver) => {
@@ -172,57 +216,16 @@ export default function DriversListPage() {
     }
 
     if (editingId) {
-      try {
-        // 1. Update recycler profile details: fullName, phone, vehicleInfo via PUT /api/Recycler/update/{id}
-        await api.put(`/Recycler/update/${editingId}`, {
-          fullName: form.name,
-          phone: form.phone,
-          vehicleInfo: form.vehicleNumber || "N/A"
-        });
-
-        // 2. Update status via PUT /api/admin/update-recycler-status
-        await api.put(`/admin/update-recycler-status?recyclerId=${editingId}&newStatus=${form.status}`);
-
-        addNotification({ title: "Driver updated", body: `${form.name} was updated.`, severity: "info", icon: "UserCheck", link: "/drivers" });
-        toast.success(`Updated ${form.name}`);
-        fetchDrivers();
-        closeForm();
-      } catch (err: any) {
-        console.error("Failed to update driver:", err);
-        toast.error(err.response?.data?.message || "Failed to update driver on server");
-      }
+      updateMutation.mutate({ id: editingId, formData: form });
     } else {
-      try {
-        const password = "SmartWaste@123"; // Valid password hash according to server requirements
-
-        // Call POST /api/admin/create-recycler with query params
-        await api.post(`/admin/create-recycler?FullName=${encodeURIComponent(form.name)}&Phone=${form.phone}&PasswordHash=${encodeURIComponent(password)}&Email=${encodeURIComponent(form.email)}`);
-
-        addNotification({ title: "Driver added", body: `${form.name} joined the fleet.`, severity: "success", icon: "UserCheck", link: "/drivers" });
-        toast.success(`Added ${form.name}`);
-        fetchDrivers();
-        closeForm();
-      } catch (err: any) {
-        console.error("Failed to add driver:", err);
-        toast.error(err.response?.data?.message || "Failed to add driver on server");
-      }
+      addMutation.mutate(form);
     }
   };
 
   const handleDelete = async () => {
     if (!editingId) return;
     if (!window.confirm("Delete driver?")) return;
-    const name = form.name;
-    try {
-      await api.delete(`/admin/delete-recycler?recyclerId=${editingId}`);
-      addNotification({ title: "Driver removed", body: `${name} was removed.`, severity: "warning", icon: "UserCheck", link: "/drivers" });
-      toast.success(`Deleted ${name}`);
-      fetchDrivers();
-      closeForm();
-    } catch (err: any) {
-      console.error("Failed to delete driver:", err);
-      toast.error(err.response?.data?.message || "Failed to delete driver on server");
-    }
+    deleteMutation.mutate(editingId);
   };
 
   const inputCls = "w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50";
