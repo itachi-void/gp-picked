@@ -35,15 +35,7 @@ interface Badge {
 }
 
 const badgesData: Badge[] = [
-  { id: "badge-001", name: "First Step", description: "Recycle your first bottle", icon: "star", category: "milestone", requirement: "Recycle 1 bottle", rarity: "common", unlockedBy: ["CIT-12345", "CIT-12346", "CIT-12347"] },
-  { id: "badge-002", name: "Century Club", description: "Recycle 100 bottles", icon: "trophy", category: "milestone", requirement: "Recycle 100 bottles", rarity: "rare", unlockedBy: ["CIT-12345", "CIT-12348"] },
-  { id: "badge-003", name: "Eco Warrior", description: "Recycle 500 bottles", icon: "shield", category: "milestone", requirement: "Recycle 500 bottles", rarity: "epic", unlockedBy: ["CIT-12345"] },
-  { id: "badge-004", name: "Legend", description: "Recycle 1000 bottles", icon: "crown", category: "milestone", requirement: "Recycle 1000 bottles", rarity: "legendary", unlockedBy: [] },
-  { id: "badge-005", name: "Week Warrior", description: "Recycle every day for 7 days", icon: "flame", category: "streak", requirement: "7-day streak", rarity: "rare", unlockedBy: ["CIT-12345", "CIT-12346"] },
-  { id: "badge-006", name: "Monthly Master", description: "Recycle every day for 30 days", icon: "zap", category: "streak", requirement: "30-day streak", rarity: "epic", unlockedBy: ["CIT-12345"] },
-  { id: "badge-007", name: "Quick Start", description: "Recycle 10 bottles in first week", icon: "target", category: "recycling", requirement: "10 bottles in first week", rarity: "common", unlockedBy: ["CIT-12345", "CIT-12346", "CIT-12347", "CIT-12348"] },
-  { id: "badge-008", name: "Community Hero", description: "Refer 10 friends", icon: "heart", category: "special", requirement: "Refer 10 friends", rarity: "epic", unlockedBy: ["CIT-12345"] },
-  { id: "badge-009", name: "Early Adopter", description: "Joined in the first month", icon: "sparkles", category: "special", requirement: "Register in launch month", rarity: "legendary", unlockedBy: ["CIT-12345", "CIT-12346"] },
+  { id: "not yet from api", name: "not yet from api", description: "not yet from api", icon: "star", category: "milestone", requirement: "not yet from api", rarity: "common", unlockedBy: [] },
 ];
 
 const iconMap: Record<string, any> = {

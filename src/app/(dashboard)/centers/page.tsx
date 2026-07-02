@@ -44,88 +44,11 @@ interface CenterNode {
 
 // ========== بيانات المراكز الخمسة ==========
 const CENTERS: CenterNode[] = [
-  {
-    id: "C1",                          // رقم المركز
-    name: "Main Collection Hub",       // الاسم بالإنجليزي
-    nameAr: "مركز التجميع الرئيسي",    // الاسم بالعربي
-    type: "collection",                // نوعه: تجميع
-    status: "online",                  // حالته: شغال
-    x: 15,                             // موقعه الأفقي: 15% من عرض الخريطة
-    y: 30,                             // موقعه الرأسي: 30% من ارتفاع الخريطة
-    capacity: 87,                      // السعة: 87%
-    throughput: 1240,                  // بيمرر 1240 زجاجة في الساعة
-    efficiency: 94,                    // كفاءة 94%
-    co2Saved: 420,                     // وفر 420 كجم CO₂
-    temperature: 24,                   // درجة الحرارة 24°C
-    activeDrivers: 8,                  // 8 سواقين شغالين
-  },
-  {
-    id: "C2",
-    name: "Sorting Facility",
-    nameAr: "مرفق الفرز",
-    type: "sorting",                   // نوعه: فرز
-    status: "online",
-    x: 42, y: 18,                      // في منتصف الخريطة تقريباً
-    capacity: 72,
-    throughput: 890,
-    efficiency: 91,
-    co2Saved: 310,
-    temperature: 28,
-    activeDrivers: 5,
-  },
-  {
-    id: "C3",
-    name: "Processing Plant",
-    nameAr: "مصنع المعالجة",
-    type: "processing",                // نوعه: معالجة
-    status: "online",
-    x: 70, y: 28,                      // في اليمين
-    capacity: 64,
-    throughput: 560,
-    efficiency: 88,
-    co2Saved: 580,
-    temperature: 34,
-    activeDrivers: 3,
-  },
-  {
-    id: "C4",
-    name: "Distribution Center",
-    nameAr: "مركز التوزيع",
-    type: "distribution",              // نوعه: توزيع
-    status: "maintenance",             // حالته: صيانة
-    x: 55, y: 58,                      // في الأسفل
-    capacity: 45,
-    throughput: 320,
-    efficiency: 76,
-    co2Saved: 190,
-    temperature: 22,
-    activeDrivers: 4,
-  },
-  {
-    id: "C5",
-    name: "Eco Station East",
-    nameAr: "المحطة البيئية شرق",
-    type: "collection",                // نوعه: تجميع
-    status: "online",
-    x: 25, y: 62,                      // في اليسار السفلي
-    capacity: 91,
-    throughput: 1100,
-    efficiency: 96,
-    co2Saved: 350,
-    temperature: 26,
-    activeDrivers: 6,
-  },
+  { id: "not yet from api", name: "not yet from api", nameAr: "not yet from api", type: "collection", status: "online", x: 0, y: 0, capacity: 0, throughput: 0, efficiency: 0, co2Saved: 0, temperature: 0, activeDrivers: 0 },
 ];
 
 // ========== التوصيلات بين المراكز ==========
-const CONNECTIONS: [string, string][] = [
-  ["C1", "C2"],  // مركز ١ متوصل بمركز ٢
-  ["C2", "C3"],  // مركز ٢ متوصل بمركز ٣
-  ["C1", "C5"],  // مركز ١ متوصل بمركز ٥
-  ["C5", "C4"],  // مركز ٥ متوصل بمركز ٤
-  ["C4", "C3"],  // مركز ٤ متوصل بمركز ٣
-  ["C2", "C4"],  // مركز ٢ متوصل بمركز ٤
-];
+const CONNECTIONS: [string, string][] = [];
 // النتيجة: شبكة متصلة، كل المراكز مرتبطة ببعض
 
 // ========== تنسيقات كل نوع مركز ==========

@@ -24,10 +24,7 @@ export interface Center {
 }
 
 const initial: Center[] = [
-  { id: "1", name: "Downtown Center", location: "123 Main St, City Center", capacity: 5000, currentLoad: 3200, status: "active", manager: "John Doe", contact: "+1 234-567-8900" },
-  { id: "2", name: "North District Center", location: "456 North Ave", capacity: 3000, currentLoad: 2800, status: "active", manager: "Jane Smith", contact: "+1 234-567-8901" },
-  { id: "3", name: "East Side Center", location: "789 East Blvd", capacity: 4000, currentLoad: 1500, status: "maintenance", manager: "Bob Johnson", contact: "+1 234-567-8902" },
-  { id: "4", name: "West Hub", location: "321 West Way", capacity: 6000, currentLoad: 4100, status: "active", manager: "Alice Brown", contact: "+1 234-567-8903" },
+  { id: "not yet from api", name: "not yet from api", location: "not yet from api", capacity: 0, currentLoad: 0, status: "active", manager: "not yet from api", contact: "not yet from api" },
 ];
 
 const statusAccent: Record<Center["status"], { bg: string; fg: string; dot: string }> = {

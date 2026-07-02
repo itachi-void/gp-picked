@@ -109,24 +109,52 @@ export default function FleetMapPage() {
     try {
       const res = await api.get("/admin/recyclers-details");
       const list = Array.isArray(res.data) ? res.data : [];
-      const mapped: FleetTruck[] = list.map((d: any, idx: number) => {
-        // Cairo center-based simulated coordinates for live visual representation
+      
+      const mappedPromises = list.map(async (d: any, idx: number) => {
+        const driverId = String(d.recyclerID || d.id || `TRK-${idx}`);
+        
+        // Cairo center-based default coordinates
         const baseLat = 30.0444;
         const baseLng = 31.2357;
         const latOffset = ((idx * 17) % 50 - 25) * 0.0018;
         const lngOffset = ((idx * 23) % 50 - 25) * 0.0018;
         
+        let zone = "not yet from api";
+        let nextStop = "not yet from api";
+        
+        // Asynchronously fetch pickup requests for this driver to populate zone and nextStop dynamically from API
+        try {
+          const reqRes = await api.get(`/PickupRequests/GetRequestsByRecyclerId/${driverId}`);
+          if (Array.isArray(reqRes.data) && reqRes.data.length > 0) {
+            const activeReq = reqRes.data.find(
+              (r: any) =>
+                r.status?.toLowerCase() === "pending" ||
+                r.status?.toLowerCase() === "accepted" ||
+                r.status?.toLowerCase() === "enroute"
+            ) || reqRes.data[0];
+            
+            if (activeReq) {
+              zone = activeReq.zone || "Cairo Zone";
+              nextStop = activeReq.address || "Hub Terminal";
+            }
+          }
+        } catch (e) {
+          // No requests or failed, keep defaults
+        }
+
         return {
-          id: String(d.recyclerID || d.id || `TRK-${idx}`),
+          id: driverId,
           driver: d.fullName || "Driver",
           status: normalizeStatus(d.status),
-          zone: "not yet from api",
+          zone,
           fuel: "not yet from api",
-          nextStop: "not yet from api",
+          nextStop,
           lat: baseLat + latOffset,
           lng: baseLng + lngOffset,
         };
       });
+
+      const mapped = await Promise.all(mappedPromises);
       setTrucks(mapped);
     } catch (err) {
       console.error("Failed to fetch fleet trucks:", err);
@@ -140,12 +168,56 @@ export default function FleetMapPage() {
     fetchTrucks();
   }, []);
 
-  // Telemetry simulation interval
+  // EventSource stream connection for live selected driver location tracking
+  useEffect(() => {
+    if (!selectedTruck) return;
+    
+    // Connect directly to the public SSE stream on the smartwaste backend
+    const streamUrl = `https://smartwaste.runasp.net/api/LiveMap/truck-stream/${selectedTruck}`;
+    const es = new EventSource(streamUrl);
+    
+    es.onmessage = (event) => {
+      try {
+        const raw = JSON.parse(event.data);
+        const lat = Number(raw.Latitude || raw.latitude);
+        const lng = Number(raw.Longitude || raw.longitude);
+        const capacity = raw.Capacity !== undefined ? raw.Capacity : raw.capacity;
+        
+        if (!isNaN(lat) && !isNaN(lng)) {
+          setTrucks((prev) =>
+            prev.map((t) => {
+              if (t.id === selectedTruck) {
+                return {
+                  ...t,
+                  lat,
+                  lng,
+                  fuel: capacity !== undefined ? `${capacity}%` : t.fuel,
+                };
+              }
+              return t;
+            })
+          );
+        }
+      } catch (err) {
+        console.error("Error parsing event stream data:", err);
+      }
+    };
+    
+    es.onerror = (err) => {
+      console.warn(`EventSource connection warning for driver ${selectedTruck}:`, err);
+    };
+    
+    return () => {
+      es.close();
+    };
+  }, [selectedTruck]);
+
+  // Telemetry simulation for unselected active trucks to keep the map alive
   useEffect(() => {
     const timer = setInterval(() => {
       setTrucks((prev) =>
         prev.map((t) => {
-          if (t.status === "offline") return t;
+          if (t.status === "offline" || t.id === selectedTruck) return t;
           const nlat = t.lat + (Math.random() * 0.0004 - 0.0002);
           const nlng = t.lng + (Math.random() * 0.0004 - 0.0002);
           return { ...t, lat: nlat, lng: nlng };
@@ -153,7 +225,7 @@ export default function FleetMapPage() {
       );
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [selectedTruck]);
 
   const filtered = useMemo(() => {
     return trucks.filter((t) => {
