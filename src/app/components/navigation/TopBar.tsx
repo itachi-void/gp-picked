@@ -8,6 +8,7 @@ import { MobileNav } from "./MobileNav";
 import { UserMenu } from "./UserMenu";
 import { LanguageToggle } from "./LanguageToggle";
 import { NotificationBell } from "./NotificationBell";
+import { GlobalSearch } from "./GlobalSearch";
 
 export default function TopBar() {
   // ========== ١. جلب الثيم ==========
@@ -22,6 +23,9 @@ export default function TopBar() {
           <Logo />
           <DesktopNav />
         </div>
+
+        {/* ========== البحث العالمي ========== */}
+        <GlobalSearch />
 
         {/* ========== ٣. الأزرار اليمين ========== */}
         <div className="flex items-center gap-2">

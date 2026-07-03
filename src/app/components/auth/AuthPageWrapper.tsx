@@ -81,10 +81,35 @@ export function AuthPageWrapper({ mode }: AuthPageWrapperProps) {
       dayMode={isDay}
       background={sceneConfig.background}
     >
-      <GlassCard className="w-full max-w-md p-8 animate-scale-pop">
-        <div className="flex justify-center mb-6">
-          <img src="/logo.png" alt="EcoSnap" className="h-16 w-auto object-contain" />
-        </div>
+      <div className="relative w-full max-w-md animate-scale-pop">
+        {/* Glow Layer 1: Wide Ambient Glow */}
+        <div
+          className={`absolute -inset-10 rounded-[3rem] blur-3xl transition-all duration-1000 opacity-60 pointer-events-none ${
+            isDay
+              ? "bg-gradient-to-tr from-amber-300 via-orange-300 to-yellow-300"
+              : "bg-gradient-to-tr from-emerald-600 via-teal-500 to-emerald-400"
+          }`}
+        />
+        
+        {/* Glow Layer 2: Intense Center Glow */}
+        <div
+          className={`absolute -inset-2 rounded-[2rem] blur-2xl transition-all duration-1000 opacity-80 pointer-events-none ${
+            isDay
+              ? "bg-amber-400/20 shadow-[0_0_80px_25px_rgba(251,191,36,0.35)]"
+              : "bg-emerald-500/20 shadow-[0_0_100px_35px_rgba(16,185,129,0.45)]"
+          }`}
+        />
+
+        <GlassCard className="relative w-full p-8">
+          <div className="flex justify-center mb-6">
+            <div className="bg-white dark:bg-white/95 px-6 py-3 rounded-2xl border border-slate-200/50 dark:border-white/15 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1),_inset_0_1px_0_rgba(255,255,255,1)] flex items-center justify-center transition-all duration-300 hover:scale-[1.02]">
+              <img 
+                src="/logo.png" 
+                alt="EcoSnap" 
+                className="h-10 w-auto object-contain" 
+              />
+            </div>
+          </div>
 
         <div className="flex p-1 bg-slate-100/70 dark:bg-white/[0.04] rounded-full border border-slate-200/60 dark:border-white/5 mb-6">
           {(["login", "signup"] as Mode[]).map((m) => (
@@ -106,6 +131,7 @@ export function AuthPageWrapper({ mode }: AuthPageWrapperProps) {
 
         <DemoRoles />
       </GlassCard>
+      </div>
       <BulbSwitch position={{ top: 24, right: 28 }} />
       <DayNightSwitch
         mode={dayNightMode}

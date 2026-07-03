@@ -25,6 +25,7 @@ interface AuthStore {
     address: string;
     role: Role;
     phone?: string | null;
+    profilePicture?: File | null;
   }) => Promise<User>;
   logout: () => void;
 }
@@ -58,7 +59,7 @@ const getInitialUser = (): User | null => {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://smartwaste.runasp.net";
 
 
-export const useAuth = create<AuthStore>((set) => ({
+export const useAuth = create<AuthStore>((set, get) => ({
   user: getInitialUser(),
   selectedRole: "User",
   setSelectedRole: (role) => set({ selectedRole: role }),
@@ -120,39 +121,37 @@ export const useAuth = create<AuthStore>((set) => ({
   // إنشاء حساب جديد
   signup: async (signupData) => {
     try {
-      const { data } = await axios.post(
-        `${API_BASE_URL}/api/Account/Register`,
-        {
-          fullName: signupData.fullName,
-          email: signupData.email,
-          passwordHash: signupData.passwordHash,
-          address: signupData.address,
-          role: signupData.role,
-          phone: signupData.phone || null,
-        },
-        { headers: { "Content-Type": "application/json" } }
-      );
-
-      const userId = data.userId || data.id || 0;
-
-      const newUser: User = {
-        id: userId,
-        name: signupData.fullName,
-        email: signupData.email,
-        role: normalizeRole(data.role || signupData.role),
-      };
-
-      const returnedToken = data.token || data || "";
-
-      if (isBrowser) {
-        localStorage.setItem("token", returnedToken);
-        localStorage.setItem("user", JSON.stringify(newUser));
+      const formData = new FormData();
+      formData.append("FullName", signupData.fullName);
+      formData.append("Email", signupData.email);
+      formData.append("PasswordHash", signupData.passwordHash);
+      formData.append("Address", signupData.address);
+      formData.append("Role", signupData.role);
+      if (signupData.phone) {
+        formData.append("Phone", signupData.phone);
+      }
+      if (signupData.profilePicture) {
+        formData.append("ProfilePictureUrl", signupData.profilePicture);
       }
 
-      set({ user: newUser });
-      return newUser;
+      await axios.post(
+        `${API_BASE_URL}/api/Account/Register`,
+        formData
+      );
+
+      // تسجيل الدخول التلقائي بعد التسجيل بنجاح للحصول على التوكن الصحيح وبيانات المستخدم
+      const loggedInUser = await get().login(
+        signupData.email,
+        signupData.passwordHash,
+        signupData.role
+      );
+
+      return loggedInUser;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || error.message || "Signup failed");
+      const errorMsg = typeof error.response?.data === 'string'
+        ? error.response.data
+        : (error.response?.data?.message || error.message || "Signup failed");
+      throw new Error(errorMsg);
     }
   },
 

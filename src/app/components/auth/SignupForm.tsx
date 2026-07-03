@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Mail, Lock, User as UserIcon, MapPin, Phone } from "lucide-react";
+import { Mail, Lock, User as UserIcon, MapPin, Phone, Camera, X } from "lucide-react";
 import { useAuth, type Role } from "@/store/authStore";
 import { homePathForRole } from "@/app/utils/roleAccess";
 import PremiumAuthButton from "./PremiumAuthButton";
@@ -41,6 +42,8 @@ type SignupFormData = z.infer<typeof signupSchema>;
 export function SignupForm() {
   const { signup, selectedRole, setSelectedRole } = useAuth();
   const router = useRouter();
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   // إعداد الفورم
   const form = useForm<SignupFormData>({
@@ -64,6 +67,7 @@ export function SignupForm() {
         address: data.address,
         role: selectedRole, // ← من المتجر، مش Props
         phone: data.phone || null,
+        profilePicture: profilePicture,
       });
       
       toast.success(`Welcome, ${u.name}`);
@@ -75,6 +79,53 @@ export function SignupForm() {
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      {/* حقل الصورة الشخصية */}
+      <div className="flex flex-col items-center justify-center mb-4">
+        <div className="relative w-20 h-20 rounded-full border-2 border-dashed border-slate-300 dark:border-white/20 hover:border-emerald-500 dark:hover:border-emerald-400 transition-all flex items-center justify-center bg-slate-50 dark:bg-white/[0.02] cursor-pointer">
+          {previewUrl ? (
+            <>
+              <img
+                src={previewUrl}
+                alt="Profile Preview"
+                className="w-full h-full rounded-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setProfilePicture(null);
+                  setPreviewUrl(null);
+                }}
+                className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all shadow-md animate-scale-pop"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </>
+          ) : (
+            <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer text-slate-400 dark:text-white/40 hover:text-emerald-500 dark:hover:text-emerald-400 transition-all">
+              <Camera className="w-6 h-6 mb-0.5" />
+              <span className="text-[9px] font-semibold">Upload Photo</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    if (file.size > 2 * 1024 * 1024) {
+                      toast.error("Image size must be less than 2MB");
+                      return;
+                    }
+                    setProfilePicture(file);
+                    setPreviewUrl(URL.createObjectURL(file));
+                  }
+                }}
+                className="hidden"
+              />
+            </label>
+          )}
+        </div>
+      </div>
+
       {/* حقل الاسم الكامل */}
       <div className="relative">
         <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />

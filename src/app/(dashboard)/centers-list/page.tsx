@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import "@/app/components/motion/motion-components.css";
 import { useQuery, useQueries, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios";
-import { Building2, MapPin, Users, Trash2, Edit, Plus, X, Activity } from "lucide-react";
+import { Building2, MapPin, Users, Trash2, Edit, Plus, X, Activity, Eye } from "lucide-react";
 import { useRoleContext } from "@/contexts/RoleContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { toast } from "sonner";
@@ -237,6 +237,16 @@ export default function CentersListPage() {
             <Plus className="w-4 h-4" /> Add Center
           </button>
         )}
+      </div>
+
+      <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-4 flex items-start gap-3">
+        <Eye className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+        <div>
+          <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Future Centers Suggestion</p>
+          <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+            These zones are suggested based on current pickup activity. Each zone shows active citizens and request volume. Real community management features are coming soon.
+          </p>
+        </div>
       </div>
 
       {/* Stats */}

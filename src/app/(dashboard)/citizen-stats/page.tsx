@@ -12,13 +12,8 @@ import {
   Recycle,
   Coins,
   Leaf,
-  TrendingUp,
   BarChart3,
   Sparkles,
-  Zap,
-  Car,
-  Trees,
-  Droplets,
   ArrowUpRight,
   ChevronRight,
   Scale,
@@ -164,12 +159,7 @@ export default function CitizenStatsPage() {
     green: { bg: "bg-green-500/10", fg: "text-green-600 dark:text-green-400", border: "border-green-500/20", gradient: "from-green-400 to-green-600" },
   };
 
-  const equivalencies = [
-    { label: "not yet from api", value: "not yet from api", desc: "not yet from api", icon: Zap, color: "text-amber-500 bg-amber-500/10" },
-    { label: "not yet from api", value: "not yet from api", desc: "not yet from api", icon: Car, color: "text-sky-500 bg-sky-500/10" },
-    { label: "not yet from api", value: "not yet from api", desc: "not yet from api", icon: Trees, color: "text-green-500 bg-green-500/10" },
-    { label: "not yet from api", value: "not yet from api", desc: "not yet from api", icon: Droplets, color: "text-teal-500 bg-teal-500/10" },
-  ];
+
 
   if (isWalletLoading || isHistoryLoading) {
     return (
@@ -355,52 +345,9 @@ export default function CitizenStatsPage() {
               <Award className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-normal">
                 Recycle more plastic bottles to earn points and upgrade your level multiplier!
-              </p>
-            </div>
-          </GlassCard>
-        </div>
-
-      </div>
-
-      {/* Environmental Impact Equivalencies Section */}
-      <div className="mc-card-in" style={{ animationDelay: "0.3s" }}>
-        <GlassCard className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-xl text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>
-                Eco Impact & Equivalencies
-              </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                What your recycling achievements actually represent in the physical world
-              </p>
-            </div>
-            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-500/10 px-3 py-1.5 rounded-full font-semibold">
-              <TrendingUp className="w-3.5 h-3.5" /> Environmental Multipliers Applied
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {equivalencies.map((eq) => {
-              const Icon = eq.icon;
-              return (
-                <div key={eq.label} className="p-5 bg-white/40 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 rounded-2xl flex flex-col justify-between hover:scale-[1.02] transition-transform">
-                  <div>
-                    <div className={`w-10 h-10 ${eq.color} rounded-xl flex items-center justify-center mb-4`}>
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <p className="text-2xl text-slate-900 dark:text-white font-bold" style={{ fontWeight: 700 }}>
-                      {eq.value}
-                    </p>
-                    <p className="text-sm text-slate-800 dark:text-slate-200 mt-1 font-semibold">
-                      {eq.label}
-                    </p>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-3 border-t border-slate-100 dark:border-white/5 pt-2 leading-relaxed">
-                    {eq.desc}
-                  </p>
-                </div>
-              );
-            })}
+              </p>    </div>
+  );
+} })}
           </div>
         </GlassCard>
       </div>
