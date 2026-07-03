@@ -54,8 +54,8 @@ export default function SettingsPage() {
   const [profile, setProfile] = useLocalStorage<ProfileSettings>("ecovoid_settings_profile", {
     name: user?.name ?? "Admin User",
     email: user?.email ?? "admin@ecovoid.io",
-    phone: "not yet from api",
-    location: "not yet from api",
+    phone: "-",
+    location: "-",
   });
   const [notifications, setNotifications] = useLocalStorage<NotificationSettings>(
     "ecovoid_settings_notifications",
@@ -342,8 +342,8 @@ export default function SettingsPage() {
                     setProfile({
                       name: user?.name ?? "Admin User",
                       email: user?.email ?? "admin@ecovoid.io",
-                      phone: "not yet from api",
-                      location: "not yet from api",
+                      phone: "-",
+                      location: "-",
                     });
                     toast.info("Reset to defaults");
                   }}

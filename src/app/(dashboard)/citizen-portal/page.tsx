@@ -23,7 +23,7 @@ const LEVELS: { level: number; title: string; min: number; max: number }[] = [];
 
 function levelFor(points: number) {
   if (LEVELS.length === 0) {
-    return { current: { level: 0, title: "not yet from api", min: 0, max: 0 }, next: { level: 0, title: "", min: 0, max: 0 }, progress: 0, toNext: 0 };
+    return { current: { level: 0, title: "-", min: 0, max: 0 }, next: { level: 0, title: "", min: 0, max: 0 }, progress: 0, toNext: 0 };
   }
   const idx = LEVELS.findIndex((l) => points >= l.min && points <= l.max);
   const current = idx >= 0 ? LEVELS[idx] : LEVELS[LEVELS.length - 1];

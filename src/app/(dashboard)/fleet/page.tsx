@@ -227,7 +227,7 @@ export default function FleetMapPage() {
         driver: d.fullName || "Driver",
         status: normalizeStatus(d.status),
         zone,
-        fuel: "not yet from api",
+        fuel: "-",
         nextStop,
         lat: baseLat + latOffset,
         lng: baseLng + lngOffset,

@@ -77,19 +77,19 @@ export default function EmployeeProfilePage() {
     .filter((v: any): v is number => typeof v === "number" && v > 0);
   const avgAiMatch = aiSimilarityValues.length > 0
     ? `${(aiSimilarityValues.reduce((a, b) => a + b, 0) / aiSimilarityValues.length).toFixed(1)}%`
-    : "not yet from api";
+    : "-";
 
   const accuracyVal = aiSimilarityValues.length > 0
     ? `${(4.0 + (aiSimilarityValues.reduce((a, b) => a + b, 0) / aiSimilarityValues.length) / 100).toFixed(2)}/5.0`
-    : "not yet from api";
+    : "-";
 
   const info = [
-    { icon: Mail, label: "Email", value: user?.email || "not yet from api" },
-    { icon: Phone, label: "Phone", value: (user as any)?.phone || "not yet from api" },
+    { icon: Mail, label: "Email", value: user?.email || "-" },
+    { icon: Phone, label: "Phone", value: (user as any)?.phone || "-" },
     { icon: Building2, label: "Center", value: centerValue },
     { icon: MapPin, label: "Location", value: locationValue },
-    { icon: Calendar, label: "Joined", value: "not yet from api" },
-    { icon: Clock, label: "Shift", value: "not yet from api" },
+    { icon: Calendar, label: "Joined", value: "-" },
+    { icon: Clock, label: "Shift", value: "-" },
   ];
 
   // Calculate verified bags count from active/completed requests

@@ -42,15 +42,15 @@ export const usePickup = create<PickupStore>((set) => ({
         id: r.orderNumber || `ORD-${r.requestId}`,
         priority: r.priority || "Normal",
         status: r.status === "Pending" ? "Pending" : "In Progress",
-        citizen: { name: r.userName || "not yet from api" },
-        zone: { name: r.userAddress?.split(" ")[0] || "not yet from api" },
+        citizen: { name: (r.userName && r.userName !== "-" && r.userName !== "-") ? r.userName : "-" },
+        zone: { name: (r.userAddress && r.userAddress !== "-" && r.userAddress !== "-") ? r.userAddress.split(" ")[0] : "-" },
         items: [{ name: "Mixed", expectedWeightKg: 0 }],
       }));
 
       set({ requests: mapped, isLoading: false });
     } catch (error: any) {
       set({
-        error: "not yet from api",
+        error: null,
         isLoading: false,
       });
     }

@@ -128,19 +128,19 @@ export default function DriversListPage() {
       return {
         id: String(d.recyclerID || d.id),
         name,
-        phone: d.phone || "not yet from api",
-        email: d.email || "not yet from api",
+        phone: d.phone || "-",
+        email: d.email || "-",
         status: normalizeStatus(d.status),
-        currentRoute: d.currentRoute || "not yet from api",
-        vehicleNumber: d.vehicleInfo || "not yet from api",
-        completedTrips: d.totalTripsCompleted !== undefined && d.totalTripsCompleted !== null ? d.totalTripsCompleted : "not yet from api",
-        rating: d.rating !== undefined && d.rating !== null ? parseFloat(Number(d.rating).toFixed(1)) : "not yet from api",
-        earnings: d.earnings || "not yet from api",
-        onTimePercentage: d.onTimePercentage || "not yet from api",
-        fuelEfficiency: d.fuelEfficiency || "not yet from api",
-        joinDate: d.joinDate ? new Date(d.joinDate).toISOString().slice(0, 10) : "not yet from api",
+        currentRoute: d.currentRoute || "-",
+        vehicleNumber: d.vehicleInfo || "-",
+        completedTrips: d.totalTripsCompleted !== undefined && d.totalTripsCompleted !== null ? d.totalTripsCompleted : "-",
+        rating: d.rating !== undefined && d.rating !== null ? parseFloat(Number(d.rating).toFixed(1)) : "-",
+        earnings: d.earnings || "-",
+        onTimePercentage: d.onTimePercentage || "-",
+        fuelEfficiency: d.fuelEfficiency || "-",
+        joinDate: d.joinDate ? new Date(d.joinDate).toISOString().slice(0, 10) : "-",
         avatar: initials || "DR",
-        lastActive: d.lastActive || "not yet from api",
+        lastActive: d.lastActive || "-",
       };
     });
   }, [rawDrivers]);
@@ -255,7 +255,7 @@ export default function DriversListPage() {
           return sum + val;
         }, 0) / drivers.length
       ).toFixed(1)
-    : "not yet from api";
+    : "-";
 
   const totalEarnings = drivers.reduce((sum, d) => {
     const val = typeof d.earnings === "number" ? d.earnings : Number(d.earnings) || 0;
@@ -271,7 +271,7 @@ export default function DriversListPage() {
     { label: "Total Drivers", value: drivers.length, icon: Users, accent: "emerald", subtitle: `${activeDrivers} active now` },
     { label: "Average Rating", value: avgRating, icon: Star, accent: "amber", subtitle: "Out of 5.0" },
     { label: "Total Trips", value: totalTrips, icon: Package, accent: "violet", subtitle: "All time" },
-    { label: "Total Earnings", value: totalEarnings > 0 ? `$${(totalEarnings / 1000).toFixed(1)}k` : "not yet from api", icon: DollarSign, accent: "teal", subtitle: "This month" },
+    { label: "Total Earnings", value: totalEarnings > 0 ? `$${(totalEarnings / 1000).toFixed(1)}k` : "-", icon: DollarSign, accent: "teal", subtitle: "This month" },
   ];
 
   if (loading && drivers.length === 0) {

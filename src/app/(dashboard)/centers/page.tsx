@@ -381,7 +381,7 @@ function IsometricBuilding({
         fontWeight={700}
         fontFamily="system-ui, -apple-system, sans-serif"
       >
-        not yet from api
+        in future
       </text>
     </g>
   );
@@ -528,14 +528,14 @@ function TelemetrySidebar({
     {
       icon: Activity,
       label: "Efficiency",
-      value: "not yet from api",
+      value: "-",
       unit: "",
       color: "text-emerald-500 dark:text-emerald-400",
     },
     {
       icon: Thermometer,
       label: "Temperature",
-      value: "not yet from api",
+      value: "-",
       unit: "",
       color: center.temperature > 30
         ? "text-amber-500 dark:text-amber-400"  // أحمر لو الحرارة > ٣٠
@@ -544,7 +544,7 @@ function TelemetrySidebar({
     {
       icon: Container,
       label: "Capacity",
-      value: "not yet from api",
+      value: "-",
       unit: "",
       color: center.capacity > 80
         ? "text-amber-500 dark:text-amber-400"  // أصفر لو السعة > ٨٠٪
@@ -553,7 +553,7 @@ function TelemetrySidebar({
     {
       icon: Fuel,
       label: "CO₂ Saved",
-      value: "not yet from api",
+      value: "-",
       unit: "",
       color: "text-green-500 dark:text-green-400",
     },
@@ -650,7 +650,7 @@ function TelemetrySidebar({
         <div className="flex justify-between text-[9px] font-bold text-slate-500 dark:text-white/40 mb-2">
           <span>Overall Load</span>
           <span className="text-[#0891B2] dark:text-[#00E5FF]">
-            not yet from api
+            in future
           </span>
         </div>
         {/* شريط التقدم */}
@@ -995,7 +995,7 @@ export default function IsometricCentersHub() {
                       <div className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
                       {/* نسبة الكفاءة */}
                       <span className="text-[8px] font-bold text-slate-400 dark:text-white/35">
-                        not yet from api
+                        in future
                       </span>
                     </div>
                   </div>

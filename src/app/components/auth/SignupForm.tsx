@@ -74,7 +74,16 @@ export function SignupForm() {
       router.replace(homePathForRole(u.role));
     } catch (err: any) {
       toast.error(err?.message ?? "Registration failed");
+      throw err;
     }
+  };
+
+  const handleAuthSubmit = async () => {
+    const isValid = await form.trigger();
+    if (!isValid) {
+      throw new Error("Validation failed");
+    }
+    await onSubmit(form.getValues());
   };
 
   return (
@@ -217,7 +226,7 @@ export function SignupForm() {
       <div className="flex justify-center pt-2">
         <PremiumAuthButton
           variant="signup"
-          onSignup={() => form.handleSubmit(onSubmit)()}
+          onSignup={handleAuthSubmit}
         />
       </div>
     </form>

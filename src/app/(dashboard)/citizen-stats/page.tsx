@@ -55,7 +55,7 @@ export default function CitizenStatsPage() {
   const progression = useMemo(() => {
     if (LEVELS.length === 0) {
       return {
-        current: { level: 0, title: "not yet from api", min: 0, max: 0, perks: [] },
+        current: { level: 0, title: "-", min: 0, max: 0, perks: [] },
         next: { level: 0, title: "", min: 0, max: 0, perks: [] },
         progress: 0,
         toNext: 0,
@@ -86,13 +86,21 @@ export default function CitizenStatsPage() {
     
     // Calculate total weight
     let totalWeight = 0;
+    let hasWeightFromApi = false;
     completedRequests.forEach((h) => {
       const requestWeight = h.totalWeight ?? 0;
+      if (requestWeight > 0) {
+        hasWeightFromApi = true;
+      }
       let calculatedWeightFromItems = 0;
 
       if (h.items && h.items.length > 0) {
         h.items.forEach((item) => {
-          calculatedWeightFromItems += item.weight ?? item.expectedWeightKg ?? 0;
+          const itemWeight = item.weight ?? item.expectedWeightKg ?? 0;
+          if (itemWeight > 0) {
+            hasWeightFromApi = true;
+          }
+          calculatedWeightFromItems += itemWeight;
         });
       }
       totalWeight += requestWeight > 0 ? requestWeight : calculatedWeightFromItems;
@@ -125,6 +133,7 @@ export default function CitizenStatsPage() {
       waterSaved: parseFloat(waterSaved.toFixed(0)),
       treesEquivalent: parseFloat(treesEquivalent.toFixed(1)),
       monthlyData,
+      hasWeightFromApi,
     };
   }, [history, walletPoints]);
 
@@ -137,20 +146,27 @@ export default function CitizenStatsPage() {
     return { pct, isAbove, diff };
   }, [walletPoints, avgPoints]);
 
-  const kpis = [
-    { 
-      label: "Total Points Earned", 
-      value: walletPoints.toLocaleString(), 
-      icon: Coins, 
-      accent: "amber",
-      subtext: compareToAvg 
-        ? `${compareToAvg.pct}% ${compareToAvg.isAbove ? "أعلى من" : "أقل من"} متوسط المجتمع (${Math.round(avgPoints)} نقطة)`
-        : "جاري مقارنة البيانات..."
-    },
-    { label: "Total Weight Recycled", value: `${stats.totalWeight} kg`, icon: Scale, accent: "emerald" },
-    { label: "Completed Pickups", value: stats.completedPickups, icon: Recycle, accent: "sky" },
-    { label: "CO₂ Emissions Saved", value: `${stats.co2Saved} kg`, icon: Leaf, accent: "green" },
-  ];
+  const kpis = useMemo(() => {
+    const base = [
+      { 
+        label: "Total Points Earned", 
+        value: walletPoints.toLocaleString(), 
+        icon: Coins, 
+        accent: "amber",
+        subtext: compareToAvg 
+          ? `${compareToAvg.pct}% ${compareToAvg.isAbove ? "أعلى من" : "أقل من"} متوسط المجتمع (${Math.round(avgPoints)} نقطة)`
+          : "جاري مقارنة البيانات..."
+      },
+      { label: "Completed Pickups", value: stats.completedPickups, icon: Recycle, accent: "sky" },
+    ];
+
+    if (stats.hasWeightFromApi) {
+      base.splice(1, 0, { label: "Total Weight Recycled", value: `${stats.totalWeight} kg`, icon: Scale, accent: "emerald" });
+      base.push({ label: "CO₂ Emissions Saved", value: `${stats.co2Saved} kg`, icon: Leaf, accent: "green" });
+    }
+
+    return base;
+  }, [walletPoints, stats, compareToAvg, avgPoints]);
 
   const accentClasses: Record<string, { bg: string; fg: string; border: string; gradient: string }> = {
     amber: { bg: "bg-amber-500/10", fg: "text-amber-600 dark:text-amber-400", border: "border-amber-500/20", gradient: "from-amber-400 to-amber-600" },
@@ -190,7 +206,7 @@ export default function CitizenStatsPage() {
       </div>
 
       {/* Top Level KPI Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className={`grid grid-cols-2 gap-4 ${kpis.length === 2 ? "md:grid-cols-2 lg:grid-cols-2 max-w-4xl" : "lg:grid-cols-4"}`}>
         {kpis.map((k, i) => {
           const Icon = k.icon;
           const a = accentClasses[k.accent];
@@ -243,7 +259,7 @@ export default function CitizenStatsPage() {
 
               {/* Graphical CSS/HTML representation of a Bar Chart */}
               {stats.monthlyData.length === 0 ? (
-                <div className="flex items-center justify-center h-[220px] text-slate-400 text-sm">not yet from api</div>
+                <div className="flex items-center justify-center h-[220px] text-slate-400 text-sm">-</div>
               ) : (
               <div className="h-[220px] flex items-end justify-around gap-2 px-2 border-b border-slate-200 dark:border-white/10 pb-2 relative">
                 {stats.monthlyData.map((data, idx) => {
@@ -345,11 +361,10 @@ export default function CitizenStatsPage() {
               <Award className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-normal">
                 Recycle more plastic bottles to earn points and upgrade your level multiplier!
-              </p>    </div>
-  );
-} })}
-          </div>
-        </GlassCard>
+              </p>
+            </div>
+          </GlassCard>
+        </div>
       </div>
     </div>
   );

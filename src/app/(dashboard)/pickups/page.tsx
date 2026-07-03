@@ -45,13 +45,21 @@ const statusAccent: Record<string, string> = {
 const DRIVERS: string[] = [];
 
 // Helper to map backend format to our local page format
+function cleanVal(val: any, fallback = "-"): string {
+  if (!val) return fallback;
+  const str = String(val).trim();
+  if (str === "-" || str === "-") return fallback;
+  return str;
+}
+
+// Helper to map backend format to our local page format
 function mapBackendToFrontend(req: any): PickupRequest {
   return {
     id: req.orderNumber || `ORD-${req.requestId}`,
     priority: req.priority || "Normal",
     status: req.status || "Pending",
-    citizen: { name: req.userName || req.user?.fullName || "Citizen" },
-    zone: { name: req.zoneName || req.userAddress?.split(" ")[0] || "Cairo" },
+    citizen: { name: cleanVal(req.userName || req.user?.fullName, "Citizen") },
+    zone: { name: cleanVal(req.zoneName || req.userAddress?.split(" ")[0], "Cairo") },
     driver: req.driverName && req.driverName !== "No Driver Assigned"
       ? { name: req.driverName } 
       : (req.recycler?.fullName ? { name: req.recycler.fullName } : null),

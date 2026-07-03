@@ -290,7 +290,7 @@ export default function PerformanceDashboardPage() {
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Collection vs Processing</p>
               {displayedTrendData.length === 0 ? (
-                <div className="flex items-center justify-center h-[280px] text-slate-400 text-sm">not yet from api</div>
+                <div className="flex items-center justify-center h-[280px] text-slate-400 text-sm">-</div>
               ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <AreaChart data={displayedTrendData}>
@@ -323,7 +323,7 @@ export default function PerformanceDashboardPage() {
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Weekly revenue analysis</p>
               {displayedTrendData.length === 0 ? (
-                <div className="flex items-center justify-center h-[280px] text-slate-400 text-sm">not yet from api</div>
+                <div className="flex items-center justify-center h-[280px] text-slate-400 text-sm">-</div>
               ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <RechartsLine data={displayedTrendData}>
@@ -345,7 +345,7 @@ export default function PerformanceDashboardPage() {
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">By category</p>
               {categoryData.length === 0 ? (
-                <div className="flex items-center justify-center h-[260px] text-slate-400 text-sm">not yet from api</div>
+                <div className="flex items-center justify-center h-[260px] text-slate-400 text-sm">-</div>
               ) : (
               <ResponsiveContainer width="100%" height={260}>
                 <RechartsPie>
@@ -366,7 +366,7 @@ export default function PerformanceDashboardPage() {
               )}
               <div className="grid grid-cols-2 gap-2 mt-4">
                 {categoryData.length === 0 ? (
-                  <div className="col-span-2 text-center text-sm text-slate-400">not yet from api</div>
+                  <div className="col-span-2 text-center text-sm text-slate-400">-</div>
                 ) : (
                 categoryData.map((cat) => (
                   <div key={cat.name} className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-white/5 rounded-xl">
@@ -386,7 +386,7 @@ export default function PerformanceDashboardPage() {
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Multi-dimensional analysis</p>
               {radarData.length === 0 ? (
-                <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">not yet from api</div>
+                <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">-</div>
               ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <RadarChart data={radarData}>
@@ -432,7 +432,7 @@ export default function PerformanceDashboardPage() {
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Efficiency, satisfaction & revenue</p>
             {monthlyData.length === 0 ? (
-              <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">not yet from api</div>
+              <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">-</div>
             ) : (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={monthlyData}>
@@ -454,9 +454,9 @@ export default function PerformanceDashboardPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { title: "Insight", value: "not yet from api", description: "not yet from api", icon: Award, accent: "emerald" },
-              { title: "Insight", value: "not yet from api", description: "not yet from api", icon: TrendingUp, accent: "teal" },
-              { title: "Insight", value: "not yet from api", description: "not yet from api", icon: AlertCircle, accent: "amber" },
+              { title: "Insight", value: "-", description: "-", icon: Award, accent: "emerald" },
+              { title: "Insight", value: "-", description: "-", icon: TrendingUp, accent: "teal" },
+              { title: "Insight", value: "-", description: "-", icon: AlertCircle, accent: "amber" },
             ].map((insight, index) => {
               const Icon = insight.icon;
               const a = accentMap[insight.accent] || { bg: "bg-emerald-500/10", fg: "text-emerald-600" };

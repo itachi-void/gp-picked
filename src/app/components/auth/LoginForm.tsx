@@ -55,7 +55,16 @@ export function LoginForm() {
       router.replace(homePathForRole(u.role));
     } catch (err: any) {
       toast.error(err?.message ?? "Authentication failed");
+      throw err;
     }
+  };
+
+  const handleAuthSubmit = async () => {
+    const isValid = await form.trigger();
+    if (!isValid) {
+      throw new Error("Validation failed");
+    }
+    await onSubmit(form.getValues());
   };
 
 
@@ -129,7 +138,7 @@ export function LoginForm() {
         <div className="flex justify-center pt-2">
           <PremiumAuthButton
             variant="login"
-            onLogin={() => form.handleSubmit(onSubmit)()}
+            onLogin={handleAuthSubmit}
           />
         </div>
       </form>

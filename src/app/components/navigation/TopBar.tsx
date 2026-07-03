@@ -9,6 +9,7 @@ import { UserMenu } from "./UserMenu";
 import { LanguageToggle } from "./LanguageToggle";
 import { NotificationBell } from "./NotificationBell";
 import { GlobalSearch } from "./GlobalSearch";
+import { TopBarStats } from "./TopBarStats";
 
 export default function TopBar() {
   // ========== ١. جلب الثيم ==========
@@ -23,6 +24,9 @@ export default function TopBar() {
           <Logo />
           <DesktopNav />
         </div>
+
+        {/* ========== إحصائيات سريعة في المنتصف ========== */}
+        <TopBarStats />
 
         {/* ========== البحث العالمي ========== */}
         <GlobalSearch />

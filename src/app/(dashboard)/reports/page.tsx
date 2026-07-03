@@ -598,7 +598,7 @@ export default function ReportsPage() {
                   <label className="block text-sm text-slate-700 dark:text-slate-300 mb-2 font-semibold" style={{ fontWeight: 600 }}>Report Type</label>
                   <div className="grid grid-cols-2 gap-3">
                     {reportTemplates.length === 0 ? (
-                      <div className="col-span-2 text-center py-8 text-slate-400 text-sm">not yet from api</div>
+                      <div className="col-span-2 text-center py-8 text-slate-400 text-sm">-</div>
                     ) : (
                     reportTemplates.map((template) => {
                       const Icon = template.icon;

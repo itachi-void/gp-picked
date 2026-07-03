@@ -58,11 +58,11 @@ export default function SustainabilityPage() {
   ];
 
   const annualGoals = [
-    { label: "CO₂ avoided", target: "not yet from api", pct: Math.min(100, Math.round((co2Avoided / 2000) * 100)), accent: "emerald" },
-    { label: "Plastic diverted", target: "not yet from api", pct: Math.min(100, Math.round((plasticDiverted / 500000) * 100)), accent: "teal" },
-    { label: "Paper saved", target: "not yet from api", pct: Math.min(100, Math.round((paperSaved / 200000) * 100)), accent: "lime" },
-    { label: "E-waste recycled", target: "not yet from api", pct: Math.min(100, Math.round((eWasteRecycled / 30000) * 100)), accent: "violet" },
-    { label: "Water saved", target: "not yet from api", pct: Math.min(100, Math.round(((waterSaved * 1000000) / 7000000) * 100)), accent: "sky" },
+    { label: "CO₂ avoided", target: "-", pct: Math.min(100, Math.round((co2Avoided / 2000) * 100)), accent: "emerald" },
+    { label: "Plastic diverted", target: "-", pct: Math.min(100, Math.round((plasticDiverted / 500000) * 100)), accent: "teal" },
+    { label: "Paper saved", target: "-", pct: Math.min(100, Math.round((paperSaved / 200000) * 100)), accent: "lime" },
+    { label: "E-waste recycled", target: "-", pct: Math.min(100, Math.round((eWasteRecycled / 30000) * 100)), accent: "violet" },
+    { label: "Water saved", target: "-", pct: Math.min(100, Math.round(((waterSaved * 1000000) / 7000000) * 100)), accent: "sky" },
   ];
 
   if (loading) {
@@ -149,7 +149,7 @@ export default function SustainabilityPage() {
         <h3 className="text-lg tracking-tight text-slate-900 dark:text-white mb-1">Quarterly Milestones</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">2026 sustainability roadmap</p>
         {milestones.length === 0 ? (
-          <div className="flex items-center justify-center h-32 text-slate-400 text-sm">not yet from api</div>
+          <div className="flex items-center justify-center h-32 text-slate-400 text-sm">-</div>
         ) : (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {milestones.map((m, i) => (
@@ -172,7 +172,7 @@ export default function SustainabilityPage() {
           <h3 className="text-lg tracking-tight text-slate-900 dark:text-white mb-1">Monthly CO₂ Saved by Material</h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Stacked tons over the year</p>
           {stackedData.length === 0 ? (
-            <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">not yet from api</div>
+            <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">-</div>
           ) : (
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={stackedData}>
@@ -194,7 +194,7 @@ export default function SustainabilityPage() {
           <h3 className="text-lg tracking-tight text-slate-900 dark:text-white mb-1">Top 5 Zones by Impact</h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">CO₂ avoided (tons)</p>
           {topZones.length === 0 ? (
-            <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">not yet from api</div>
+            <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">-</div>
           ) : (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={topZones}>

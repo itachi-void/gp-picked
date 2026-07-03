@@ -110,9 +110,9 @@ export default function CentersListPage() {
     return rawStaff.map((s: any, idx: number) => {
       const staffId = s.hubStaffId || s.id || idx;
       let managerName = s.name || "Hub Staff";
-      let location = "not yet from api";
+      let location = "-";
       let status = "active";
-      let contact = "not yet from api";
+      let contact = "-";
 
       const qResult = queryData[idx];
       if (qResult && qResult.status === "success") {
@@ -131,8 +131,8 @@ export default function CentersListPage() {
         id: String(staffId),
         name: `${managerName}'s Collection Center`,
         location,
-        capacity: "not yet from api",
-        currentLoad: "not yet from api",
+        capacity: "-",
+        currentLoad: "-",
         status: status as any,
         manager: managerName,
         contact,
@@ -149,18 +149,18 @@ export default function CentersListPage() {
   const [isOpen, setIsOpen] = useState(false);                // ٢. الـ Modal مفتوح؟
   const [editing, setEditing] = useState<Center | null>(null);// ٣. بنعدل على أنهي مركز؟
   const [create, setCreate] = useState(false);                // ٤. بنضيف جديد؟
-  const [form, setForm] = useState<Center>({ id: "", name: "", location: "", capacity: "not yet from api", currentLoad: "not yet from api", status: "active", manager: "", contact: "" });
+  const [form, setForm] = useState<Center>({ id: "", name: "", location: "", capacity: "-", currentLoad: "-", status: "active", manager: "", contact: "" });
 
   // ========== إحصائيات ==========
   const stats = [
     { label: "Total Centers", value: centers.length, icon: Building2, accent: "emerald" },
     { label: "Active Centers", value: centers.filter((c) => c.status === "active").length, icon: Users, accent: "sky" },
-    { label: "Total Capacity", value: "not yet from api", icon: Activity, accent: "rose" },
+    { label: "Total Capacity", value: "-", icon: Activity, accent: "rose" },
   ];
 
   // ========== فتح الـ Modal للإضافة ==========
   const openCreate = () => {
-    setForm({ id: "",  name: "", location: "", capacity: "not yet from api", currentLoad: "not yet from api", status: "active", manager: "", contact: "" });
+    setForm({ id: "",  name: "", location: "", capacity: "-", currentLoad: "-", status: "active", manager: "", contact: "" });
     setCreate(true);        // بنضيف جديد
     setEditing(null);       // مفيش تعديل
     setIsOpen(true);        // افتح
