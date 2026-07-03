@@ -179,7 +179,7 @@ export default function CitizenLevelsPage() {
           {levels.map((lv: any) => {
             const cfg = LEVEL_CONFIG[lv.tier as LevelTier];
             const Icon = cfg.icon;
-            const a = accentMap[cfg.accent];
+            const a = accentMap[cfg.accent] || { bg: "", fg: "" };
             return (
               <div key={lv.tier} className={`mc-card-in p-5 rounded-2xl border ${a.bg} border-slate-200/60 dark:border-white/10`}>
                 <div className="flex items-center gap-3 mb-3">
@@ -225,7 +225,7 @@ export default function CitizenLevelsPage() {
               {citizens.slice(0, 100).map((c) => {
                 const tier = getLevel(c.walletPoints, bronzeMax, silverMax);
                 const cfg = LEVEL_CONFIG[tier];
-                const a = accentMap[cfg.accent];
+                const a = accentMap[cfg.accent] || { bg: "", fg: "" };
                 return (
                   <tr key={c.userId} className="hover:bg-slate-50/40 dark:hover:bg-white/5">
                     <td className="px-3 py-2.5 text-slate-500 dark:text-slate-400">#{c.rank}</td>

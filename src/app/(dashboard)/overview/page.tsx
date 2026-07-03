@@ -72,7 +72,7 @@ export default function OverviewPage() {
         />
       </div>
 
-      <div data-aos="fade-up" data-aos-delay="100">
+      <div data-aos="fade-up" data-aos-delay="200">
         <OperationalKPIs
           activePickups={activePickups}
           driversOnRoad={driversOnRoad}

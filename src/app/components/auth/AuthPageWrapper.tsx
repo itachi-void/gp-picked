@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Recycle } from "lucide-react";
 import { useAuth } from "@/store/authStore";
 import { homePathForRole } from "@/app/utils/roleAccess";
 import { GlassCard } from "@/app/components/GlassCard";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
 import { DemoRoles } from "./DemoRoles";
+import LampScene from "@/app/components/LampScene";
+import BulbSwitch from "@/app/components/BulbSwitch";
+import DayNightSwitch from "@/app/components/DayNightSwitch";
 
 type Mode = "login" | "signup";
 
@@ -19,17 +21,67 @@ interface AuthPageWrapperProps {
 export function AuthPageWrapper({ mode }: AuthPageWrapperProps) {
   const { user } = useAuth();
   const router = useRouter();
+  const [dayNightMode, setDayNightMode] = useState<"day" | "night">("night");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (user) router.replace(homePathForRole(user.role));
   }, [user, router]);
 
-  return (
-    <div className="min-h-screen relative flex items-center justify-center p-6 overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-teal-400/10 blur-3xl pointer-events-none" />
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="animate-pulse text-emerald-500/50 text-sm">Loading...</div>
+      </div>
+    );
+  }
 
-      <GlassCard className="relative z-10 w-full max-w-md p-8 animate-scale-pop">
+  const isDay = dayNightMode === "day";
+
+  const sceneConfig = isDay
+    ? {
+        warm: "255, 220, 140",
+        beamIntensity: 0.7,
+        beamWidth: 0.75,
+        ambientGlow: 0,
+        shadowStrength: 0.0,
+        lampStyle: "warm-brass" as const,
+        background:
+          "linear-gradient(180deg, #eaf6ef 0%, #c8e3d4 50%, #9fcdbb 100%)",
+      }
+    : {
+        warm: "167, 243, 208",
+        beamIntensity: 1.2,
+        beamWidth: 0.8,
+        ambientGlow: 0,
+        shadowStrength: 1.0,
+        lampStyle: "cool-steel" as const,
+        background:
+          "radial-gradient(ellipse at 50% 55%, #0a1f17 0%, #051410 55%, #020806 100%)",
+      };
+
+  return (
+    <LampScene
+      key={dayNightMode}
+      warm={sceneConfig.warm}
+      beamIntensity={sceneConfig.beamIntensity}
+      beamWidth={sceneConfig.beamWidth}
+      ambientGlow={sceneConfig.ambientGlow}
+      shadowStrength={sceneConfig.shadowStrength}
+      contentPosition="center"
+      lampStyle={sceneConfig.lampStyle}
+      lampLeft="3%"
+      lampBottom="6%"
+      lampScale={0.85}
+      showDust={!isDay}
+      dayMode={isDay}
+      background={sceneConfig.background}
+    >
+      <GlassCard className="w-full max-w-md p-8 animate-scale-pop">
         <div className="flex justify-center mb-6">
           <img src="/logo.png" alt="EcoSnap" className="h-16 w-auto object-contain" />
         </div>
@@ -54,6 +106,12 @@ export function AuthPageWrapper({ mode }: AuthPageWrapperProps) {
 
         <DemoRoles />
       </GlassCard>
-    </div>
+      <BulbSwitch position={{ top: 24, right: 28 }} />
+      <DayNightSwitch
+        mode={dayNightMode}
+        onChange={setDayNightMode}
+        position={{ top: 30, right: 100 }}
+      />
+    </LampScene>
   );
 }

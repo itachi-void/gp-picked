@@ -70,6 +70,11 @@ function mapBackendToTicket(t: any): Ticket {
 export default function SupportTicketsPage() {
   const { role, user } = useRoleContext();
   const { addNotification } = useNotifications();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<TicketStatus | "all">("all");
@@ -308,6 +313,15 @@ export default function SupportTicketsPage() {
     }
   };
 
+  if (!mounted) {
+    return (
+      <div className="max-w-[1600px] mx-auto p-6 space-y-6 animate-pulse">
+        <div className="h-10 w-48 bg-slate-200 dark:bg-slate-800 rounded-full" />
+        <div className="h-4 w-64 bg-slate-200 dark:bg-slate-800 rounded-full mt-2" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-[1600px] mx-auto p-6 space-y-6">
       <div className="mc-fade-in-down flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -317,7 +331,7 @@ export default function SupportTicketsPage() {
           </div>
           <div>
             <h1 className="text-3xl tracking-tight text-slate-900 dark:text-white font-bold" style={{ fontWeight: 700 }}>Support Tickets</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-slate-500 dark:text-slate-400 mt-0.5" suppressHydrationWarning>
               {isCitizen
                 ? "Track your inquiries and complaints"
                 : isDriver
@@ -326,7 +340,7 @@ export default function SupportTicketsPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" suppressHydrationWarning>
           <button
             onClick={handleExport}
             className="flex items-center gap-2 px-4 h-10 bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-full hover:bg-white dark:hover:bg-white/10 transition-colors text-sm cursor-pointer font-semibold"

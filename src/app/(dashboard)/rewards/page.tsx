@@ -18,7 +18,9 @@ import {
   HelpCircle,
   TrendingUp,
   Banknote,
-  DollarSign
+  DollarSign,
+  Truck,
+  Star
 } from "lucide-react";
 
 // Conversion rate: 10 points = 1 EGP (i.e. 1 point = 0.1 EGP)
@@ -163,6 +165,28 @@ export default function RewardsPage() {
 
   const [ownHistory, setOwnHistory] = useState<any[]>([]);
   const [ownHistoryLoading, setOwnHistoryLoading] = useState(true);
+  const [driverStats, setDriverStats] = useState<any>(null);
+  const [driverStatsLoading, setDriverStatsLoading] = useState(true);
+
+  React.useEffect(() => {
+    if (!mounted || role !== "driver" || !user?.id) {
+      setDriverStatsLoading(false);
+      return;
+    }
+    const fetchDriverStats = async () => {
+      try {
+        const res = await api.get("/admin/recycler-with-total-trip");
+        const list = Array.isArray(res.data) ? res.data : [];
+        const me = list.find((r: any) => r.recyclerID === user.id || r.id === user.id);
+        setDriverStats(me || null);
+      } catch {
+        setDriverStats(null);
+      } finally {
+        setDriverStatsLoading(false);
+      }
+    };
+    fetchDriverStats();
+  }, [mounted, role, user?.id]);
 
   React.useEffect(() => {
     if (!mounted || !user?.id) return;
@@ -339,10 +363,46 @@ export default function RewardsPage() {
             Eco Rewards Portal 🎁
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">
-            Redeem your hard-earned points for real cash sent directly to your mobile wallet or bank account.
+            {role === "driver"
+              ? "Track your trip earnings and redeem your rewards for cash."
+              : "Redeem your hard-earned points for real cash sent directly to your mobile wallet or bank account."}
           </p>
         </div>
       </div>
+
+      {/* Driver Trip Stats */}
+      {role === "driver" && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <GlassCard className="p-5">
+            <div className="w-12 h-12 bg-sky-500/10 rounded-2xl flex items-center justify-center mb-3 text-sky-600 dark:text-sky-400">
+              <Truck className="w-6 h-6" />
+            </div>
+            <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{driverStatsLoading ? "..." : driverStats?.totalTripsCompleted ?? 0}</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">Total Trips</p>
+          </GlassCard>
+          <GlassCard className="p-5">
+            <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center mb-3 text-amber-600 dark:text-amber-400">
+              <Star className="w-6 h-6" />
+            </div>
+            <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{driverStatsLoading ? "..." : driverStats?.rating ?? "—"}</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">Rating</p>
+          </GlassCard>
+          <GlassCard className="p-5">
+            <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-3 text-emerald-600 dark:text-emerald-400">
+              <Coins className="w-6 h-6" />
+            </div>
+            <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{walletLoading ? "..." : currentPoints.toLocaleString()}</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">Wallet Points</p>
+          </GlassCard>
+          <GlassCard className="p-5">
+            <div className="w-12 h-12 bg-violet-500/10 rounded-2xl flex items-center justify-center mb-3 text-violet-600 dark:text-violet-400">
+              <Banknote className="w-6 h-6" />
+            </div>
+            <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{walletLoading ? "..." : currentCashVal.toFixed(2)} EGP</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">Cash Value</p>
+          </GlassCard>
+        </div>
+      )}
 
       {/* 2. Main content area: Balance Overview & Redemption Form */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

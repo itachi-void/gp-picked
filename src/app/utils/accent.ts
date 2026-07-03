@@ -60,4 +60,10 @@ export const accentMap: Record<string, AccentConfig> = {
     border: "border-fuchsia-200 dark:border-fuchsia-800/50",
     gradient: "from-fuchsia-500 to-fuchsia-700",
   },
+  yellow: {
+    bg: "bg-yellow-500/10 dark:bg-yellow-500/20",
+    fg: "text-yellow-600 dark:text-yellow-500",
+    border: "border-yellow-200 dark:border-yellow-800/50",
+    gradient: "from-yellow-500 to-yellow-700",
+  },
 };
