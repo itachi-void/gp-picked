@@ -170,31 +170,73 @@ export default function PremiumAuthButton({
     ]);
   };
 
-  const handleLoginClick = () => {
+  const isMounted = useRef(true);
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      clearT();
+    };
+  }, []);
+
+  const handleLoginClick = async () => {
     clearT(); resetAll(); setIsHovered(false); setLoginSuccess(false);
     setPhase("clicking"); setBtnScale(0.96);
 
-    sched([
-      [() => { setBtnScale(1); setIsCharRunning(true); setCharX(CE); setDoorIsOpen(true); }, 75],
-      [() => { setIsCharRunning(false); setCharAlpha(0); }, 430],
-      [() => { setDoorIsOpen(false); setPhase("closing"); }, 620],
-      [() => {
-        setLoginSuccess(true); setBtnScale(1.06);
-        if (variant === "signup") onSignup?.(); else onLogin?.();
-        onClick?.();
-      }, 880],
-      [() => setBtnScale(1), 1080],
-      [() => setLoginSuccess(false), 1500],
-      [() => { resetAll(); setPhase("idle"); }, 1700],
-    ]);
+    const sleep = (ms: number) => new Promise((resolve) => {
+      const t = window.setTimeout(resolve, ms);
+      timers.current.push(t);
+    });
+
+    await sleep(75);
+    if (!isMounted.current) return;
+    setBtnScale(1);
+    setIsCharRunning(true);
+    setCharX(CE);
+    setDoorIsOpen(true);
+
+    await sleep(430 - 75);
+    if (!isMounted.current) return;
+    setIsCharRunning(false);
+    setCharAlpha(0);
+
+    await sleep(620 - 430);
+    if (!isMounted.current) return;
+    setDoorIsOpen(false);
+    setPhase("closing");
+
+    await sleep(880 - 620);
+    if (!isMounted.current) return;
+
+    try {
+      if (variant === "signup") {
+        if (onSignup) await onSignup();
+      } else {
+        if (onLogin) await onLogin();
+      }
+      if (onClick) await onClick();
+
+      if (!isMounted.current) return;
+      setLoginSuccess(true);
+      setBtnScale(1.06);
+
+      await sleep(200);
+      if (!isMounted.current) return;
+      setBtnScale(1);
+    } catch (err) {
+      console.error("Auth action failed:", err);
+      if (!isMounted.current) return;
+      setLoginSuccess(false);
+      setBtnScale(1);
+      resetAll();
+      setPhase("idle");
+    }
   };
 
   const handleClick = () => {
     if (isLocked) return;
     if (isLogin) handleLoginClick(); else handleLogoutClick();
   };
-
-  useEffect(() => () => clearT(), []);
 
   const isLocked = ["clicking", "falling", "closing"].includes(phase);
 

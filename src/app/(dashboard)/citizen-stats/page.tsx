@@ -147,7 +147,7 @@ export default function CitizenStatsPage() {
   }, [walletPoints, avgPoints]);
 
   const kpis = useMemo(() => {
-    const base = [
+    const base: { label: string; value: string | number; icon: any; accent: string; subtext?: string }[] = [
       { 
         label: "Total Points Earned", 
         value: walletPoints.toLocaleString(), 
