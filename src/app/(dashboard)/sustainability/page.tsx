@@ -2,23 +2,14 @@
 
 import { useState, useEffect } from "react";
 import "@/app/components/motion/motion-components.css";
-import { Leaf, Cloud, Recycle, Trees, Cpu, Droplets, Download, Target, CheckCircle, Circle, Loader2 } from "lucide-react";
-import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-} from "recharts";
+import { Leaf, Cloud, Recycle, Trees, Cpu, Droplets, Download, Target, Loader2 } from "lucide-react";
 import { useRoleContext } from "@/contexts/RoleContext";
 import { toast } from "sonner";
-import { useTheme } from "next-themes";
 import { GlassCard } from "@/app/components/GlassCard";
 import { accentMap } from "@/app/utils/accent";
-import { tooltipStyle } from "@/app/utils/chartTheme";
 import api from "@/lib/axios";
 
-const milestones: { q: string; label: string; done: boolean; current?: boolean }[] = [];
 
-const stackedData: { m: string; Plastic: number; Glass: number; Metal: number; Paper: number }[] = [];
-
-const topZones: { zone: string; impact: number }[] = [];
 
 export default function SustainabilityPage() {
   useRoleContext();
@@ -145,69 +136,6 @@ export default function SustainabilityPage() {
         </div>
       </GlassCard>
 
-      <GlassCard className="p-6">
-        <h3 className="text-lg tracking-tight text-slate-900 dark:text-white mb-1">Quarterly Milestones</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">2026 sustainability roadmap</p>
-        {milestones.length === 0 ? (
-          <div className="flex items-center justify-center h-32 text-slate-400 text-sm">-</div>
-        ) : (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {milestones.map((m, i) => (
-            <div key={m.q} className="mc-card-in" style={{ animationDelay: `${i * 0.08}s` }}>
-              <div className={`p-4 rounded-2xl border ${m.current ? "border-emerald-400/40 bg-emerald-500/5" : "border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/5"}`}>
-                <div className="flex items-center gap-2 mb-2">
-                  {m.done ? <CheckCircle className="w-5 h-5 text-emerald-500" /> : <Circle className={`w-5 h-5 ${m.current ? "text-emerald-500" : "text-slate-400"}`} />}
-                  <span className="text-sm text-slate-500 dark:text-slate-400" style={{ fontWeight: 600 }}>{m.q}</span>
-                </div>
-                <p className="text-sm text-slate-900 dark:text-white">{m.label}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-        )}
-      </GlassCard>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <GlassCard className="p-6">
-          <h3 className="text-lg tracking-tight text-slate-900 dark:text-white mb-1">Monthly CO₂ Saved by Material</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Stacked tons over the year</p>
-          {stackedData.length === 0 ? (
-            <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">-</div>
-          ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={stackedData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
-              <XAxis dataKey="m" stroke="#94a3b8" />
-              <YAxis stroke="#94a3b8" />
-              <Tooltip contentStyle={tooltipStyle(isDark)} />
-              <Legend />
-              <Area type="monotone" dataKey="Plastic" stackId="1" stroke="#10b981" fill="#10b981" fillOpacity={0.6} />
-              <Area type="monotone" dataKey="Glass" stackId="1" stroke="#14b8a6" fill="#14b8a6" fillOpacity={0.6} />
-              <Area type="monotone" dataKey="Metal" stackId="1" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.6} />
-              <Area type="monotone" dataKey="Paper" stackId="1" stroke="#84cc16" fill="#84cc16" fillOpacity={0.6} />
-            </AreaChart>
-          </ResponsiveContainer>
-          )}
-        </GlassCard>
-
-        <GlassCard className="p-6">
-          <h3 className="text-lg tracking-tight text-slate-900 dark:text-white mb-1">Top 5 Zones by Impact</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">CO₂ avoided (tons)</p>
-          {topZones.length === 0 ? (
-            <div className="flex items-center justify-center h-[300px] text-slate-400 text-sm">-</div>
-          ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={topZones}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
-              <XAxis dataKey="zone" stroke="#94a3b8" />
-              <YAxis stroke="#94a3b8" />
-              <Tooltip contentStyle={tooltipStyle(isDark)} />
-              <Bar dataKey="impact" fill="#10b981" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-          )}
-        </GlassCard>
-      </div>
     </div>
   );
 }

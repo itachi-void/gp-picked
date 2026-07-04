@@ -150,15 +150,16 @@ function DriverOverviewDashboard() {
   return (
     <div className="max-w-[1400px] mx-auto p-6 space-y-6">
       {/* Hero */}
-      <div
-        className="animate-fade-in-up rounded-3xl p-6 md:p-8 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 text-white relative overflow-hidden"
-      >
+      <div className="animate-fade-in-up rounded-3xl p-6 md:p-8 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 text-white relative overflow-hidden">
         <div className="relative z-10 flex items-center justify-between flex-wrap gap-4">
           <div>
             <p className="text-white/70 text-sm">{greeting},</p>
-            <h1 className="text-3xl" style={{ fontWeight: 700 }}>{user?.name ?? "Driver"}</h1>
+            <h1 className="text-3xl" style={{ fontWeight: 700 }}>
+              {user?.name ?? "Driver"}
+            </h1>
             <p className="text-white/80 text-sm mt-1">
-              You have <strong>{assigned.length}</strong> pickup{assigned.length !== 1 ? "s" : ""} on today’s route.
+              You have <strong>{assigned.length}</strong> pickup
+              {assigned.length !== 1 ? "s" : ""} on today’s route.
             </p>
           </div>
           <div className="flex gap-3">
@@ -179,8 +180,15 @@ function DriverOverviewDashboard() {
           </div>
         </div>
         {/* decorative wave */}
-        <svg className="absolute inset-x-0 bottom-0 w-full h-20 opacity-30" viewBox="0 0 720 80" preserveAspectRatio="none">
-          <path d="M0,50 C150,20 300,70 450,40 C600,15 680,55 720,40 L720,80 L0,80 Z" fill="rgba(255,255,255,0.18)" />
+        <svg
+          className="absolute inset-x-0 bottom-0 w-full h-20 opacity-30"
+          viewBox="0 0 720 80"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M0,50 C150,20 300,70 450,40 C600,15 680,55 720,40 L720,80 L0,80 Z"
+            fill="rgba(255,255,255,0.18)"
+          />
         </svg>
       </div>
 
@@ -196,12 +204,21 @@ function DriverOverviewDashboard() {
             >
               <GlassCard className="p-4">
                 <div className="flex items-center justify-between">
-                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${toneMap[k.tone]}`}>
+                  <div
+                    className={`w-10 h-10 rounded-2xl flex items-center justify-center ${toneMap[k.tone]}`}
+                  >
                     <Icon className="w-5 h-5" />
                   </div>
                 </div>
-                <div className="mt-3 text-2xl text-slate-900 dark:text-white truncate" style={{ fontWeight: 700 }}>{k.value}</div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">{k.label} · <span className="opacity-70">{k.sub}</span></div>
+                <div
+                  className="mt-3 text-2xl text-slate-900 dark:text-white truncate"
+                  style={{ fontWeight: 700 }}
+                >
+                  {k.value}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {k.label} · <span className="opacity-70">{k.sub}</span>
+                </div>
               </GlassCard>
             </div>
           );
@@ -212,21 +229,44 @@ function DriverOverviewDashboard() {
         {/* Today's schedule */}
         <GlassCard className="p-5 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm text-slate-900 dark:text-white flex items-center gap-2" style={{ fontWeight: 700 }}>
-              <Clock className="w-4 h-4 text-emerald-500" /> Today’s schedule
+            <h2
+              className="text-sm text-slate-900 dark:text-white flex items-center gap-2"
+              style={{ fontWeight: 700 }}
+            >
+              <Clock className="w-4 h-4 text-emerald-500" /> Today’s schedule{" "}
+              <span className="text-red-500">Coming in the future</span>
             </h2>
-            <button onClick={() => router.push("/schedule")} className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 hover:gap-1.5 transition-all cursor-pointer" style={{ fontWeight: 600 }}>
+            <button
+              onClick={() => router.push("/schedule")}
+              className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 hover:gap-1.5 transition-all cursor-pointer"
+              style={{ fontWeight: 600 }}
+            >
               Full schedule <ArrowRight className="w-3 h-3" />
             </button>
           </div>
           <div className="space-y-1">
             {todaySchedule.map((s, i) => (
-              <div key={i} className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-white/5 last:border-0">
-                <span className="text-xs font-mono w-12 text-slate-700 dark:text-slate-200">{s.time}</span>
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${s.done ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-slate-200 dark:bg-white/10 text-slate-400"}`}>
-                  {s.done ? <CheckCircle2 className="w-3.5 h-3.5" /> : <span className="w-1.5 h-1.5 rounded-full bg-current" />}
+              <div
+                key={i}
+                className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-white/5 last:border-0"
+              >
+                <span className="text-xs font-mono w-12 text-slate-700 dark:text-slate-200">
+                  {s.time}
                 </span>
-                <span className={`text-sm ${s.done ? "text-slate-400 line-through" : "text-slate-700 dark:text-slate-200"}`}>{s.label}</span>
+                <span
+                  className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${s.done ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-slate-200 dark:bg-white/10 text-slate-400"}`}
+                >
+                  {s.done ? (
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  ) : (
+                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                  )}
+                </span>
+                <span
+                  className={`text-sm ${s.done ? "text-slate-400 line-through" : "text-slate-700 dark:text-slate-200"}`}
+                >
+                  {s.label}
+                </span>
               </div>
             ))}
           </div>
@@ -234,22 +274,56 @@ function DriverOverviewDashboard() {
 
         {/* Vehicle status */}
         <GlassCard className="p-5">
-          <h2 className="text-sm text-slate-900 dark:text-white flex items-center gap-2 mb-4" style={{ fontWeight: 700 }}>
-            <Truck className="w-4 h-4 text-cyan-500" /> Vehicle status
+          <h2
+            className="text-sm text-slate-900 dark:text-white flex items-center gap-2 mb-4"
+            style={{ fontWeight: 700 }}
+          >
+            <Truck className="w-4 h-4 text-cyan-500" /> Vehicle status{" "}
+            <span className="text-red-500">Coming in the future</span>
           </h2>
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-300" style={{ fontWeight: 700 }}>
+            <span
+              className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-300"
+              style={{ fontWeight: 700 }}
+            >
               ● On the road
             </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">TRK-204</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+              TRK-204
+            </span>
           </div>
           <div className="space-y-3">
-            <VehicleStat icon={Fuel} label="Fuel" value={0} unit="%" tone="emerald" />
-            <VehicleStat icon={Gauge} label="Load capacity" value={0} unit="%" tone="sky" />
-            <VehicleStat icon={Navigation} label="Distance today" value={0} unit="km" raw tone="violet" />
+            <VehicleStat
+              icon={Fuel}
+              label="Fuel"
+              value={0}
+              unit="%"
+              tone="emerald"
+            />
+            <VehicleStat
+              icon={Gauge}
+              label="Load capacity"
+              value={0}
+              unit="%"
+              tone="sky"
+            />
+            <VehicleStat
+              icon={Navigation}
+              label="Distance today"
+              value={0}
+              unit="km"
+              raw
+              tone="violet"
+            />
           </div>
-          <p className="text-[10px] text-slate-400 text-center mt-1 italic">-</p>
-          <button onClick={() => router.push("/fleet")} className="mt-4 w-full text-xs text-cyan-600 dark:text-cyan-400 flex items-center justify-center gap-1 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:border-cyan-300 transition-colors cursor-pointer" style={{ fontWeight: 600 }}>
+          <p className="text-[10px] text-slate-400 text-center mt-1 italic">
+            -
+          </p>
+          <button
+            onClick={() => router.push("/fleet")}
+            className="mt-4 w-full text-xs text-cyan-600 dark:text-cyan-400 flex items-center justify-center gap-1 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:border-cyan-300 transition-colors cursor-pointer"
+            style={{ fontWeight: 600 }}
+          >
             View on Fleet map <ArrowRight className="w-3 h-3" />
           </button>
         </GlassCard>
@@ -257,19 +331,31 @@ function DriverOverviewDashboard() {
 
       {/* Notifications */}
       <GlassCard className="p-5">
-        <h2 className="text-sm text-slate-900 dark:text-white flex items-center gap-2 mb-3" style={{ fontWeight: 700 }}>
+        <h2
+          className="text-sm text-slate-900 dark:text-white flex items-center gap-2 mb-3"
+          style={{ fontWeight: 700 }}
+        >
           <Bell className="w-4 h-4 text-amber-500" /> Quick notifications
         </h2>
         <div className="space-y-2">
           {notifications.map((n, i) => {
             const Icon = n.icon;
             return (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-white/5">
-                <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${toneMap[n.tone]}`}>
+              <div
+                key={i}
+                className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-white/5"
+              >
+                <span
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${toneMap[n.tone]}`}
+                >
                   <Icon className="w-4 h-4" />
                 </span>
-                <span className="text-sm text-slate-700 dark:text-slate-200 flex-1">{n.text}</span>
-                <span className="text-[11px] text-slate-400 shrink-0">{n.time}</span>
+                <span className="text-sm text-slate-700 dark:text-slate-200 flex-1">
+                  {n.text}
+                </span>
+                <span className="text-[11px] text-slate-400 shrink-0">
+                  {n.time}
+                </span>
               </div>
             );
           })}

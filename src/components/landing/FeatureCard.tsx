@@ -32,7 +32,7 @@ export function FeatureCard({ feature, index }: FeatureCardProps) {
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
           <div
-            className="progress-bar-fill h-full bg-gradient-to-r from-emerald-500 to-teal-500 relative"
+            className="progress-bar-fill h-full bg-gradient-to-r from-emerald-500 to-teal-500 relative overflow-hidden"
             style={{
               width: `${feature.accuracy}%`,
               boxShadow: "0 0 10px rgba(16,185,129,0.5)",

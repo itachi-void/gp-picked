@@ -8,7 +8,6 @@ import {
   Leaf,
   Users,
   Coins,
-  QrCode,
   MapPin,
   Play,
   ArrowRight,
@@ -21,7 +20,6 @@ import { StepItem } from "./StepItem";
 import { RoleCard } from "./RoleCard";
 import { ImpactStatCard } from "./ImpactStatCard";
 import { LiquidProgress } from "./LiquidProgress";
-import { QRScannerModal } from "./QRScannerModal";
 import { SectionHeading } from "./SectionHeading";
 import { Stat, FeatureT, StepT, RoleT, ImpactEqT, ImpactStatT } from "./types";
 
@@ -38,17 +36,51 @@ import "./landing-animations.css";
 const NAV_ITEMS = ["Features", "How It Works", "Pricing", "Impact"];
 
 const FEATURES: FeatureT[] = [
-  { icon: Recycle, name: "AI Bottle Matching", accuracy: 99, description: "Identify bottle types instantly with 99.9% accuracy" },
-  { icon: QrCode, name: "QR Verification", accuracy: 95, description: "Secure QR system for instant authentication" },
-  { icon: MapPin, name: "Smart Routing", accuracy: 87, description: "AI-optimized collection routes save 40% fuel costs" },
-  { icon: Recycle, name: "Live Dashboard", accuracy: 92, description: "Real-time analytics and performance monitoring" },
-  { icon: Recycle, name: "Digital Wallet", accuracy: 88, description: "Instant rewards and seamless point redemption" },
-  { icon: Recycle, name: "Secure Management", accuracy: 96, description: "Enterprise-grade security with blockchain verification" },
+  {
+    icon: Recycle,
+    name: "AI Bottle Matching",
+    accuracy: 99,
+    description: "Identify bottle types instantly with 99.9% accuracy",
+  },
+  {
+    icon: Coins,
+    name: "Instant Rewards",
+    accuracy: 98,
+    description: "Earn points instantly upon drop-off verification",
+  },
+  {
+    icon: MapPin,
+    name: "Smart Routing",
+    accuracy: 87,
+    description: "AI-optimized collection routes save 40% fuel costs",
+  },
+  {
+    icon: Recycle,
+    name: "Live Dashboard",
+    accuracy: 92,
+    description: "Real-time analytics and performance monitoring",
+  },
+  {
+    icon: Recycle,
+    name: "Digital Wallet",
+    accuracy: 88,
+    description: "Instant rewards and seamless point redemption",
+  },
+  {
+    icon: Recycle,
+    name: "Secure Management",
+    accuracy: 96,
+    description: "Enterprise-grade security with blockchain verification",
+  },
 ];
 
 const STEPS: StepT[] = [
-  { icon: Recycle, title: "Identify Bottle", description: "AI scans bottle type" },
-  { icon: QrCode, title: "Scan QR", description: "Verify authenticity" },
+  {
+    icon: Recycle,
+    title: "Identify Bottle",
+    description: "AI scans bottle type",
+  },
+  { icon: MapPin, title: "Find Hub", description: "Locate closest center" },
   { icon: Recycle, title: "AI Verify", description: "Instant verification" },
   { icon: MapPin, title: "Driver Collect", description: "Optimized pickup" },
   { icon: Coins, title: "Earn Points", description: "Instant rewards" },
@@ -86,16 +118,30 @@ const IMPACT_EQ: ImpactEqT[] = [
 ];
 
 const IMPACT_STATS: ImpactStatT[] = [
-  { icon: Recycle, label: "Bottles Recycled", value: "125,000", subtitle: "This Month" },
-  { icon: Recycle, label: "CO₂ Reduced", value: "62,500kg", subtitle: "Carbon Offset" },
-  { icon: Recycle, label: "Water Saved", value: "1,250,000L", subtitle: "Conservation" },
+  {
+    icon: Recycle,
+    label: "Bottles Recycled",
+    value: "125,000",
+    subtitle: "This Month",
+  },
+  {
+    icon: Recycle,
+    label: "CO₂ Reduced",
+    value: "62,500kg",
+    subtitle: "Carbon Offset",
+  },
+  {
+    icon: Recycle,
+    label: "Water Saved",
+    value: "1,250,000L",
+    subtitle: "Conservation",
+  },
 ];
 
 /* -------------------------------------------------------------------------- */
 /*                               Main Component                               */
 /* -------------------------------------------------------------------------- */
 export default function LandingPage() {
-  const [qrModalOpen, setQrModalOpen] = useState(false);
   const [bottleCount, setBottleCount] = useState(100);
   const [mounted, setMounted] = useState(false);
 
@@ -109,16 +155,22 @@ export default function LandingPage() {
 
     const fetchStats = async () => {
       try {
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://smartwaste.runasp.net";
+        const API_BASE_URL =
+          process.env.NEXT_PUBLIC_API_URL || "https://smartwaste.runasp.net";
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        const [resTotal, resActive, resPickups, resEarnings] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/admin/total-recyclers`, { headers }),
-          axios.get(`${API_BASE_URL}/api/admin/total-recycling-active`, { headers }),
-          axios.get(`${API_BASE_URL}/api/admin/total-pickup-requests`, { headers }),
-          axios.get(`${API_BASE_URL}/api/admin/Total-Earing`, { headers })
-        ]);
+        const [resTotal, resActive, resPickups, resEarnings] =
+          await Promise.all([
+            axios.get(`${API_BASE_URL}/api/admin/total-recyclers`, { headers }),
+            axios.get(`${API_BASE_URL}/api/admin/total-recycling-active`, {
+              headers,
+            }),
+            axios.get(`${API_BASE_URL}/api/admin/total-pickup-requests`, {
+              headers,
+            }),
+            axios.get(`${API_BASE_URL}/api/admin/Total-Earing`, { headers }),
+          ]);
 
         if (typeof resTotal.data === "number") {
           setTotalRecyclers(resTotal.data);
@@ -128,19 +180,28 @@ export default function LandingPage() {
 
         if (typeof resActive.data === "number") {
           setActiveRecyclers(resActive.data);
-        } else if (resActive.data && typeof resActive.data.active === "number") {
+        } else if (
+          resActive.data &&
+          typeof resActive.data.active === "number"
+        ) {
           setActiveRecyclers(resActive.data.active);
         }
 
         if (typeof resPickups.data === "number") {
           setTotalPickups(resPickups.data);
-        } else if (resPickups.data && typeof resPickups.data.total === "number") {
+        } else if (
+          resPickups.data &&
+          typeof resPickups.data.total === "number"
+        ) {
           setTotalPickups(resPickups.data.total);
         }
 
         if (typeof resEarnings.data === "number") {
           setTotalEarnings(resEarnings.data);
-        } else if (resEarnings.data && typeof resEarnings.data.totalEarnings === "number") {
+        } else if (
+          resEarnings.data &&
+          typeof resEarnings.data.totalEarnings === "number"
+        ) {
           setTotalEarnings(resEarnings.data.totalEarnings);
         }
       } catch (err) {
@@ -151,12 +212,39 @@ export default function LandingPage() {
     fetchStats();
   }, []);
 
-  const STATS: Stat[] = useMemo(() => [
-    { icon: Recycle, label: "Total Pickups", value: totalPickups !== null ? totalPickups : 2547893, suffix: totalPickups !== null ? "" : "+", color: "emerald" },
-    { icon: Users, label: "Total Recyclers", value: totalRecyclers !== null ? totalRecyclers : 52140, suffix: totalRecyclers !== null ? "" : "+", color: "purple" },
-    { icon: Users, label: "Active Recyclers", value: activeRecyclers !== null ? activeRecyclers : 45678, suffix: activeRecyclers !== null ? "" : "+", color: "blue" },
-    { icon: Coins, label: "Total Earnings", value: totalEarnings !== null ? totalEarnings : 1234567, suffix: " $", color: "amber" },
-  ], [activeRecyclers, totalRecyclers, totalPickups, totalEarnings]);
+  const STATS: Stat[] = useMemo(
+    () => [
+      {
+        icon: Recycle,
+        label: "Total Pickups",
+        value: totalPickups !== null ? totalPickups : 2547893,
+        suffix: totalPickups !== null ? "" : "+",
+        color: "emerald",
+      },
+      {
+        icon: Users,
+        label: "Total Recyclers",
+        value: totalRecyclers !== null ? totalRecyclers : 52140,
+        suffix: totalRecyclers !== null ? "" : "+",
+        color: "purple",
+      },
+      {
+        icon: Users,
+        label: "Active Recyclers",
+        value: activeRecyclers !== null ? activeRecyclers : 45678,
+        suffix: activeRecyclers !== null ? "" : "+",
+        color: "blue",
+      },
+      {
+        icon: Coins,
+        label: "Total Earnings",
+        value: totalEarnings !== null ? totalEarnings : 1234567,
+        suffix: " $",
+        color: "amber",
+      },
+    ],
+    [activeRecyclers, totalRecyclers, totalPickups, totalEarnings],
+  );
 
   const calculatedValue = useMemo(() => bottleCount * 0.5, [bottleCount]);
   const calculatedPoints = useMemo(() => bottleCount * 10, [bottleCount]);
@@ -175,7 +263,7 @@ export default function LandingPage() {
                 <Recycle className="h-5 w-5 text-white" />
               </div>
               <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                RecycleHub
+                EcoSnap
               </span>
             </div>
 
@@ -217,24 +305,34 @@ export default function LandingPage() {
         <div className="container mx-auto text-center">
           <div className="animate-fade-in-up">
             <h1 className="animate-scale-pop text-6xl md:text-7xl font-bold text-gray-900 mb-6">
-              <CyclingText texts={["Recycle Smart", "Earn Rewards", "Save Planet", "Join Movement"]} />
+              <CyclingText
+                texts={[
+                  "Recycle Smart",
+                  "Earn Rewards",
+                  "Save Planet",
+                  "Join Movement",
+                ]}
+              />
             </h1>
 
             <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              <MaskWipeText text="Transform bottle recycling with QR verification, AI matching, live tracking, and instant rewards" />
+              <MaskWipeText text="Transform bottle recycling with AI matching, live tracking, and instant rewards" />
             </p>
 
-            <div className="animate-fade-in-up flex flex-wrap gap-4 justify-center" style={{ animationDelay: "0.6s" }}>
-              <button
-                onClick={() => setQrModalOpen(true)}
-                className="px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg transition-all duration-300 flex items-center gap-2 shadow-lg hover:scale-105 active:scale-95 hover:shadow-[0_20px_40px_rgba(16,185,129,0.4)] cursor-pointer"
+            <div
+              className="animate-fade-in-up flex flex-wrap gap-4 justify-center"
+              style={{ animationDelay: "0.6s" }}
+            >
+              <Link
+                href="/overview"
+                className="px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg transition-all duration-300 flex items-center gap-2 shadow-lg hover:scale-105 active:scale-95 hover:shadow-[0_20px_40px_rgba(16,185,129,0.4)] cursor-pointer font-semibold"
               >
-                <QrCode className="w-5 h-5" />
-                Scan QR Code
+                <Recycle className="w-5 h-5" />
+                Go to Dashboard
                 <span className="inline-flex animate-arrow-nudge">
                   <ArrowRight className="w-5 h-5" />
                 </span>
-              </button>
+              </Link>
 
               <button className="group px-8 py-4 bg-white text-emerald-600 rounded-lg transition-all duration-300 flex items-center gap-2 shadow-lg border border-emerald-200 hover:scale-105 active:scale-95 hover:shadow-[0_20px_40px_rgba(0,0,0,0.1)] cursor-pointer">
                 <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -283,7 +381,10 @@ export default function LandingPage() {
       {/* ------------------------------- Features ------------------------------ */}
       <section id="features" className="relative z-10 py-20 px-4">
         <div className="container mx-auto">
-          <SectionHeading title="Powerful Features" subtitle="Advanced technology for seamless recycling experience" />
+          <SectionHeading
+            title="Powerful Features"
+            subtitle="Advanced technology for seamless recycling experience"
+          />
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {FEATURES.map((feature, i) => (
               <FeatureCard key={i} feature={feature} index={i} />
@@ -293,9 +394,15 @@ export default function LandingPage() {
       </section>
 
       {/* ---------------------------- How It Works ----------------------------- */}
-      <section id="how-it-works" className="relative z-10 py-20 px-4 bg-white/40 backdrop-blur-sm">
+      <section
+        id="how-it-works"
+        className="relative z-10 py-20 px-4 bg-white/40 backdrop-blur-sm"
+      >
         <div className="container mx-auto">
-          <SectionHeading title="How It Works" subtitle="Simple 5-step process" />
+          <SectionHeading
+            title="How It Works"
+            subtitle="Simple 5-step process"
+          />
 
           <div className="max-w-4xl mx-auto">
             <div className="relative">
@@ -330,7 +437,10 @@ export default function LandingPage() {
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Number of Bottles: <span className="text-emerald-600 font-bold">{bottleCount}</span>
+                  Number of Bottles:{" "}
+                  <span className="text-emerald-600 font-bold">
+                    {bottleCount}
+                  </span>
                 </label>
                 <input
                   type="range"
@@ -344,9 +454,21 @@ export default function LandingPage() {
 
               <div className="grid md:grid-cols-3 gap-6">
                 {[
-                  { label: "Cash Value", value: `$${calculatedValue.toFixed(2)}`, gradient: "from-emerald-50 to-teal-50" },
-                  { label: "Reward Points", value: calculatedPoints.toLocaleString(), gradient: "from-purple-50 to-pink-50" },
-                  { label: "CO₂ Saved", value: `${calculatedCO2}kg`, gradient: "from-green-50 to-emerald-50" },
+                  {
+                    label: "Cash Value",
+                    value: `$${calculatedValue.toFixed(2)}`,
+                    gradient: "from-emerald-50 to-teal-50",
+                  },
+                  {
+                    label: "Reward Points",
+                    value: calculatedPoints.toLocaleString(),
+                    gradient: "from-purple-50 to-pink-50",
+                  },
+                  {
+                    label: "CO₂ Saved",
+                    value: `${calculatedCO2}kg`,
+                    gradient: "from-green-50 to-emerald-50",
+                  },
                 ].map((item, index) => {
                   return (
                     <div
@@ -355,9 +477,14 @@ export default function LandingPage() {
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <Recycle className="w-5 h-5 text-emerald-600" />
-                        <span className="text-sm text-gray-600">{item.label}</span>
+                        <span className="text-sm text-gray-600">
+                          {item.label}
+                        </span>
                       </div>
-                      <div key={item.value} className="animate-fade-in text-3xl font-bold text-emerald-600">
+                      <div
+                        key={item.value}
+                        className="animate-fade-in text-3xl font-bold text-emerald-600"
+                      >
                         {item.value}
                       </div>
                     </div>
@@ -374,7 +501,10 @@ export default function LandingPage() {
       {/* -------------------------------- Roles -------------------------------- */}
       <section className="relative z-10 py-20 px-4">
         <div className="container mx-auto">
-          <SectionHeading title="Choose Your Role" subtitle="Join as a citizen, driver, or admin" />
+          <SectionHeading
+            title="Choose Your Role"
+            subtitle="Join as a citizen, driver, or admin"
+          />
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {ROLES.map((role, i) => (
               <RoleCard key={i} role={role} index={i} />
@@ -384,29 +514,40 @@ export default function LandingPage() {
       </section>
 
       {/* -------------------------------- Impact ------------------------------- */}
-      <section id="impact" className="relative z-10 py-20 px-4 bg-gradient-to-br from-green-600 to-emerald-700 text-white overflow-hidden">
+      <section
+        id="impact"
+        className="relative z-10 py-20 px-4 bg-gradient-to-br from-green-600 to-emerald-700 text-white overflow-hidden"
+      >
         <div className="container mx-auto relative z-10">
           <div className="animate-fade-in-up text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">Environmental Impact</h2>
-            <p className="text-xl text-green-100 max-w-2xl mx-auto">Making a real difference for our planet</p>
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              Environmental Impact
+            </h2>
+            <p className="text-xl text-green-100 max-w-2xl mx-auto">
+              Making a real difference for our planet
+            </p>
           </div>
 
-          <div
-            data-aos="fade-up"
-            className="max-w-4xl mx-auto mb-12"
-          >
+          <div data-aos="fade-up" className="max-w-4xl mx-auto mb-12">
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
-              <h3 className="text-2xl font-bold mb-6 text-center">Impact Equation</h3>
+              <h3 className="text-2xl font-bold mb-6 text-center">
+                Impact Equation
+              </h3>
               <div className="flex flex-wrap items-center justify-center gap-4 text-lg">
                 {IMPACT_EQ.map((item, index, array) => {
                   const Icon = item.icon;
                   return (
-                    <div key={`impact-item-${index}`} className="flex items-center gap-4">
+                    <div
+                      key={`impact-item-${index}`}
+                      className="flex items-center gap-4"
+                    >
                       <div className="flex items-center gap-2 transition-transform duration-300 hover:scale-110 hover:-translate-y-1.5">
                         <Icon className="w-6 h-6 animate-pulse" />
                         <span>{item.text}</span>
                       </div>
-                      {index < array.length - 1 && <span className="text-2xl">=</span>}
+                      {index < array.length - 1 && (
+                        <span className="text-2xl">=</span>
+                      )}
                     </div>
                   );
                 })}
@@ -443,10 +584,13 @@ export default function LandingPage() {
               ))}
             </div>
 
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 relative z-10">Ready to Start Recycling Smart?</h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 relative z-10">
+              Ready to Start Recycling Smart?
+            </h2>
 
             <p className="text-xl text-emerald-100 mb-8 max-w-2xl mx-auto relative z-10">
-              Join thousands of citizens making a difference. Start earning rewards today!
+              Join thousands of citizens making a difference. Start earning
+              rewards today!
             </p>
 
             <div className="flex flex-wrap gap-4 justify-center relative z-10">
@@ -480,25 +624,39 @@ export default function LandingPage() {
                 <div className="animate-spin-slow">
                   <Recycle className="w-6 h-6" />
                 </div>
-                <span className="text-xl font-bold">RecycleHub</span>
+                <span className="text-xl font-bold">EcoSnap</span>
               </div>
               <p className="text-gray-400 text-sm">
-                Smart bottle recycling system with AI verification and instant rewards.
+                Smart bottle recycling system with AI verification and instant
+                rewards.
               </p>
             </div>
 
             {[
-              { title: "Product", links: ["Features", "How It Works", "Pricing", "Dashboard"] },
-              { title: "Company", links: ["About", "Careers", "Contact"] },
-              { title: "Legal", links: ["Privacy", "Terms", "Security"] },
+              {
+                title: "Product",
+                links: [
+                  { label: "Features", href: "#features" },
+                  { label: "How It Works", href: "#how-it-works" },
+                  { label: "Pricing", href: "#pricing" },
+                  { label: "Dashboard", href: "/overview" },
+                ],
+              },
             ].map((section, index) => (
-              <div key={section.title} data-aos="fade-up" data-aos-delay={index * 100}>
+              <div
+                key={section.title}
+                data-aos="fade-up"
+                data-aos-delay={index * 100}
+              >
                 <h4 className="font-semibold mb-4">{section.title}</h4>
                 <ul className="space-y-2 text-sm text-gray-400">
                   {section.links.map((link) => (
-                    <li key={link}>
-                      <a href="#" className="inline-block hover:text-white transition-all duration-200 hover:translate-x-1.5">
-                        {link}
+                    <li key={link.label}>
+                      <a
+                        href={link.href}
+                        className="inline-block hover:text-white transition-all duration-200 hover:translate-x-1.5"
+                      >
+                        {link.label}
                       </a>
                     </li>
                   ))}
@@ -508,21 +666,20 @@ export default function LandingPage() {
           </div>
 
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-gray-400">© {new Date().getFullYear()} RecycleHub. All rights reserved.</p>
+            <p className="text-sm text-gray-400">
+              © {new Date().getFullYear()} EcoSnap. All rights reserved.
+            </p>
             <a
-              href="https://readdy.link"
+              href="https://EcoSnap.link"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block text-sm text-gray-400 hover:text-white transition-all duration-200 hover:scale-105"
             >
-              Powered by Readdy
+              Powered by EcoSnap
             </a>
           </div>
         </div>
       </footer>
-
-      {/* Modals */}
-      <QRScannerModal isOpen={qrModalOpen} onClose={() => setQrModalOpen(false)} />
     </div>
   );
 }

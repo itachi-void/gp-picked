@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useAuth } from "@/store/authStore";
 import { useUserWallet } from "@/hooks/useUserWallet";
 import { usePickupHistory } from "@/hooks/usePickupHistory";
@@ -15,24 +15,10 @@ import {
   BarChart3,
   Sparkles,
   ArrowUpRight,
-  ChevronRight,
   Scale,
   Award,
   Gift,
 } from "lucide-react";
-import { useTheme } from "next-themes";
-import { tooltipStyle } from "@/app/utils/chartTheme";
-import {
-  ResponsiveContainer,
-  ComposedChart,
-  Bar,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-} from "recharts";
-import { PickupHistory } from "@/types/pickup";
 
 /* Progression Levels from the system design */
 const LEVELS: { level: number; title: string; min: number; max: number; perks: string[] }[] = [
@@ -43,9 +29,10 @@ const LEVELS: { level: number; title: string; min: number; max: number; perks: s
 ];
 
 export default function CitizenStatsPage() {
+  const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+
+  useEffect(() => { setMounted(true); }, []);
   
   const { data: walletData, isLoading: isWalletLoading } = useUserWallet(user?.id);
   const { data: history = [], isLoading: isHistoryLoading } = usePickupHistory(user?.id);
@@ -103,143 +90,42 @@ export default function CitizenStatsPage() {
   const stats = useMemo(() => {
     const completedRequests = history.filter((h) => h.status === "Completed");
     const totalPickups = completedRequests.length;
-    
-    // Calculate total weight
+
     let totalWeight = 0;
     let hasWeightFromApi = false;
     completedRequests.forEach((h) => {
       const requestWeight = h.totalWeight ?? 0;
-      if (requestWeight > 0) {
-        hasWeightFromApi = true;
-      }
+      if (requestWeight > 0) hasWeightFromApi = true;
       let calculatedWeightFromItems = 0;
-
       if (h.items && h.items.length > 0) {
         h.items.forEach((item) => {
           const itemWeight = item.weight ?? item.expectedWeightKg ?? 0;
-          if (itemWeight > 0) {
-            hasWeightFromApi = true;
-          }
+          if (itemWeight > 0) hasWeightFromApi = true;
           calculatedWeightFromItems += itemWeight;
         });
       }
       totalWeight += requestWeight > 0 ? requestWeight : calculatedWeightFromItems;
     });
 
-    // If total weight is 0 but we have completed requests, provide a realistic baseline mock for display
-    const finalWeight = totalWeight > 0 ? totalWeight : (totalPickups > 0 ? totalPickups * 12.5 : 45.8);
-
-    // Environmental equivalency factors for plastic bottles
-    // 1 kg recycled plastic saves ~1.5 kg CO2
+    const finalWeight = totalWeight;
     const co2Saved = finalWeight * 1.5;
-    
-    // 1 kg plastic saves ~5.77 kWh of energy
-    const energySaved = finalWeight * 5.8; 
-    
-    // 1 kg recycled saves ~15.2 liters of water equivalent
-    const waterSaved = finalWeight * 15.2; 
-    
-    // CO2 trees offset: ~22kg of CO2 is absorbed by 1 mature tree in a year
+    const energySaved = finalWeight * 5.8;
+    const waterSaved = finalWeight * 15.2;
     const treesEquivalent = co2Saved / 22;
 
-    const monthlyData: { month: string; weight: number; points: number }[] = [];
-
     return {
-      totalPickups: history.length > 0 ? history.length : 8,
-      completedPickups: totalPickups > 0 ? totalPickups : 6,
+      totalPickups,
+      completedPickups: totalPickups,
       totalWeight: parseFloat(finalWeight.toFixed(1)),
       co2Saved: parseFloat(co2Saved.toFixed(1)),
       energySaved: parseFloat(energySaved.toFixed(1)),
       waterSaved: parseFloat(waterSaved.toFixed(0)),
       treesEquivalent: parseFloat(treesEquivalent.toFixed(1)),
-      monthlyData,
       hasWeightFromApi,
     };
   }, [history, walletPoints]);
 
-  const last10Requests = useMemo(() => {
-    // Filter completed requests first
-    let list = history.filter((h) => h.status === "Completed");
-    
-    // If no completed requests, fallback to all requests
-    if (list.length === 0) {
-      list = history;
-    }
 
-    // Sort requests by date descending to get the newest 10, then reverse to chronological order
-    const sorted = [...list].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    const newest10 = sorted.slice(0, 10).reverse();
-
-    if (newest10.length === 0) {
-      // Return 10 simulated data points
-      return [
-        { id: "1", index: 1, label: "#001", date: "Jun 10", bottles: 12, weight: 0.5, isSimulated: true },
-        { id: "2", index: 2, label: "#002", date: "Jun 12", bottles: 18, weight: 0.7, isSimulated: true },
-        { id: "3", index: 3, label: "#003", date: "Jun 15", bottles: 25, weight: 1.0, isSimulated: true },
-        { id: "4", index: 4, label: "#004", date: "Jun 18", bottles: 15, weight: 0.6, isSimulated: true },
-        { id: "5", index: 5, label: "#005", date: "Jun 20", bottles: 30, weight: 1.2, isSimulated: true },
-        { id: "6", index: 6, label: "#006", date: "Jun 22", bottles: 22, weight: 0.9, isSimulated: true },
-        { id: "7", index: 7, label: "#007", date: "Jun 25", bottles: 28, weight: 1.1, isSimulated: true },
-        { id: "8", index: 8, label: "#008", date: "Jun 28", bottles: 35, weight: 1.4, isSimulated: true },
-        { id: "9", index: 9, label: "#009", date: "Jul 01", bottles: 40, weight: 1.6, isSimulated: true },
-        { id: "10", index: 10, label: "#010", date: "Jul 03", bottles: 48, weight: 1.9, isSimulated: true },
-      ];
-    }
-
-    return newest10.map((h, idx) => {
-      // Formatted date
-      let dateStr = "Pickup";
-      try {
-        if (h.createdAt) {
-          dateStr = new Date(h.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-        }
-      } catch (err) {
-        console.error("Failed to parse date:", err);
-      }
-
-      // Calculate bottles
-      let bottles = 0;
-      if (h.bottlesCount !== undefined && h.bottlesCount !== null && h.bottlesCount > 0) {
-        bottles = h.bottlesCount;
-      } else if (h.items && h.items.length > 0) {
-        h.items.forEach((item) => {
-          bottles += item.quantity ?? item.expectedQuantity ?? 0;
-        });
-      }
-
-      // Calculate weight
-      let weight = h.totalWeight ?? 0;
-      if (weight === 0 && h.items && h.items.length > 0) {
-        h.items.forEach((item) => {
-          weight += item.weight ?? item.expectedWeightKg ?? 0;
-        });
-      }
-
-      // Fallbacks if both are 0
-      if (bottles === 0 && weight > 0) {
-        bottles = Math.round(weight * 25);
-      } else if (weight === 0 && bottles > 0) {
-        weight = parseFloat((bottles / 25).toFixed(1));
-      } else if (bottles === 0 && weight === 0) {
-        bottles = 15;
-        weight = 0.6;
-      }
-
-      const orderNum = h.orderNumber || h.requestId?.slice(-4) || String(idx + 1);
-
-      return {
-        id: h.requestId || String(idx),
-        index: idx + 1,
-        label: `#${orderNum}`,
-        date: dateStr,
-        bottles,
-        weight: parseFloat(weight.toFixed(1)),
-        isSimulated: false,
-      };
-    });
-  }, [history]);
-
-  // Calculate comparison with average points
   const compareToAvg = useMemo(() => {
     if (!avgPoints || avgPoints === 0) return null;
     const diff = walletPoints - avgPoints;
@@ -279,7 +165,7 @@ export default function CitizenStatsPage() {
 
 
 
-  if (isWalletLoading || isHistoryLoading) {
+  if (!mounted || isWalletLoading || isHistoryLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="animate-pulse flex flex-col items-center gap-3">
@@ -338,101 +224,8 @@ export default function CitizenStatsPage() {
         })}
       </div>
 
-      {/* Main Charts / Details Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* CSS Chart: Monthly Progress */}
-        <div className="lg:col-span-2 mc-card-in" style={{ animationDelay: "0.2s" }}>
-          <GlassCard className="p-6 h-full flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>
-                    Recycling Activity Trend
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Recycling output comparison over time (plastic bottles)</p>
-                </div>
-                <div className="flex gap-4">
-                  <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                    <span className="w-2.5 h-2.5 rounded bg-emerald-500" /> Bottles (pcs)
-                  </span>
-                  <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                    <span className="w-2.5 h-0.5 bg-amber-500 block" style={{ width: '12px' }} /> Weight (kg)
-                  </span>
-                </div>
-              </div>
-
-              <div className="h-[220px] w-full mt-2">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={last10Requests} margin={{ top: 10, right: -10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorBottles" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0.2}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid stroke={isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"} vertical={false} strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="date" 
-                      tickLine={false} 
-                      axisLine={false}
-                      tick={{ fill: isDark ? "#94a3b8" : "#64748b", fontSize: 10 }}
-                    />
-                    <YAxis 
-                      yAxisId="left"
-                      tickLine={false} 
-                      axisLine={false}
-                      tick={{ fill: isDark ? "#94a3b8" : "#64748b", fontSize: 10 }}
-                    />
-                    <YAxis 
-                      yAxisId="right"
-                      orientation="right"
-                      tickLine={false} 
-                      axisLine={false}
-                      tick={{ fill: isDark ? "#94a3b8" : "#64748b", fontSize: 10 }}
-                    />
-                    <Tooltip 
-                      contentStyle={tooltipStyle(isDark)}
-                      cursor={{ fill: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)" }}
-                    />
-                    <Bar 
-                      yAxisId="left" 
-                      dataKey="bottles" 
-                      name="Bottles" 
-                      fill="url(#colorBottles)" 
-                      radius={[4, 4, 0, 0]} 
-                      maxBarSize={30}
-                    />
-                    <Line 
-                      yAxisId="right" 
-                      type="monotone" 
-                      dataKey="weight" 
-                      name="Weight" 
-                      stroke="#f59e0b" 
-                      strokeWidth={2.5}
-                      dot={{ r: 4, stroke: "#f59e0b", strokeWidth: 1.5, fill: isDark ? "#0f172a" : "#ffffff" }}
-                      activeDot={{ r: 6 }}
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            
-            <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-100 dark:border-white/5">
-              <span className="text-xs text-slate-400">
-                {last10Requests[0]?.isSimulated 
-                  ? "يعرض الرسم البياني بيانات توضيحية حتى تقوم بأول عملية إعادة تدوير."
-                  : "Values are updated dynamically after verified collections."}
-              </span>
-              <button className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center hover:underline">
-                View History <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
-              </button>
-            </div>
-          </GlassCard>
-        </div>
-
-        {/* Level Progression & Perks Card */}
-        <div className="mc-card-in" style={{ animationDelay: "0.25s" }}>
+      {/* Main Content: Progression card — full width */}
+      <div className="mc-card-in" style={{ animationDelay: "0.2s" }}>
           <GlassCard className="p-6 h-full flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -497,7 +290,6 @@ export default function CitizenStatsPage() {
             </div>
           </GlassCard>
         </div>
-      </div>
     </div>
   );
 }

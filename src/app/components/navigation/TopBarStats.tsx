@@ -6,10 +6,13 @@ import { usePickup } from "@/store/pickupStore";
 import { useAuth } from "@/store/authStore";
 
 export function TopBarStats() {
+  const [mounted, setMounted] = useState(false);
   const [activeDrivers, setActiveDrivers] = useState(8);
   const [activeAlerts, setActiveAlerts] = useState(3);
   const { requests, fetchRequests } = usePickup();
   const { user } = useAuth();
+
+  useEffect(() => { setMounted(true); }, []);
   
   // Real fetch for pickups
   useEffect(() => {
@@ -40,7 +43,7 @@ export function TopBarStats() {
 
   const pendingRequestsCount = requests.filter(r => r.status === "Pending").length || 5;
 
-  if (!user) return null;
+  if (!mounted || !user) return null;
 
   return (
     <div className="hidden lg:flex items-center gap-4 px-4 py-1.5 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 rounded-full transition-all duration-300">
