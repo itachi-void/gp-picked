@@ -2,17 +2,16 @@
 
 import { useMemo, useState, useEffect } from "react";
 import "@/app/components/motion/motion-components.css";
-import { CalendarClock, ChevronLeft, ChevronRight, Plus, Filter, Download, MapPin, Truck, Package, X, Trash2 } from "lucide-react";
+import { CalendarClock, ChevronLeft, ChevronRight, Filter, Download, MapPin, Truck, Package, X, Loader2 } from "lucide-react";
 import { useRoleContext } from "@/contexts/RoleContext";
 import { toast } from "sonner";
 import { GlassCard } from "@/app/components/GlassCard";
-import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import api from "@/lib/axios";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const BLOCKS = ["AM", "PM"] as const;
-const MATERIALS = ["PET", "Paper", "Glass", "Metal", "Organic", "HDPE"];
 
 type Pickup = { id: string; day: number; block: "AM" | "PM"; time: string; date: string; zone: string; driver: string; material: string; accent: string };
 type Unassigned = { id: string; zone: string; material: string; priority: string };
@@ -21,29 +20,6 @@ const materialAccent: Record<string, string> = {
   PET: "emerald", Paper: "lime", Glass: "teal", Metal: "amber", Organic: "sky", HDPE: "sky",
 };
 
-const seedScheduled: Pickup[] = [
-  { id: "P-201", day: 0, block: "AM", time: "08:30", date: "", zone: "Downtown", driver: "Mike T.", material: "PET", accent: "emerald" },
-  { id: "P-202", day: 0, block: "PM", time: "14:00", date: "", zone: "Riverside", driver: "Omar S.", material: "Glass", accent: "teal" },
-  { id: "P-203", day: 1, block: "AM", time: "09:15", date: "", zone: "Harbor", driver: "Ahmed H.", material: "HDPE", accent: "sky" },
-  { id: "P-204", day: 1, block: "PM", time: "13:00", date: "", zone: "Old City", driver: "Khaled H.", material: "Paper", accent: "lime" },
-  { id: "P-205", day: 2, block: "AM", time: "07:45", date: "", zone: "Downtown", driver: "Mike T.", material: "Metal", accent: "amber" },
-  { id: "P-206", day: 2, block: "PM", time: "15:30", date: "", zone: "North", driver: "Mohamed A.", material: "PET", accent: "emerald" },
-  { id: "P-207", day: 3, block: "AM", time: "10:00", date: "", zone: "East", driver: "Omar S.", material: "Glass", accent: "teal" },
-  { id: "P-208", day: 3, block: "PM", time: "14:45", date: "", zone: "South", driver: "Ahmed H.", material: "Paper", accent: "lime" },
-  { id: "P-209", day: 4, block: "AM", time: "08:00", date: "", zone: "Central", driver: "Khaled H.", material: "PET", accent: "emerald" },
-  { id: "P-210", day: 4, block: "PM", time: "13:30", date: "", zone: "Riverside", driver: "Mohamed A.", material: "Metal", accent: "amber" },
-  { id: "P-211", day: 5, block: "AM", time: "09:30", date: "", zone: "Harbor", driver: "Mike T.", material: "HDPE", accent: "sky" },
-  { id: "P-212", day: 5, block: "PM", time: "16:00", date: "", zone: "Old City", driver: "Omar S.", material: "Glass", accent: "teal" },
-  { id: "P-213", day: 6, block: "AM", time: "10:15", date: "", zone: "Downtown", driver: "Ahmed H.", material: "PET", accent: "emerald" },
-];
-
-const seedUnassigned: Unassigned[] = [
-  { id: "U-301", zone: "Downtown", material: "PET", priority: "Critical" },
-  { id: "U-302", zone: "Harbor", material: "Glass", priority: "High" },
-  { id: "U-303", zone: "East", material: "Paper", priority: "Normal" },
-  { id: "U-304", zone: "South", material: "Metal", priority: "Normal" },
-];
-
 const accentBg: Record<string, string> = {
   emerald: "bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300",
   teal: "bg-teal-500/10 border-teal-500/30 text-teal-700 dark:text-teal-300",
@@ -51,8 +27,6 @@ const accentBg: Record<string, string> = {
   lime: "bg-lime-500/10 border-lime-500/30 text-lime-700 dark:text-lime-300",
   amber: "bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300",
 };
-
-const inputCls = "w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50";
 
 function pad(n: number) { return String(n).padStart(2, "0"); }
 function toIcsDate(d: Date) {
@@ -90,25 +64,15 @@ function buildIcs(pickups: Pickup[]): string {
 export default function SchedulePage() {
   const { role, user } = useRoleContext();
   const { addNotification } = useNotifications();
+  const queryClient = useQueryClient();
   const [mounted, setMounted] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
   const [filterZone, setFilterZone] = useState("all");
   const [filterDriver, setFilterDriver] = useState("all");
-  const [scheduled, setScheduled] = useLocalStorage<Pickup[]>("ecovoid.schedule.v1", seedScheduled);
-  const [unassigned, setUnassigned] = useLocalStorage<Unassigned[]>("ecovoid.schedule.unassigned.v1", seedUnassigned);
-  const [driverList, setDriverList] = useState<{ id: number; name: string }[]>([]);
 
-  const [creating, setCreating] = useState(false);
   const [details, setDetails] = useState<Pickup | null>(null);
   const [assigning, setAssigning] = useState<Unassigned | null>(null);
-  const [assignDay, setAssignDay] = useState(0);
-  const [assignBlock, setAssignBlock] = useState<"AM" | "PM">("AM");
-  const [assignTime, setAssignTime] = useState("09:00");
   const [assignDriver, setAssignDriver] = useState("");
-
-  const todayIso = new Date().toISOString().slice(0, 10);
-  const emptyForm: Pickup = { id: "", day: 0, block: "AM", time: "09:00", date: todayIso, zone: "", driver: "", material: "PET", accent: "emerald" };
-  const [form, setForm] = useState<Pickup>(emptyForm);
 
   const rawRole = role?.toLowerCase() ?? "user";
   const isCitizen = rawRole === "user" || rawRole === "citizen";
@@ -117,37 +81,153 @@ export default function SchedulePage() {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    const fetchDrivers = async () => {
+  // 1. Fetch Drivers details
+  const { data: driverList = [] } = useQuery<{ id: number; name: string }[]>({
+    queryKey: ["driverList"],
+    queryFn: async () => {
       try {
         const res = await api.get("/admin/recyclers-details");
         const list = Array.isArray(res.data) ? res.data : [];
-        setDriverList(list.map((d: any) => ({ id: d.recyclerID || d.id, name: d.fullName || d.name })));
+        return list.map((d: any) => ({
+          id: d.recyclerID || d.id,
+          name: d.fullName || d.name || "Unknown Driver",
+        }));
       } catch {
-        setDriverList([]);
+        return [];
       }
-    };
-    if (mounted) {
-      fetchDrivers();
+    },
+    enabled: mounted,
+  });
+
+  // 2. Fetch Scheduled (Assigned) Pickups
+  const { data: rawScheduled = [], isLoading: loadingScheduled } = useQuery<any[]>({
+    queryKey: ["scheduledPickups", role, user?.id],
+    queryFn: async () => {
+      let endpoint = "/PickupRequests/GetInProgressHubRequests";
+      const isDriver = rawRole === "driver" || rawRole === "recycler";
+      
+      if (isDriver && user?.id) {
+        endpoint = `/PickupRequests/GetRequestsByRecyclerId/${user.id}`;
+      } else if (isCitizen && user?.id) {
+        endpoint = `/PickupRequests/user-history/${user.id}`;
+      }
+
+      try {
+        const res = await api.get(endpoint);
+        return Array.isArray(res.data) ? res.data : [];
+      } catch (err: any) {
+        if (err.response?.status === 404) return [];
+        throw err;
+      }
+    },
+    enabled: mounted,
+  });
+
+  // 3. Fetch Unassigned Pickups
+  const { data: rawUnassigned = [], isLoading: loadingUnassigned } = useQuery<any[]>({
+    queryKey: ["pendingPickups"],
+    queryFn: async () => {
+      try {
+        const res = await api.get("/PickupRequests/GetPendingRequestForms");
+        return Array.isArray(res.data) ? res.data : [];
+      } catch (err: any) {
+        if (err.response?.status === 404) return [];
+        throw err;
+      }
+    },
+    enabled: mounted,
+  });
+
+  // 4. Assign Pickup Mutation
+  const assignMutation = useMutation({
+    mutationFn: async ({ requestId, driverId }: { requestId: number; driverId: number }) => {
+      await api.put(`/recycler/pickup-requests/accept-bulk?recyclerId=${driverId}`, [requestId]);
+    },
+    onSuccess: (_, variables) => {
+      const selectedDriver = driverList.find(d => d.id === variables.driverId);
+      addNotification({ 
+        title: "Pickup Assigned", 
+        body: `Request #${variables.requestId} has been assigned to ${selectedDriver?.name || "Driver"}`, 
+        severity: "success", 
+        icon: "CalendarClock", 
+        link: "/schedule" 
+      });
+      toast.success("Pickup assigned successfully");
+      setAssigning(null);
+      setAssignDriver("");
+      queryClient.invalidateQueries({ queryKey: ["scheduledPickups"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingPickups"] });
+    },
+    onError: (err: any) => {
+      console.error("Failed to assign pickup:", err);
+      toast.error(err.response?.data?.message || "Failed to assign pickup");
     }
-  }, [mounted]);
+  });
 
-  if (!mounted) {
-    return (
-      <div className="max-w-[1600px] mx-auto p-6 space-y-6 animate-pulse">
-        <div className="h-10 w-48 bg-slate-200 dark:bg-slate-800 rounded-full" />
-        <div className="h-4 w-64 bg-slate-200 dark:bg-slate-800 rounded-full mt-2" />
-      </div>
+  // Map raw unassigned data to view format
+  const unassigned = useMemo<Unassigned[]>(() => {
+    return rawUnassigned.map((item: any) => {
+      const zone = item.userAddress ? item.userAddress.split(",")[0].trim() : "Downtown";
+      const material = item.categoryName || "PET";
+      const priority = item.priority || "Normal";
+      return {
+        id: String(item.requestId || item.id),
+        zone,
+        material,
+        priority,
+      };
+    });
+  }, [rawUnassigned]);
+
+  // Map raw scheduled data to weekly calendar grid based on weekOffset
+  const scheduled = useMemo<Pickup[]>(() => {
+    const base = new Date();
+    base.setDate(base.getDate() + weekOffset * 7);
+    const monday = new Date(base);
+    monday.setDate(base.getDate() - ((base.getDay() + 6) % 7));
+    monday.setHours(0, 0, 0, 0);
+
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    return rawScheduled
+      .map((item: any) => {
+        const dateStr = item.pickupDate || item.requestDate || item.createdAt;
+        if (!dateStr) return null;
+        const dateObj = new Date(dateStr);
+        if (dateObj < monday || dateObj > sunday) return null;
+
+        const dayIdx = (dateObj.getDay() + 6) % 7;
+        const block = dateObj.getHours() < 12 ? "AM" : "PM";
+        const time = `${String(dateObj.getHours()).padStart(2, "0")}:${String(dateObj.getMinutes()).padStart(2, "0")}`;
+        const zone = item.zone || (item.userAddress ? item.userAddress.split(",")[0].trim() : "Downtown");
+        const material = item.categoryName || (item.requestItems && item.requestItems[0]?.category?.categoryName) || "PET";
+
+        return {
+          id: String(item.requestId || item.id),
+          day: dayIdx,
+          block,
+          time,
+          date: dateStr.slice(0, 10),
+          zone,
+          driver: item.driverName || (item.recycler?.fullName) || "No Driver Assigned",
+          material,
+          accent: materialAccent[material] || "emerald",
+        };
+      })
+      .filter((x): x is Pickup => x !== null);
+  }, [rawScheduled, weekOffset]);
+
+  const zones = useMemo(() => Array.from(new Set(scheduled.map((p) => p.zone))), [scheduled]);
+  const driverNames = useMemo(() => Array.from(new Set([...scheduled.map((p) => p.driver), ...driverList.map((d) => d.name)])), [scheduled, driverList]);
+
+  const filtered = useMemo(() => {
+    return scheduled.filter((p) => 
+      (filterZone === "all" || p.zone === filterZone) && 
+      (filterDriver === "all" || p.driver === filterDriver)
     );
-  }
-
-  const zones = Array.from(new Set(scheduled.map((p) => p.zone)));
-  const driverNames = Array.from(new Set([...scheduled.map((p) => p.driver), ...driverList.map((d) => d.name)]));
-
-  const filtered = useMemo(
-    () => scheduled.filter((p) => (filterZone === "all" || p.zone === filterZone) && (filterDriver === "all" || p.driver === filterDriver)),
-    [scheduled, filterZone, filterDriver]
-  );
+  }, [scheduled, filterZone, filterDriver]);
 
   const weekLabel = useMemo(() => {
     const base = new Date();
@@ -160,42 +240,11 @@ export default function SchedulePage() {
     return `${fmt(monday)} – ${fmt(sunday)}`;
   }, [weekOffset]);
 
-  const handleCreate = () => {
-    if (!form.zone.trim() || !form.driver.trim()) { toast.error("Zone and driver required"); return; }
-    const dayIdx = form.date ? ((new Date(form.date).getDay() + 6) % 7) : form.day;
-    const newPickup: Pickup = { ...form, id: `P-${Date.now().toString().slice(-4)}`, day: dayIdx, accent: materialAccent[form.material] || "emerald" };
-    setScheduled([...scheduled, newPickup]);
-    setCreating(false);
-    setForm(emptyForm);
-    addNotification({ title: "Pickup scheduled", body: `${newPickup.material} pickup at ${newPickup.zone} (${DAYS[newPickup.day]} ${newPickup.block})`, severity: "info", icon: "CalendarClock", link: "/schedule" });
-    toast.success("Pickup scheduled");
-  };
-
-  const handleDelete = (id: string) => {
-    const p = scheduled.find((x) => x.id === id);
-    setScheduled(scheduled.filter((x) => x.id !== id));
-    setDetails(null);
-    addNotification({ title: "Pickup removed", body: `${p?.id} ${p?.zone}`, severity: "warning", icon: "Trash2", link: "/schedule" });
-    toast.success(`Removed ${p?.id}`);
-  };
-
-  const handleAssign = () => {
-    if (!assigning) return;
-    if (!assignDriver) { toast.error("Pick a driver"); return; }
-    const newPickup: Pickup = {
-      id: `P-${Date.now().toString().slice(-4)}`,
-      day: assignDay, block: assignBlock, time: assignTime, date: "",
-      zone: assigning.zone, driver: assignDriver, material: assigning.material,
-      accent: materialAccent[assigning.material] || "emerald",
-    };
-    setScheduled([...scheduled, newPickup]);
-    setUnassigned(unassigned.filter((u) => u.id !== assigning.id));
-    addNotification({ title: "Unassigned scheduled", body: `${assigning.id} → ${DAYS[assignDay]} ${assignBlock} (${assignDriver})`, severity: "success", icon: "CalendarClock", link: "/schedule" });
-    toast.success(`Assigned ${assigning.id}`);
-    setAssigning(null);
-  };
-
   const handleExportIcs = () => {
+    if (scheduled.length === 0) {
+      toast.error("No scheduled pickups in this week to export");
+      return;
+    }
     const ics = buildIcs(scheduled);
     const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -209,6 +258,15 @@ export default function SchedulePage() {
     addNotification({ title: "Calendar exported", body: `${scheduled.length} events written to ecovoid-schedule.ics`, severity: "success", icon: "Download", link: "/schedule" });
     toast.success("Calendar exported");
   };
+
+  if (!mounted || loadingScheduled || loadingUnassigned) {
+    return (
+      <div className="max-w-[1600px] mx-auto p-6 flex flex-col items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 text-sky-500 animate-spin" />
+        <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">Loading schedule data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[1600px] mx-auto p-6 space-y-6">
@@ -245,11 +303,6 @@ export default function SchedulePage() {
             <option value="all">All drivers</option>
             {driverNames.map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
-          {!isCitizen && (
-            <button onClick={() => { setForm(emptyForm); setCreating(true); }} className="flex items-center gap-2 px-4 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors text-sm">
-              <Plus className="w-4 h-4" /> Add pickup
-            </button>
-          )}
         </div>
       </GlassCard>
 
@@ -300,9 +353,9 @@ export default function SchedulePage() {
           <div className="space-y-2">
             {unassigned.map((u) => (
               <div key={u.id} className="p-3 bg-slate-50/60 dark:bg-white/5 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
-                onClick={() => { if (isCitizen) return; setAssigning(u); setAssignDay(0); setAssignBlock("AM"); setAssignTime("09:00"); setAssignDriver(driverList[0]?.name || ""); }}>
+                onClick={() => { if (isCitizen) return; setAssigning(u); setAssignDriver(""); }}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>{u.id}</span>
+                  <span className="text-sm text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>#{u.id}</span>
                   <span className={`px-2 py-0.5 rounded-full text-xs ${u.priority === "Critical" ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : u.priority === "High" ? "bg-amber-500/10 text-amber-700 dark:text-amber-300" : "bg-sky-500/10 text-sky-700 dark:text-sky-300"}`}>{u.priority}</span>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1"><MapPin className="w-3 h-3" />{u.zone} · {u.material}</p>
@@ -319,62 +372,11 @@ export default function SchedulePage() {
         </button>
       </div>
 
-      {creating && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setCreating(false)}>
-          <div className="mc-scale-in bg-white dark:bg-[#0a0e14] rounded-3xl p-6 max-w-lg w-full border border-slate-200 dark:border-white/10" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>Add Pickup</h2>
-              <button onClick={() => setCreating(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl"><X className="w-5 h-5 text-slate-500" /></button>
-            </div>
-            <div className="space-y-3">
-              <label className="block">
-                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Zone</span>
-                <input value={form.zone} onChange={(e) => setForm({ ...form, zone: e.target.value })} className={inputCls} placeholder="Downtown" />
-              </label>
-              <label className="block">
-                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Driver</span>
-                <select value={form.driver} onChange={(e) => setForm({ ...form, driver: e.target.value })} className={inputCls}>
-                  <option value="">Select a driver</option>
-                  {driverList.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
-                </select>
-              </label>
-              <label className="block">
-                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Material</span>
-                <select value={form.material} onChange={(e) => setForm({ ...form, material: e.target.value })} className={inputCls}>
-                  {MATERIALS.map((m) => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="block">
-                  <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Date</span>
-                  <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className={inputCls} />
-                </label>
-                <label className="block">
-                  <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Block</span>
-                  <select value={form.block} onChange={(e) => setForm({ ...form, block: e.target.value as "AM" | "PM" })} className={inputCls}>
-                    <option value="AM">AM</option>
-                    <option value="PM">PM</option>
-                  </select>
-                </label>
-              </div>
-              <label className="block">
-                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Time</span>
-                <input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className={inputCls} />
-              </label>
-            </div>
-            <div className="mt-6 flex justify-end gap-2">
-              <button onClick={() => setCreating(false)} className="px-4 h-10 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200">Cancel</button>
-              <button onClick={handleCreate} className="px-4 h-10 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm">Create</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {details && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setDetails(null)}>
           <div className="mc-scale-in bg-white dark:bg-[#0a0e14] rounded-3xl p-6 max-w-md w-full border border-slate-200 dark:border-white/10" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>{details.id}</h2>
+              <h2 className="text-lg tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>Request #{details.id}</h2>
               <button onClick={() => setDetails(null)} className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl"><X className="w-5 h-5 text-slate-500" /></button>
             </div>
             <dl className="space-y-2 text-sm">
@@ -384,11 +386,8 @@ export default function SchedulePage() {
               <div className="flex justify-between"><dt className="text-slate-500 dark:text-slate-400">Day</dt><dd className="text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>{DAYS[details.day]} {details.block}</dd></div>
               <div className="flex justify-between"><dt className="text-slate-500 dark:text-slate-400">Time</dt><dd className="text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>{details.time}</dd></div>
             </dl>
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="mt-6 flex justify-end">
               <button onClick={() => setDetails(null)} className="px-4 h-10 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200">Close</button>
-              {!isCitizen && (
-                <button onClick={() => handleDelete(details.id)} className="px-4 h-10 rounded-full bg-rose-500 hover:bg-rose-600 text-white text-sm flex items-center gap-2"><Trash2 className="w-4 h-4" /> Delete</button>
-              )}
             </div>
           </div>
         </div>
@@ -398,41 +397,31 @@ export default function SchedulePage() {
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setAssigning(null)}>
           <div className="mc-scale-in bg-white dark:bg-[#0a0e14] rounded-3xl p-6 max-w-md w-full border border-slate-200 dark:border-white/10" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>Assign {assigning.id}</h2>
+              <h2 className="text-lg tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>Assign Request #{assigning.id}</h2>
               <button onClick={() => setAssigning(null)} className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl"><X className="w-5 h-5 text-slate-500" /></button>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{assigning.zone} · {assigning.material} · {assigning.priority}</p>
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <label className="block">
-                  <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Day</span>
-                  <select value={assignDay} onChange={(e) => setAssignDay(Number(e.target.value))} className={inputCls}>
-                    {DAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}
-                  </select>
-                </label>
-                <label className="block">
-                  <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Block</span>
-                  <select value={assignBlock} onChange={(e) => setAssignBlock(e.target.value as "AM" | "PM")} className={inputCls}>
-                    <option value="AM">AM</option>
-                    <option value="PM">PM</option>
-                  </select>
-                </label>
-              </div>
-              <label className="block">
-                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Time</span>
-                <input type="time" value={assignTime} onChange={(e) => setAssignTime(e.target.value)} className={inputCls} />
-              </label>
               <label className="block">
                 <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Driver</span>
-                <select value={assignDriver} onChange={(e) => setAssignDriver(e.target.value)} className={inputCls}>
+                <select value={assignDriver} onChange={(e) => setAssignDriver(e.target.value)} className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50">
                   <option value="">Select a driver</option>
-                  {driverList.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
+                  {driverList.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
               </label>
             </div>
             <div className="mt-6 flex justify-end gap-2">
               <button onClick={() => setAssigning(null)} className="px-4 h-10 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200">Cancel</button>
-              <button onClick={handleAssign} className="px-4 h-10 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm">Assign</button>
+              <button 
+                onClick={() => {
+                  if (!assignDriver) { toast.error("Pick a driver"); return; }
+                  assignMutation.mutate({ requestId: Number(assigning.id), driverId: Number(assignDriver) });
+                }} 
+                className="px-4 h-10 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm flex items-center justify-center gap-1"
+                disabled={assignMutation.isPending}
+              >
+                {assignMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Assign"}
+              </button>
             </div>
           </div>
         </div>

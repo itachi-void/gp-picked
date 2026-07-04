@@ -39,7 +39,9 @@ export function canAccess(role: string, path: string): boolean {
       "/fleet",
       "/schedule",
       "/logistics",
-      "/support"
+      "/support",
+      "/profile",
+      "/settings"
     ];
     return driverRoutes.some(p => path === p || path.startsWith(p + "/"));
   }
@@ -70,7 +72,8 @@ export function canAccess(role: string, path: string): boolean {
       "/citizen-stats",
       "/sustainability",
       "/support",
-      "/settings"
+      "/settings",
+      "/profile"
     ];
     return citizenRoutes.some(p => path === p || path.startsWith(p + "/"));
   }
