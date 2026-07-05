@@ -290,7 +290,7 @@ export default function NotFound404_Glitch() {
       </div>
 
       <Link
-        to="/"
+        href="/"
         style={{
           display: "inline-flex",
           alignItems: "center",

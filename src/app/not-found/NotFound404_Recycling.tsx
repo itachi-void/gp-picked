@@ -203,7 +203,7 @@ export default function NotFound404_Recycling() {
       </div>
 
       <Link
-        to="/"
+        href="/"
         style={{
           display: "inline-flex",
           alignItems: "center",

@@ -258,7 +258,7 @@ export default function NotFound404_WrongTurn() {
       </div>
 
       <Link
-        to="/"
+        href="/"
         style={{
           display: "inline-flex",
           alignItems: "center",

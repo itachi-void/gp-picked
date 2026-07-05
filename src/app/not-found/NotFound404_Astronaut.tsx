@@ -244,7 +244,7 @@ export default function NotFound404_Astronaut() {
       </div>
 
       <Link
-        to="/"
+        href="/"
         style={{
           display: "inline-flex",
           alignItems: "center",

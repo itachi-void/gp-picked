@@ -212,7 +212,7 @@ export default function NotFound404_Typography() {
           }}
         />
         <Link
-          to="/"
+          href="/"
           style={{
             display: "inline-flex",
             alignItems: "center",

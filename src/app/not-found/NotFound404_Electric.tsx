@@ -647,7 +647,7 @@ export default function NotFound404_Electric() {
 
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
           <Link
-            to="/"
+            href="/"
             style={{
               display: "inline-flex",
               alignItems: "center",

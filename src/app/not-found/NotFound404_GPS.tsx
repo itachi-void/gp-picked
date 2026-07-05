@@ -213,7 +213,7 @@ export default function NotFound404_GPS() {
       </div>
 
       <Link
-        to="/"
+        href="/"
         style={{
           display: "inline-flex",
           alignItems: "center",

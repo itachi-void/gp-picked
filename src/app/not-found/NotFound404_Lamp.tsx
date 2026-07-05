@@ -122,7 +122,7 @@ function InfoCard() {
         </div>
 
         <Link
-          to="/"
+          href="/"
           style={{
             display: "inline-flex",
             alignItems: "center",
