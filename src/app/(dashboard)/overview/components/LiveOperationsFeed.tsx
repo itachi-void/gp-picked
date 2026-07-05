@@ -6,6 +6,7 @@ import { ArrowRight, Radio, MapPin, Clock } from "lucide-react";
 import { GlassCard } from "@/app/components/GlassCard";
 import api from "@/lib/axios";
 import "@/app/components/motion/motion-components.css";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const priorityTone: Record<string, { dot: string; label: string }> = {
   Critical: { dot: "bg-rose-500", label: "text-rose-600 dark:text-rose-400" },
@@ -24,6 +25,7 @@ export default function LiveOperationsFeed() {
   const router = useRouter();
   const [feed, setFeed] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t, tApi, language } = useLanguage();
 
   useEffect(() => {
     const fetchFeed = async () => {
@@ -77,10 +79,10 @@ export default function LiveOperationsFeed() {
         </div>
         <div className="flex-1">
           <h2 className="text-lg tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 700 }}>
-            Live Operations Feed
+            {t("dashboard.feed.title")}
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Latest pickup activity across all zones
+            {t("dashboard.feed.subtitle")}
           </p>
         </div>
         <button
@@ -104,7 +106,10 @@ export default function LiveOperationsFeed() {
           </div>
         ) : (
           feed.slice(0, 5).map((r, i) => {
-            const tone = priorityTone[r.priority] || priorityTone.Normal;
+            const toneColor = priorityTone[r.priority] || priorityTone.Normal;
+            const displayId = r.id;
+            const displayCitizen = r.citizen.name;
+            const displayZone = r.zone.name;
             return (
               <button
                 key={r.id}
@@ -113,28 +118,30 @@ export default function LiveOperationsFeed() {
                 style={{ animationDelay: `${i * 0.04}s` }}
               >
                 <span className="relative flex w-2 h-2 mt-1 shrink-0">
-                  <span className={`absolute inline-flex h-full w-full rounded-full ${tone.dot} opacity-50 animate-ping`} />
-                  <span className={`relative inline-flex w-2 h-2 rounded-full ${tone.dot}`} />
+                  <span className={`absolute inline-flex h-full w-full rounded-full ${toneColor.dot} opacity-50 animate-ping`} />
+                  <span className={`relative inline-flex w-2 h-2 rounded-full ${toneColor.dot}`} />
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-slate-900 dark:text-white truncate font-bold">
-                      {r.id}
+                      {displayId}
                     </span>
-                    <span className={`text-[11px] ${tone.label} font-bold`}>
-                      {r.priority}
+                    <span className={`text-[11px] ${toneColor.label} font-bold`}>
+                      {tApi(r.priority)}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     <span className="flex items-center gap-1 truncate">
-                      <MapPin className="w-3 h-3" /> {r.zone.name}
+                      <MapPin className="w-3 h-3" /> {displayZone}
                     </span>
-                    <span className="truncate">{r.citizen.name}</span>
-                    <span className="hidden md:inline">{r.weight}kg</span>
+                    <span className="truncate">{displayCitizen}</span>
+                    <span className="hidden md:inline">
+                      {`${r.weight}kg`}
+                    </span>
                   </div>
                 </div>
                 <span className={`text-[11px] px-2 py-1 rounded-full ${statusBg[r.status] || "bg-slate-100"}`} style={{ fontWeight: 700 }}>
-                  {r.status}
+                  {tApi(r.status)}
                 </span>
               </button>
             );
@@ -147,8 +154,11 @@ export default function LiveOperationsFeed() {
           <Clock className="w-3.5 h-3.5" />
           Updated just now
         </span>
-        <span>{feed.length} total requests</span>
+        <span>
+          {`${feed.length} total requests`}
+        </span>
       </div>
     </GlassCard>
   );
 }
+

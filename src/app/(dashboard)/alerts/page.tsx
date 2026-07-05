@@ -147,27 +147,25 @@ function AlertRow({
                       View Details
                     </button>
                     {alert.status !== "resolved" && (
-                      <button
-                        onClick={() => {
-                          onResolve();
-                          setMenuOpen(false);
-                        }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer"
-                      >
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        Mark Resolved
-                      </button>
+                      <div title="Backend API support pending — action disabled">
+                        <button
+                          disabled
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-400 dark:text-white/25 cursor-not-allowed opacity-60"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          Mark Resolved
+                        </button>
+                      </div>
                     )}
-                    <button
-                      onClick={() => {
-                        onDelete();
-                        setMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      Delete
-                    </button>
+                    <div title="Backend API support pending — action disabled">
+                      <button
+                        disabled
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-400 dark:text-white/25 cursor-not-allowed opacity-60"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </>
               )}

@@ -142,8 +142,8 @@ export default function CitizenStatsPage() {
         icon: Coins, 
         accent: "amber",
         subtext: compareToAvg 
-          ? `${compareToAvg.pct}% ${compareToAvg.isAbove ? "أعلى من" : "أقل من"} متوسط المجتمع (${Math.round(avgPoints)} نقطة)`
-          : "جاري مقارنة البيانات..."
+          ? `${compareToAvg.pct}% ${compareToAvg.isAbove ? "above" : "below"} community average (${Math.round(avgPoints)} pts)`
+          : "Comparing data..."
       },
       { label: "Completed Pickups", value: stats.completedPickups, icon: Recycle, accent: "sky" },
     ];
@@ -194,7 +194,7 @@ export default function CitizenStatsPage() {
       </div>
 
       {/* Top Level KPI Cards Grid */}
-      <div className={`grid grid-cols-2 gap-4 ${kpis.length === 2 ? "md:grid-cols-2 lg:grid-cols-2 max-w-4xl" : "lg:grid-cols-4"}`}>
+      <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${kpis.length === 2 ? "max-w-4xl" : "lg:grid-cols-4"}`}>
         {kpis.map((k, i) => {
           const Icon = k.icon;
           const a = accentClasses[k.accent];
@@ -261,7 +261,7 @@ export default function CitizenStatsPage() {
                 {progression.toNext > 0 && (
                   <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-3 font-semibold flex items-center justify-center gap-1">
                     <Sparkles className="w-3.5 h-3.5" />
-                    تحتاج {progression.toNext} نقطة إضافية للترقي إلى {progression.next.title}!
+                    You need {progression.toNext} more points to level up to {progression.next.title}!
                   </p>
                 )}
               </div>

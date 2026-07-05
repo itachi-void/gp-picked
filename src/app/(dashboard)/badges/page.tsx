@@ -108,6 +108,10 @@ export default function BadgesPage() {
   const emptyCatForm = { categoryId: "", categoryName: "", pointsPerUnit: "", unitType: "", imagePathFile: null as File | null };
   const [catForm, setCatForm] = useState(emptyCatForm);
 
+  // Edit state
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editForm, setEditForm] = useState<{ categoryId: number; categoryName: string; pointsPerUnit: string; unitType: string } | null>(null);
+
   const { data: wasteCategories = [], refetch: refetchCategories } = useQuery<any[]>({
     queryKey: ["waste-categories"],
     queryFn: async () => {
@@ -166,6 +170,46 @@ export default function BadgesPage() {
       deleteCategoryMutation.mutate(categoryId);
     }
   };
+
+  const updateCategoryMutation = useMutation({
+    mutationFn: async (form: { categoryId: number; categoryName: string; pointsPerUnit: string; unitType: string }) => {
+      await api.put("/admin/update-waste-category", {
+        CategoryId: form.categoryId,
+        CategoryName: form.categoryName,
+        PointsPerUnit: parseFloat(form.pointsPerUnit),
+        UnitType: form.unitType,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Waste category updated successfully");
+      refetchCategories();
+      setShowEditForm(false);
+      setEditForm(null);
+    },
+    onError: (err: any) => {
+      console.error("Failed to update waste category:", err);
+      toast.error(err.response?.data?.message || "Failed to update waste category");
+    },
+  });
+
+  const handleEditCategory = (cat: any) => {
+    setEditForm({
+      categoryId: cat.categoryId,
+      categoryName: cat.categoryName,
+      pointsPerUnit: String(cat.pointsPerUnit),
+      unitType: cat.unitType || "",
+    });
+    setShowEditForm(true);
+  };
+
+  const handleUpdateCategorySubmit = () => {
+    if (!editForm) return;
+    if (!editForm.categoryName.trim()) { toast.error("Category Name is required"); return; }
+    if (!editForm.pointsPerUnit) { toast.error("Points Per Unit is required"); return; }
+    if (!editForm.unitType.trim()) { toast.error("Unit Type is required"); return; }
+    updateCategoryMutation.mutate(editForm);
+  };
+
 
   const handleCreateCategorySubmit = () => {
     if (!catForm.categoryId) {
@@ -391,13 +435,22 @@ export default function BadgesPage() {
               <div key={cat.categoryName || i} className="mc-card-in" style={{ animationDelay: `${i * 0.05}s` }}>
                 <GlassCard className="p-5 relative group">
                   {user?.role === "Admin" && (
-                    <button
-                      onClick={() => handleDeleteCategory(cat.categoryId)}
-                      className="absolute top-2 right-2 p-1.5 rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-600 hover:text-white opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
-                      title="Delete Category"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <button
+                        onClick={() => handleEditCategory(cat)}
+                        className="p-1.5 rounded-lg bg-sky-500/10 text-sky-600 hover:bg-sky-600 hover:text-white transition-all cursor-pointer"
+                        title="Edit Category"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCategory(cat.categoryId)}
+                        className="p-1.5 rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-600 hover:text-white transition-all cursor-pointer"
+                        title="Delete Category"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   )}
                   <div className="w-11 h-11 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-3">
                     {cat.imagePath ? (
@@ -479,6 +532,57 @@ export default function BadgesPage() {
             <div className="mt-6 flex items-center justify-end gap-2">
               <button onClick={() => setShowCatForm(false)} className="h-10 px-5 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 cursor-pointer">Cancel</button>
               <button onClick={handleCreateCategorySubmit} className="h-10 px-5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm cursor-pointer font-bold animate-pulse-subtle" style={{ fontWeight: 600 }}>Create Category</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Edit Category Modal */}
+      {showEditForm && editForm && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#0a0e14] rounded-3xl p-6 max-w-md w-full border border-slate-200 dark:border-white/10 mc-scale-up">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg tracking-tight text-slate-900 dark:text-white font-bold">Edit Waste Category</h2>
+              <button onClick={() => { setShowEditForm(false); setEditForm(null); }} className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer">
+                <X className="w-5 h-5 text-slate-500" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <label className="block">
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Category Name</span>
+                <input
+                  value={editForm.categoryName}
+                  onChange={(e) => setEditForm({ ...editForm, categoryName: e.target.value })}
+                  className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-400/50"
+                />
+              </label>
+              <label className="block">
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Points Per Unit</span>
+                <input
+                  type="number"
+                  value={editForm.pointsPerUnit}
+                  onChange={(e) => setEditForm({ ...editForm, pointsPerUnit: e.target.value })}
+                  className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-400/50"
+                />
+              </label>
+              <label className="block">
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Unit Type</span>
+                <input
+                  value={editForm.unitType}
+                  onChange={(e) => setEditForm({ ...editForm, unitType: e.target.value })}
+                  placeholder="e.g. kg or Item"
+                  className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-400/50"
+                />
+              </label>
+            </div>
+            <div className="mt-6 flex items-center justify-end gap-2">
+              <button onClick={() => { setShowEditForm(false); setEditForm(null); }} className="h-10 px-5 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 cursor-pointer">Cancel</button>
+              <button
+                onClick={handleUpdateCategorySubmit}
+                disabled={updateCategoryMutation.isPending}
+                className="h-10 px-5 rounded-full bg-sky-600 hover:bg-sky-700 text-white text-sm cursor-pointer font-bold disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {updateCategoryMutation.isPending ? "Saving..." : "Save Changes"}
+              </button>
             </div>
           </div>
         </div>

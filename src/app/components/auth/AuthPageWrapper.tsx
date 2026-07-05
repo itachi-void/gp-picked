@@ -11,6 +11,7 @@ import { DemoRoles } from "./DemoRoles";
 import LampScene from "@/app/components/LampScene";
 import BulbSwitch from "@/app/components/BulbSwitch";
 import DayNightSwitch from "@/app/components/DayNightSwitch";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Mode = "login" | "signup";
 
@@ -63,6 +64,8 @@ export function AuthPageWrapper({ mode }: AuthPageWrapperProps) {
         background:
           "radial-gradient(ellipse at 50% 55%, #0a1f17 0%, #051410 55%, #020806 100%)",
       };
+
+  const { t } = useLanguage();
 
   return (
     <LampScene
@@ -122,7 +125,7 @@ export function AuthPageWrapper({ mode }: AuthPageWrapperProps) {
                   : "text-slate-600 dark:text-white/60"
               }`}
             >
-              {m === "login" ? "Login" : "Sign up"}
+              {m === "login" ? t("auth.login") : t("auth.signup")}
             </button>
           ))}
         </div>

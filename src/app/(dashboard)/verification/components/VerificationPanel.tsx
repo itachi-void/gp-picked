@@ -83,11 +83,11 @@ export function VerificationPanel({ order, onResolve }: VerificationPanelProps) 
     if (resultType === "verified") {
       const awardedPoints = result?.finalPoints ?? 0;
       toast.success(
-        `تم تحويل ${awardedPoints} نقطة بنجاح إلى حساب المواطن ${order.userName} (رقم العملية: ${order.requestId})`
+        `Successfully transferred ${awardedPoints} points to citizen ${order.userName} (Request ID: ${order.requestId})`
       );
     } else {
       toast.error(
-        `تم رفض العملية رقم ${order.requestId} للمواطن ${order.userName}`
+        `Request ID ${order.requestId} for citizen ${order.userName} was rejected`
       );
     }
     onResolve(id, resultType);

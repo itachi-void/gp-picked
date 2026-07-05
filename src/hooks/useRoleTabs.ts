@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/store/authStore";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Home, LayoutDashboard, Package, Route, MapIcon, Users,
   ScanLine, History, UserCircle2,
@@ -27,32 +28,34 @@ export function useRoleTabs() {
         ? "citizen" 
         : rawRole;
 
+  const { t } = useLanguage();
+
   // ========== جلب التبويبات حسب الرول ==========
   let tabs: Tab[] = [];
 
   if (role === "admin" || role === "manager") {
     tabs = [
-      { to: "/overview", label: "Overview", icon: LayoutDashboard },
-      { to: "/pickups", label: "Pickups", icon: Package },
-      { to: "/routes", label: "Routes", icon: Route },
-      { to: "/fleet", label: "Fleet", icon: MapIcon },
-      { to: "/drivers", label: "Drivers", icon: Users },
+      { to: "/overview", label: t("nav.overview"), icon: LayoutDashboard },
+      { to: "/pickups", label: t("nav.pickups"), icon: Package },
+      { to: "/routes", label: t("nav.routes"), icon: Route },
+      { to: "/fleet", label: t("nav.fleet"), icon: MapIcon },
+      { to: "/drivers", label: t("nav.drivers"), icon: Users },
     ];
   } else if (role === "driver") {
     tabs = [
-      { to: "/driver-portal", label: "Home", icon: Home },
+      { to: "/driver-portal", label: t("nav.home"), icon: Home },
     ];
   } else if (role === "employee") {
     tabs = [
-      { to: "/verification", label: "Station", icon: ScanLine },
-      { to: "/employee-history", label: "History", icon: History },
-      { to: "/employee-profile", label: "Profile", icon: UserCircle2 },
-      { to: "/pickups", label: "Pickups", icon: Package },
+      { to: "/verification", label: t("nav.station"), icon: ScanLine },
+      { to: "/employee-history", label: t("nav.history"), icon: History },
+      { to: "/employee-profile", label: t("nav.profile"), icon: UserCircle2 },
+      { to: "/pickups", label: t("nav.pickups"), icon: Package },
     ];
   } else {
     // citizen أو أي حاجة تانية
     tabs = [
-      { to: "/citizen-portal", label: "Home", icon: Home },
+      { to: "/citizen-portal", label: t("nav.home"), icon: Home },
     ];
   }
 

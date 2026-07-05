@@ -6,6 +6,7 @@ import { CheckCircle } from "lucide-react";
 import { RoleT, colorBg, colorText, colorBtnFrom, colorBtnTo } from "./types";
 import { useAuth } from "@/store/authStore";
 import { homePathForRole } from "@/app/utils/roleAccess";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface RoleCardProps {
   role: RoleT;
@@ -15,6 +16,7 @@ interface RoleCardProps {
 export function RoleCard({ role, index }: RoleCardProps) {
   const { user } = useAuth();
   const Icon = role.icon;
+  const { t } = useLanguage();
 
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
@@ -52,7 +54,7 @@ export function RoleCard({ role, index }: RoleCardProps) {
         href={targetHref}
         className={`block w-full px-6 py-3 bg-gradient-to-r ${colorBtnFrom[role.color] || "from-emerald-600"} ${colorBtnTo[role.color] || "to-emerald-700"} text-white rounded-lg hover:shadow-lg transition-all duration-300 text-center hover:scale-[1.03] active:scale-95`}
       >
-        Get Started
+        {t("common.getStarted")}
       </Link>
     </div>
   );

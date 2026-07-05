@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Activity, Zap, TrendingUp, Gauge, ArrowRight,
@@ -6,19 +6,12 @@ import {
 } from "lucide-react";
 import { GlassCard } from "@/app/components/GlassCard";
 import "@/app/components/motion/motion-components.css";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Center = {
   id: string; label: string; short: string; color: string; ring: string;
   Icon: typeof Boxes; load: number; x: number; y: number;
 };
-
-const centers: Center[] = [
-  { id: "main",         label: "Main Hub",      short: "MAIN", color: "#06b6d4", ring: "ring-cyan-400/40",    Icon: Boxes,    load: 67, x: 22, y: 58 },
-  { id: "sorting",      label: "Sorting",        short: "SORT", color: "#a855f7", ring: "ring-violet-400/40", Icon: Building2,load: 89, x: 50, y: 26 },
-  { id: "processing",   label: "Processing",     short: "PROC", color: "#f59e0b", ring: "ring-amber-400/40",  Icon: Factory,  load: 78, x: 78, y: 45 },
-  { id: "distribution", label: "Distribution",   short: "DIST", color: "#10b981", ring: "ring-emerald-400/40",Icon: Truck,    load: 65, x: 58, y: 78 },
-  { id: "east",         label: "East Station",   short: "EAST", color: "#0ea5e9", ring: "ring-sky-400/40",    Icon: Warehouse,load: 84, x: 20, y: 84 },
-];
 
 const links: [number, number][] = [[0, 1], [0, 3], [0, 4], [1, 2], [2, 3]];
 
@@ -26,13 +19,6 @@ type Stat = {
   label: string; value: string; delta: string; trend: "up" | "down";
   icon: typeof Zap; accent: "emerald" | "sky" | "violet" | "amber"; progress: number;
 };
-
-const stats: Stat[] = [
-  { label: "Centers Online", value: "5/5",  delta: "All operational",      trend: "up", icon: Network,   accent: "emerald", progress: 100 },
-  { label: "Throughput",     value: "1,240", delta: "t/hr · +4.2%",        trend: "up", icon: Zap,       accent: "sky",     progress: 82  },
-  { label: "Efficiency",     value: "94%",  delta: "+1.8% vs last week",   trend: "up", icon: TrendingUp, accent: "violet",  progress: 94  },
-  { label: "Overall Load",   value: "87%",  delta: "Capacity used",        trend: "up", icon: Gauge,     accent: "amber",   progress: 87  },
-];
 
 const tone: Record<Stat["accent"], { iconBg: string; iconFg: string; bar: string; deltaFg: string }> = {
   emerald: { iconBg: "bg-emerald-500/10", iconFg: "text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-500", deltaFg: "text-emerald-600 dark:text-emerald-400" },
@@ -44,7 +30,28 @@ const tone: Record<Stat["accent"], { iconBg: string; iconFg: string; bar: string
 export function InfrastructureHealthCard() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const { t, language } = useLanguage();
+
   useEffect(() => { setMounted(true); }, []);
+
+  const localizedCenters: Center[] = useMemo(() => [
+    { id: "main",         label: "Main Hub",      short: "MAIN", color: "#06b6d4", ring: "ring-cyan-400/40",    Icon: Boxes,    load: 67, x: 22, y: 58 },
+    { id: "sorting",      label: "Sorting",        short: "SORT", color: "#a855f7", ring: "ring-violet-400/40", Icon: Building2,load: 89, x: 50, y: 26 },
+    { id: "processing",   label: "Processing",     short: "PROC", color: "#f59e0b", ring: "ring-amber-400/40",  Icon: Factory,  load: 78, x: 78, y: 45 },
+    { id: "distribution", label: "Distribution",   short: "DIST", color: "#10b981", ring: "ring-emerald-400/40",Icon: Truck,    load: 65, x: 58, y: 78 },
+    { id: "east",         label: "East Station",   short: "EAST", color: "#0ea5e9", ring: "ring-sky-400/40",    Icon: Warehouse,load: 84, x: 20, y: 84 },
+  ], []);
+
+  const localizedStats: Stat[] = useMemo(() => [
+    { label: "Centers Online", value: "5/5",  delta: "All operational",      trend: "up", icon: Network,   accent: "emerald", progress: 100 },
+    { label: "Throughput",     value: "1,240", delta: "t/hr · +4.2%",        trend: "up", icon: Zap,       accent: "sky",     progress: 82  },
+    { label: "Efficiency",     value: "94%",  delta: "+1.8% vs last week",   trend: "up", icon: TrendingUp, accent: "violet",  progress: 94  },
+    { label: "Overall Load",   value: "87%",  delta: "Capacity used",        trend: "up", icon: Gauge,     accent: "amber",   progress: 87  },
+  ], []);
+
+  const formatNumber = (num: number) => {
+    return num.toLocaleString();
+  };
 
   return (
     <GlassCard className="p-6">
@@ -53,15 +60,20 @@ export function InfrastructureHealthCard() {
           <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
         </div>
         <div className="flex-1">
-          <h2 className="text-lg tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 700 }}>
-            Infrastructure Health
-          </h2>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-lg tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 700 }}>
+              {t("dashboard.infrastructure.title")}
+            </h2>
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              Demo Visualization
+            </span>
+          </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Live status across the recycling network
+            {t("dashboard.infrastructure.subtitle")}
           </p>
         </div>
         <button
-          onClick={() => router.push("/centers")}
+          onClick={() => router.push("/centers-list")}
           className="hidden sm:inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm transition-colors cursor-pointer"
         >
           Open Network Hub <ArrowRight className="w-4 h-4" />
@@ -69,10 +81,10 @@ export function InfrastructureHealthCard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-5 items-stretch">
-        <div className="grid grid-cols-2 gap-3">
-          {stats.map((s, i) => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {localizedStats.map((s, i) => {
             const Icon = s.icon;
-            const t = tone[s.accent];
+            const tTone = tone[s.accent];
             return (
               <div
                 key={s.label}
@@ -80,10 +92,10 @@ export function InfrastructureHealthCard() {
                 style={{ animationDelay: `${i * 0.05}s` }}
               >
                 <div className="flex items-start justify-between mb-3">
-                  <div className={`w-9 h-9 rounded-xl ${t.iconBg} flex items-center justify-center`}>
-                    <Icon className={`w-4 h-4 ${t.iconFg}`} />
+                  <div className={`w-9 h-9 rounded-xl ${tTone.iconBg} flex items-center justify-center`}>
+                    <Icon className={`w-4 h-4 ${tTone.iconFg}`} />
                   </div>
-                  <span className={`text-[11px] ${t.deltaFg}`} style={{ fontWeight: 600 }}>
+                  <span className={`text-[11px] ${tTone.deltaFg}`} style={{ fontWeight: 600 }}>
                     {s.delta}
                   </span>
                 </div>
@@ -93,7 +105,7 @@ export function InfrastructureHealthCard() {
                 </p>
                 <div className="mt-3 h-1.5 rounded-full bg-slate-200/70 dark:bg-white/[0.08] overflow-hidden">
                   <div
-                    className={`h-full ${t.bar}`}
+                    className={`h-full ${tTone.bar}`}
                     style={{
                       width: mounted ? `${s.progress}%` : "0%",
                       transition: "width 0.7s cubic-bezier(0, 0, 0.2, 1)",
@@ -121,8 +133,8 @@ export function InfrastructureHealthCard() {
             <rect width="100" height="100" fill="url(#net-glow)" />
 
             {links.map(([a, b], i) => {
-              const c1 = centers[a];
-              const c2 = centers[b];
+              const c1 = localizedCenters[a];
+              const c2 = localizedCenters[b];
               return (
                 <g key={i}>
                   <line x1={c1.x} y1={c1.y} x2={c2.x} y2={c2.y} stroke="currentColor" strokeWidth="0.35" className="text-slate-400 dark:text-white/25" />
@@ -134,7 +146,7 @@ export function InfrastructureHealthCard() {
             })}
           </svg>
 
-          {centers.map((c, i) => {
+          {localizedCenters.map((c, i) => {
             const Icon = c.Icon;
             return (
               <div
@@ -146,7 +158,7 @@ export function InfrastructureHealthCard() {
                   <Icon className="w-4 h-4 text-white" />
                 </div>
                 <div className="mt-1 px-1.5 py-0.5 rounded-md bg-white/85 dark:bg-black/60 backdrop-blur text-[9px] text-slate-700 dark:text-slate-200 whitespace-nowrap" style={{ fontWeight: 700 }}>
-                  {c.short} · {c.load}%
+                  {c.short} · {formatNumber(c.load)}%
                 </div>
               </div>
             );
@@ -157,7 +169,9 @@ export function InfrastructureHealthCard() {
               <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60 animate-ping" />
               <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-emerald-500" />
             </span>
-            <span className="text-[10px] text-slate-600 dark:text-slate-300" style={{ fontWeight: 700 }}>LIVE</span>
+            <span className="text-[10px] text-slate-600 dark:text-slate-300" style={{ fontWeight: 700 }}>
+              LIVE
+            </span>
           </div>
 
           <div className="absolute bottom-2.5 left-2.5 text-[10px] text-slate-500 dark:text-slate-400" style={{ fontWeight: 600 }}>
@@ -167,7 +181,7 @@ export function InfrastructureHealthCard() {
       </div>
 
       <button
-        onClick={() => router.push("/centers")}
+        onClick={() => router.push("/centers-list")}
         className="sm:hidden mt-4 w-full h-10 inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm transition-colors cursor-pointer"
       >
         Open Network Hub <ArrowRight className="w-4 h-4" />
@@ -177,3 +191,4 @@ export function InfrastructureHealthCard() {
 }
 
 export default InfrastructureHealthCard;
+

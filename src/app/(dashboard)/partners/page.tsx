@@ -20,6 +20,9 @@ import {
   Trash2,
   Calendar,
   Eye,
+  Clock,
+  GitBranch,
+  Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRoleContext } from "@/contexts/RoleContext";
@@ -162,15 +165,39 @@ function PartnersPageInner() {
         )}
       </div>
 
-      <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-4 flex items-start gap-3">
-        <Eye className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-        <div>
-          <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Future B2B Suggestion</p>
-          <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-            These zones are suggested based on current pickup activity. Each zone shows active citizens and request volume. Real community management features are coming soon.
-          </p>
+      {/* ── Planned Feature Banner ─────────────────────────── */}
+      <div className="relative overflow-hidden rounded-2xl border border-amber-500/25 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 dark:from-amber-500/[0.08] dark:via-orange-500/[0.06] dark:to-amber-500/[0.08] p-5">
+        {/* decorative glow */}
+        <div className="absolute -top-6 -right-6 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="relative flex items-start gap-4">
+          <div className="w-11 h-11 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
+            <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <span className="text-sm font-bold text-amber-800 dark:text-amber-300">Planned Feature</span>
+              <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25">
+                🚧 Coming Soon
+              </span>
+            </div>
+            <p className="text-sm text-amber-700 dark:text-amber-400/90 leading-relaxed">
+              <strong>Partners Management</strong> is a planned feature and will be available in a future release.
+              Backend API integration is pending — all data shown here is for demonstration and roadmap purposes only.
+            </p>
+            <div className="mt-3 flex items-center gap-4 flex-wrap">
+              <span className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-500 font-semibold">
+                <Lock className="w-3.5 h-3.5" />
+                Backend API: Not Available
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-500 font-semibold">
+                <GitBranch className="w-3.5 h-3.5" />
+                Status: On Roadmap
+              </span>
+            </div>
+          </div>
         </div>
       </div>
+      {/* ────────────────────────────────────────────────────── */}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((k, i) => {

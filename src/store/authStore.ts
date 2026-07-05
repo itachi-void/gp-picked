@@ -112,9 +112,9 @@ export const useAuth = create<AuthStore>((set, get) => ({
 
     } catch (error: any) {
       if (error.response?.status === 401) {
-        throw new Error("الإيميل أو الباسورد غلط");
+        throw new Error("Incorrect email or password");
       }
-      throw new Error(error.response?.data?.message || "حصلت مشكلة في تسجيل الدخول");
+      throw new Error(error.response?.data?.message || "An error occurred during login");
     }
   },
 

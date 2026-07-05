@@ -11,6 +11,7 @@ import { useAuth, type Role } from "@/store/authStore";
 import { homePathForRole } from "@/app/utils/roleAccess";
 import { ForgotPasswordModal } from "./ForgotPasswordModal";
 import PremiumAuthButton from "./PremiumAuthButton";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // ========== ١. قواعد التحقق من البيانات ==========
 const loginSchema = z.object({
@@ -18,12 +19,11 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-
-
 // ========== ٣. مكون فورم تسجيل الدخول ==========
 export function LoginForm() {
   const { login, selectedRole, setSelectedRole, demoLoginTrigger } = useAuth();
   const router = useRouter();
+  const { t, tApi } = useLanguage();
 
   const [isForgotOpen, setIsForgotOpen] = useState(false);
 
@@ -51,10 +51,10 @@ export function LoginForm() {
   const onSubmit = async (data: z.infer<typeof loginSchema>) => {
     try {
       const u = await login(data.username.trim(), data.password, selectedRole);
-      toast.success(`Welcome back, ${u.name}`);
+      toast.success(`${t("auth.welcomeBack")}, ${u.name}`);
       router.replace(homePathForRole(u.role));
     } catch (err: any) {
-      toast.error(err?.message ?? "Authentication failed");
+      toast.error(err?.message ? tApi(err.message) : t("auth.authFailed"));
       throw err;
     }
   };
@@ -67,8 +67,6 @@ export function LoginForm() {
     await onSubmit(form.getValues());
   };
 
-
-
   return (
     <>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -78,12 +76,14 @@ export function LoginForm() {
           <input
             {...form.register("username")}
             type="text"
-            placeholder="Username"
+            placeholder={t("auth.username")}
             className="w-full pl-10 pr-4 h-11 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
           />
           {form.formState.errors.username && (
             <p className="text-red-500 text-xs mt-1 ml-4">
-              {form.formState.errors.username.message}
+              {form.formState.errors.username.message === "Username is required"
+                ? t("auth.usernameReq")
+                : tApi(form.formState.errors.username.message || "")}
             </p>
           )}
         </div>
@@ -94,12 +94,14 @@ export function LoginForm() {
           <input
             {...form.register("password")}
             type="password"
-            placeholder="Password"
+            placeholder={t("auth.password")}
             className="w-full pl-10 pr-4 h-11 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
           />
           {form.formState.errors.password && (
             <p className="text-red-500 text-xs mt-1 ml-4">
-              {form.formState.errors.password.message}
+              {form.formState.errors.password.message === "Password is required"
+                ? t("auth.passwordReq")
+                : tApi(form.formState.errors.password.message || "")}
             </p>
           )}
         </div>
@@ -111,7 +113,7 @@ export function LoginForm() {
             onClick={() => setIsForgotOpen(true)}
             className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
           >
-            Forgot Password?
+            {t("auth.forgotPassword")}
           </button>
         </div>
 
@@ -123,11 +125,11 @@ export function LoginForm() {
             onChange={(e) => setSelectedRole(e.target.value as Role)}
             className="w-full pl-10 pr-8 h-11 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none cursor-pointer bg-white dark:bg-slate-900"
           >
-            <option value="User">Citizen</option>
-            <option value="Driver">Driver</option>
-            <option value="Admin">Admin</option>
-            <option value="Recycler">Recycler</option>
-            <option value="Employee">Employee</option>
+            <option value="User">{t("auth.roleCitizen")}</option>
+            <option value="Driver">{t("auth.roleDriver")}</option>
+            <option value="Admin">{t("auth.roleAdmin")}</option>
+            <option value="Recycler">{t("auth.roleRecycler")}</option>
+            <option value="Employee">{t("auth.roleEmployee")}</option>
           </select>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">
             ▼
@@ -139,6 +141,7 @@ export function LoginForm() {
           <PremiumAuthButton
             variant="login"
             onLogin={handleAuthSubmit}
+            label={t("auth.login")}
           />
         </div>
       </form>
@@ -151,3 +154,4 @@ export function LoginForm() {
     </>
   );
 }
+

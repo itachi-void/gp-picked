@@ -10,12 +10,50 @@ import { useAuth } from "@/store/authStore";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import PremiumAuthButton from "@/app/components/auth/PremiumAuthButton";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+const routeToKey: Record<string, string> = {
+  "/centers": "nav.centers",
+  "/centers-list": "nav.centersList",
+  "/communities": "nav.communities",
+  "/partners": "nav.partners",
+  "/schedule": "nav.schedule",
+  "/verification": "nav.verification",
+  "/logistics": "nav.logistics",
+  "/analytics": "nav.analytics",
+  "/alerts": "nav.alerts",
+  "/performance": "nav.performance",
+  "/reports": "nav.reports",
+  "/sustainability": "nav.sustainability",
+  "/citizen-levels": "nav.levels",
+  "/badges": "nav.badges",
+  "/leaderboards": "nav.leaderboards",
+  "/rewards": "nav.rewards",
+  "/citizen-stats": "nav.citizenStats",
+  "/users": "nav.users",
+  "/resources": "nav.resources",
+  "/ai-validation": "nav.aiValidation",
+  "/activity-log": "nav.activityLog",
+  "/permissions": "nav.permissions",
+  "/audit": "nav.audit",
+  "/support": "nav.support",
+  "/drivers": "nav.drivers",
+  "/fleet": "nav.fleet",
+  "/routes": "nav.routes",
+  "/pickups": "nav.pickups",
+  "/overview": "nav.overview",
+  "/driver-portal": "nav.home",
+  "/citizen-portal": "nav.home",
+  "/employee-history": "nav.history",
+  "/employee-profile": "nav.profile",
+};
 
 export function MoreDropdown() {
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const { role } = useRoleTabs();
   const { logout } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -78,7 +116,7 @@ export function MoreDropdown() {
 
   const handleLogout = () => {
     logout();
-    toast.success("Signed out successfully");
+    toast.success(t("common.signOut") === "Sign Out" ? "Signed out successfully" : "تم تسجيل الخروج بنجاح");
     router.replace("/login");
   };
 
@@ -95,7 +133,7 @@ export function MoreDropdown() {
             : "text-slate-600 dark:text-gray-400 hover:text-black dark:hover:text-white"
         }`}
       >
-        More
+        {t("common.more")}
         <ChevronDown className={`w-3 h-3 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
@@ -118,10 +156,10 @@ export function MoreDropdown() {
           >
           <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800 mb-4">
             <span className="text-[10px] font-extrabold uppercase tracking-[2px] text-gray-400 dark:text-gray-500">
-              Operations & Control
+              {t("common.operationsControl")}
             </span>
             <span className="text-[10px] font-extrabold uppercase tracking-[2px] text-emerald-600 dark:text-emerald-400">
-              EcoSnap
+              {t("common.appName")}
             </span>
           </div>
 
@@ -132,7 +170,7 @@ export function MoreDropdown() {
             {visibleGroups.map((group) => (
               <div key={group.title} className="space-y-3">
                 <div className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-emerald-600 dark:text-emerald-400">
-                  {group.title}
+                  {t("nav." + group.title.toLowerCase(), group.title)}
                 </div>
                 <div className="flex flex-col gap-1">
                   {group.items.map((m) => (
@@ -143,7 +181,12 @@ export function MoreDropdown() {
                       className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50"
                     >
                       {m.icon && <m.icon className="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" />}
-                      <span className="font-semibold truncate">{m.label}</span>
+                      <span className="font-semibold truncate">{t(routeToKey[m.to], m.label)}</span>
+                      {m.comingSoon && (
+                        <span className="ml-auto px-1.5 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0 whitespace-nowrap">
+                          Coming Soon
+                        </span>
+                      )}
                     </Link>
                   ))}
                 </div>
@@ -152,7 +195,7 @@ export function MoreDropdown() {
           </div>
 
           <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-center">
-            <PremiumAuthButton variant="logout" label="Sign Out" onLogout={handleLogout} />
+            <PremiumAuthButton variant="logout" label={t("common.signOut")} onLogout={handleLogout} />
           </div>
         </div>
         </>,

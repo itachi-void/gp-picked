@@ -8,6 +8,7 @@ import api from "@/lib/axios";
 import { useRoleContext } from "@/contexts/RoleContext";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Role = "admin" | "driver" | "citizen" | "employee";
 
@@ -29,14 +30,6 @@ const roleConfig: Record<Role, { label: string; icon: typeof Shield; bg: string;
   citizen:  { label: "Citizen",  icon: Users,       bg: "bg-violet-500/10",  fg: "text-violet-600 dark:text-violet-400" },
 };
 
-const ROLES: { value: Role | "all"; label: string }[] = [
-  { value: "all",      label: "All"      },
-  { value: "admin",    label: "Admin"    },
-  { value: "driver",   label: "Driver"   },
-  { value: "employee", label: "Employee" },
-  { value: "citizen",  label: "Citizen"  },
-];
-
 const accentMap: Record<string, { bg: string; fg: string }> = {
   emerald: { bg: "bg-emerald-500/10", fg: "text-emerald-600 dark:text-emerald-400" },
   amber:   { bg: "bg-amber-500/10",   fg: "text-amber-600 dark:text-amber-400"     },
@@ -56,8 +49,8 @@ function mapApiUser(item: any): User {
     email: item.email || "no-email@smartwaste.com",
     role,
     status: item.status === "inactive" ? "inactive" : "active",
-    joinedAt: item.joinedAt ? new Date(item.joinedAt).toLocaleDateString() : "Just now",
-    lastSeen: item.lastSeen ? new Date(item.lastSeen).toLocaleTimeString() : "Active",
+    joinedAt: item.joinedAt || "",
+    lastSeen: item.lastSeen || "",
     walletPoints: item.walletPoints || item.points || 0,
   };
 }
@@ -65,6 +58,8 @@ function mapApiUser(item: any): User {
 export default function UsersPage() {
   const { role } = useRoleContext();
   const router = useRouter();
+  const { t, tApi, language } = useLanguage();
+
   useEffect(() => {
     if (role && !["Admin", "Manager"].includes(role)) {
       router.replace("/overview");
@@ -78,6 +73,14 @@ export default function UsersPage() {
   const [showForm, setShowForm] = useState(false);
   const emptyForm = { fullName: "", email: "", password: "", address: "", phone: "" };
   const [form, setForm] = useState(emptyForm);
+
+  const ROLES: { value: Role | "all"; label: string }[] = useMemo(() => [
+    { value: "all" as const,      label: "All"      },
+    { value: "admin" as const,    label: t("auth.roleAdmin", "Admin")    },
+    { value: "driver" as const,   label: t("auth.roleDriver", "Driver")   },
+    { value: "employee" as const, label: "Employee" },
+    { value: "citizen" as const,  label: t("auth.roleCitizen", "Citizen")  },
+  ], [t]);
 
   const { data: rawData = [], isLoading, refetch } = useQuery<any[]>({
     queryKey: ["sorting-users", { sortOrder: "Descending" }],
@@ -175,10 +178,14 @@ export default function UsersPage() {
 
   const summary = [
     { label: "Total Users", value: users.length, accent: "emerald" },
-    { label: "Admins", value: users.filter((u) => u.role === "admin").length, accent: "emerald" },
-    { label: "Drivers", value: users.filter((u) => u.role === "driver").length, accent: "amber" },
+    { label: t("auth.roleAdmin"), value: users.filter((u) => u.role === "admin").length, accent: "emerald" },
+    { label: t("auth.roleDriver"), value: users.filter((u) => u.role === "driver").length, accent: "amber" },
     { label: "Active", value: users.filter((u) => u.status === "active").length, accent: "sky" },
   ];
+
+  const formatNumber = (num: number) => {
+    return num.toLocaleString();
+  };
 
   if (isLoading) {
     return (
@@ -202,7 +209,7 @@ export default function UsersPage() {
       <div data-aos="fade-up" className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl text-slate-900 dark:text-white tracking-tight" style={{ fontWeight: 700 }}>
-            Users
+            {t("dashboard.nav.users")}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Manage all platform users
@@ -222,7 +229,7 @@ export default function UsersPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {summary.map((s, i) => {
-          const a = accentMap[s.accent];
+          const a = accentMap[s.accent] || accentMap.emerald;
           return (
             <div key={s.label} data-aos="fade-up" data-aos-delay={i * 80}>
               <GlassCard className="p-5">
@@ -288,9 +295,11 @@ export default function UsersPage() {
                 </tr>
               ) : (
                 filtered.map((u) => {
-                  const rc = roleConfig[u.role];
+                  const rc = roleConfig[u.role] || roleConfig.citizen;
                   const RoleIcon = rc.icon;
                   const initials = u.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+                  const displayJoined = u.joinedAt ? new Date(u.joinedAt).toLocaleDateString([]) : "Just now";
+                  const displayLastSeen = u.lastSeen ? new Date(u.lastSeen).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Active";
                   return (
                     <tr key={u.id || u.name} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
                       <td className="px-6 py-4">
@@ -299,7 +308,7 @@ export default function UsersPage() {
                             {initials || "?"}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-slate-900 dark:text-white truncate" style={{ fontWeight: 600 }}>{u.name}</p>
+                            <p className="text-slate-900 dark:text-white truncate font-bold" style={{ fontWeight: 600 }}>{u.name}</p>
                             <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
                               <Mail className="w-3 h-3" /> {u.email}
                             </p>
@@ -317,12 +326,12 @@ export default function UsersPage() {
                       <td className="px-6 py-4 hidden md:table-cell">
                         <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5" />
-                          {u.joinedAt}
+                          {displayJoined}
                         </span>
                       </td>
 
                       <td className="px-6 py-4 hidden lg:table-cell">
-                        <span className="text-slate-500 dark:text-slate-400">{u.lastSeen}</span>
+                        <span className="text-slate-500 dark:text-slate-400">{displayLastSeen}</span>
                       </td>
 
                       <td className="px-6 py-4">
@@ -368,7 +377,9 @@ export default function UsersPage() {
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#0a0e14] rounded-3xl p-6 max-w-md w-full border border-slate-200 dark:border-white/10 mc-scale-up">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg tracking-tight text-slate-900 dark:text-white font-bold" style={{ fontWeight: 600 }}>Add New User</h2>
+              <h2 className="text-lg tracking-tight text-slate-900 dark:text-white font-bold" style={{ fontWeight: 600 }}>
+                Add New User
+              </h2>
               <button onClick={() => setShowForm(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer">
                 <X className="w-5 h-5 text-slate-500" />
               </button>
@@ -396,8 +407,12 @@ export default function UsersPage() {
               </label>
             </div>
             <div className="mt-6 flex items-center justify-end gap-2">
-              <button onClick={() => setShowForm(false)} className="h-10 px-5 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 cursor-pointer">Cancel</button>
-              <button onClick={handleSubmit} className="h-10 px-5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm cursor-pointer font-bold" style={{ fontWeight: 600 }}>Add User</button>
+              <button onClick={() => setShowForm(false)} className="h-10 px-5 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 cursor-pointer">
+                Cancel
+              </button>
+              <button onClick={handleSubmit} className="h-10 px-5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm cursor-pointer font-bold" style={{ fontWeight: 600 }}>
+                Add User
+              </button>
             </div>
           </div>
         </div>
@@ -405,3 +420,4 @@ export default function UsersPage() {
     </div>
   );
 }
+

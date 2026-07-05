@@ -48,6 +48,14 @@ export type Stat = {
   color: string;
 };
 
+export type WasteCategory = {
+  categoryName: string;
+  pointsPerUnit: number;
+  imagePath: string | null;
+  icon?: IconType;
+  description?: string;
+};
+
 export type FeatureT = {
   icon: IconType;
   name: string;
@@ -63,7 +71,7 @@ export type StepT = {
 
 export type RoleT = {
   icon: IconType;
-  title: "User" | "Driver" | "Admin";
+  title: string;
   description: string;
   features: string[];
   color: string;

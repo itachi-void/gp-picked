@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Truck, Users, Recycle, Gauge, ArrowUpRight, ArrowDownRight, LucideIcon } from "lucide-react";
 import { GlassCard } from "@/app/components/GlassCard";
 import "@/app/components/motion/motion-components.css";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface KPI {
   label: string;
@@ -54,11 +55,12 @@ export default function OperationalKPIs({
   fleetUtilization,
 }: Props) {
   const [mounted, setMounted] = useState(false);
+  const { t, language } = useLanguage();
   useEffect(() => { setMounted(true); }, []);
 
   const kpis: KPI[] = [
     {
-      label: "Active Pickups",
+      label: t("dashboard.kpis.pickups"),
       value: String(activePickups),
       sub: "in progress + pending",
       delta: 12.4,
@@ -67,7 +69,7 @@ export default function OperationalKPIs({
       spark: [3, 5, 4, 6, 5, 7, 8, 7, 9, 8, 10, activePickups],
     },
     {
-      label: "Drivers On-Road",
+      label: t("dashboard.kpis.drivers"),
       value: `${driversOnRoad}/${totalDrivers}`,
       sub: "currently dispatched",
       delta: 4.1,
@@ -76,7 +78,7 @@ export default function OperationalKPIs({
       spark: [2, 3, 3, 4, 5, 4, 5, 6, 5, 6, 7, driversOnRoad],
     },
     {
-      label: "Today's Tonnage",
+      label: t("dashboard.kpis.tonnage"),
       value: `${todayTonnage.toFixed(1)}t`,
       sub: "collected since midnight",
       delta: 8.6,
@@ -85,7 +87,7 @@ export default function OperationalKPIs({
       spark: [12, 18, 22, 30, 35, 42, 48, 55, 60, 68, 72, todayTonnage],
     },
     {
-      label: "Fleet Utilization",
+      label: t("dashboard.kpis.utilization"),
       value: `${fleetUtilization}%`,
       sub: "capacity in use",
       delta: -2.3,
@@ -96,9 +98,9 @@ export default function OperationalKPIs({
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {kpis.map((k, i) => {
-        const t = accentMap[k.accent];
+        const tAcc = accentMap[k.accent];
         const Icon = k.Icon;
         const up = k.delta >= 0;
         return (
@@ -108,10 +110,10 @@ export default function OperationalKPIs({
             style={{ animationDelay: `${i * 0.05}s` }}
           >
             <GlassCard className="p-5 relative overflow-hidden">
-              <div className={`absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t ${t.bar} pointer-events-none`} />
+              <div className={`absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t ${tAcc.bar} pointer-events-none`} />
               <div className="relative flex items-start justify-between">
-                <div className={`w-10 h-10 rounded-xl ${t.bg} flex items-center justify-center`}>
-                  <Icon className={`w-5 h-5 ${t.fg}`} />
+                <div className={`w-10 h-10 rounded-xl ${tAcc.bg} flex items-center justify-center`}>
+                  <Icon className={`w-5 h-5 ${tAcc.fg}`} />
                 </div>
                 <div
                   className={`flex items-center gap-0.5 text-xs ${up ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}
@@ -119,7 +121,6 @@ export default function OperationalKPIs({
                 >
                   {up ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
                   {Math.abs(k.delta).toFixed(1)}% 
-                  {/* remove minus */}
                 </div>
               </div>
               <div className="relative mt-3">
@@ -130,7 +131,7 @@ export default function OperationalKPIs({
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{k.sub}</p>
               </div>
               <div className="relative mt-3 h-8 opacity-90">
-                <Sparkline data={k.spark} color={t.stroke} />
+                <Sparkline data={k.spark} color={tAcc.stroke} />
               </div>
             </GlassCard>
           </div>
@@ -139,3 +140,4 @@ export default function OperationalKPIs({
     </div>
   );
 }
+

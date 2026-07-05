@@ -24,7 +24,6 @@ import {
 interface CenterNode {
   id: string;           // رقم المركز: "C1", "C2", ...
   name: string;         // اسم المركز بالإنجليزي
-  nameAr: string;       // اسم المركز بالعربي
   type:                 // نوع المركز:
     | "collection"      //   - تجميع
     | "sorting"         //   - فرز
@@ -582,10 +581,6 @@ function TelemetrySidebar({
             <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider leading-none">
               {center.name}
             </h4>
-            {/* اسم المركز بالعربي */}
-            <p className="text-[10px] text-slate-400 dark:text-white/40 font-bold mt-1">
-              {center.nameAr}
-            </p>
           </div>
         </div>
         
@@ -752,7 +747,6 @@ export default function IsometricCentersHub() {
       return {
         id: `C${staffId}`,
         name: `${managerName}'s Hub`,
-        nameAr: `مركز ${managerName}`,
         type,
         status: (idx % 8 === 3 ? "maintenance" : (idx % 8 === 5 ? "offline" : "online")) as any,
         x: coord.x,
@@ -785,7 +779,7 @@ export default function IsometricCentersHub() {
     }
   }, [CENTERS, activeCenter]);
 
-  const selectedCenter = CENTERS.find((c) => c.id === activeCenter) || CENTERS[0] || { id: "C1", name: "Loading...", nameAr: "جاري التحميل...", type: "collection", status: "online", x: 50, y: 50, capacity: 50, throughput: 0, efficiency: 90, co2Saved: 0, temperature: 25, activeDrivers: 0 };
+  const selectedCenter = CENTERS.find((c) => c.id === activeCenter) || CENTERS[0] || { id: "C1", name: "Loading...", type: "collection", status: "online", x: 50, y: 50, capacity: 50, throughput: 0, efficiency: 90, co2Saved: 0, temperature: 25, activeDrivers: 0 };
 
   // ===== تحويل النسب المئوية لإحداثيات SVG =====
   const SVG_W = 700;  // عرض الـ SVG

@@ -230,11 +230,13 @@ function DriverOverviewDashboard() {
         <GlassCard className="p-5 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h2
-              className="text-sm text-slate-900 dark:text-white flex items-center gap-2"
+              className="text-sm text-slate-900 dark:text-white flex items-center gap-2 flex-wrap"
               style={{ fontWeight: 700 }}
             >
               <Clock className="w-4 h-4 text-emerald-500" /> Today’s schedule{" "}
-              <span className="text-red-500">Coming in the future</span>
+              <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                Coming Soon
+              </span>
             </h2>
             <button
               onClick={() => router.push("/schedule")}
@@ -275,11 +277,13 @@ function DriverOverviewDashboard() {
         {/* Vehicle status */}
         <GlassCard className="p-5">
           <h2
-            className="text-sm text-slate-900 dark:text-white flex items-center gap-2 mb-4"
+            className="text-sm text-slate-900 dark:text-white flex items-center gap-2 flex-wrap mb-4"
             style={{ fontWeight: 700 }}
           >
             <Truck className="w-4 h-4 text-cyan-500" /> Vehicle status{" "}
-            <span className="text-red-500">Coming in the future</span>
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              Coming Soon
+            </span>
           </h2>
           <div className="flex items-center gap-2 mb-4">
             <span

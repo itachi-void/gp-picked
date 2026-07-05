@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Target, CheckCircle2, AlertTriangle } from "lucide-react";
 import { GlassCard } from "@/app/components/GlassCard";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Goal {
   label: string;
@@ -33,18 +34,23 @@ export default function TodaysGoals({
   totalDrivers,
 }: Props) {
   const [mounted, setMounted] = useState(false);
+  const { t, language } = useLanguage();
   useEffect(() => { setMounted(true); }, []);
 
   const goals: Goal[] = [
-    { label: "Pickup Completion", current: completedPickups, target: Math.max(totalPickups, 1), unit: "requests", accent: "emerald" },
-    { label: "Daily Tonnage", current: todayTonnage, target: 120, unit: "tonnes", accent: "violet" },
-    { label: "Driver Deployment", current: driversOnRoad, target: totalDrivers, unit: "drivers", accent: "sky" },
+    { label: t("dashboard.goals.pickupTarget"), current: completedPickups, target: Math.max(totalPickups, 1), unit: "requests", accent: "emerald" },
+    { label: t("dashboard.goals.tonnageTarget"), current: todayTonnage, target: 120, unit: "tonnes", accent: "violet" },
+    { label: t("dashboard.goals.fleetTarget"), current: driversOnRoad, target: totalDrivers, unit: "drivers", accent: "sky" },
     { label: "SLA Compliance", current: 94, target: 95, unit: "%", accent: "amber" },
   ];
 
   const overallProgress = Math.round(
     goals.reduce((sum, g) => sum + Math.min(100, (g.current / g.target) * 100), 0) / goals.length
   );
+
+  const formatNumber = (num: number, maximumFractionDigits = 0) => {
+    return num.toFixed(maximumFractionDigits);
+  };
 
   return (
     <GlassCard className="p-6 h-full flex flex-col">
@@ -54,10 +60,10 @@ export default function TodaysGoals({
         </div>
         <div className="flex-1">
           <h2 className="text-lg tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 700 }}>
-            Today's Goals
+            {t("dashboard.goals.title")}
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Daily targets and SLA progress
+            {t("dashboard.goals.subtitle")}
           </p>
         </div>
       </div>
@@ -89,6 +95,7 @@ export default function TodaysGoals({
       <div className="space-y-4 flex-1">
         {goals.map((g, i) => {
           const pct = Math.min(100, (g.current / g.target) * 100);
+          const fractionDigits = g.unit === "%" || g.unit === "طن" || g.unit === "tonnes" ? 1 : 0;
           return (
             <div key={g.label}>
               <div className="flex items-center justify-between text-sm mb-1.5">
@@ -96,7 +103,7 @@ export default function TodaysGoals({
                   {g.label}
                 </span>
                 <span className="text-slate-500 dark:text-slate-400 tabular-nums text-xs">
-                  {g.current.toFixed(g.unit === "%" || g.unit === "tonnes" ? 1 : 0)} / {g.target} {g.unit}
+                  {formatNumber(g.current, fractionDigits)} / {formatNumber(g.target)} {g.unit}
                 </span>
               </div>
               <div className="h-2 rounded-full bg-slate-200/70 dark:bg-white/[0.06] overflow-hidden">
@@ -116,3 +123,4 @@ export default function TodaysGoals({
     </GlassCard>
   );
 }
+

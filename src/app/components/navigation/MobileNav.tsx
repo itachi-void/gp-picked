@@ -6,11 +6,49 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { useRoleTabs } from "@/hooks/useRoleTabs";
 import { moreGroups } from "@/data/navigation";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+const routeToKey: Record<string, string> = {
+  "/centers": "nav.centers",
+  "/centers-list": "nav.centersList",
+  "/communities": "nav.communities",
+  "/partners": "nav.partners",
+  "/schedule": "nav.schedule",
+  "/verification": "nav.verification",
+  "/logistics": "nav.logistics",
+  "/analytics": "nav.analytics",
+  "/alerts": "nav.alerts",
+  "/performance": "nav.performance",
+  "/reports": "nav.reports",
+  "/sustainability": "nav.sustainability",
+  "/citizen-levels": "nav.levels",
+  "/badges": "nav.badges",
+  "/leaderboards": "nav.leaderboards",
+  "/rewards": "nav.rewards",
+  "/citizen-stats": "nav.citizenStats",
+  "/users": "nav.users",
+  "/resources": "nav.resources",
+  "/ai-validation": "nav.aiValidation",
+  "/activity-log": "nav.activityLog",
+  "/permissions": "nav.permissions",
+  "/audit": "nav.audit",
+  "/support": "nav.support",
+  "/drivers": "nav.drivers",
+  "/fleet": "nav.fleet",
+  "/routes": "nav.routes",
+  "/pickups": "nav.pickups",
+  "/overview": "nav.overview",
+  "/driver-portal": "nav.home",
+  "/citizen-portal": "nav.home",
+  "/employee-history": "nav.history",
+  "/employee-profile": "nav.profile",
+};
 
 export function MobileNav() {
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const { tabs, role } = useRoleTabs();
+  const { t, language } = useLanguage();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -81,7 +119,7 @@ export function MobileNav() {
               {visibleGroups.map((group) => (
                 <div key={group.title} className="pt-3 border-t border-gray-100 dark:border-gray-900 mt-3">
                   <div className="text-[10px] font-bold uppercase text-gray-400 px-3 pb-1">
-                    {group.title}
+                    {t("nav." + group.title.toLowerCase(), group.title)}
                   </div>
                   <div className="space-y-0.5">
                     {group.items.map((item) => (
@@ -91,8 +129,13 @@ export function MobileNav() {
                         onClick={() => setOpen(false)}
                         className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                       >
-                        {item.icon && <item.icon className="h-4 w-4 text-gray-500" />}
-                        {item.label}
+                        {item.icon && <item.icon className="h-4 w-4 text-gray-500 shrink-0" />}
+                        <span className="truncate">{t(routeToKey[item.to], item.label)}</span>
+                        {item.comingSoon && (
+                          <span className="ml-auto px-1.5 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0 whitespace-nowrap">
+                            Coming Soon
+                          </span>
+                        )}
                       </Link>
                     ))}
                   </div>

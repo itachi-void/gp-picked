@@ -8,25 +8,29 @@ import {
   Leaf,
   Users,
   Coins,
+  QrCode,
   MapPin,
   Play,
   ArrowRight,
+  Cpu,
 } from "lucide-react";
 
 // Local Subcomponents
 import { StatCard } from "./StatCard";
-import { FeatureCard } from "./FeatureCard";
+import { WasteCategoryCard } from "./WasteCategoryCard";
 import { StepItem } from "./StepItem";
 import { RoleCard } from "./RoleCard";
 import { ImpactStatCard } from "./ImpactStatCard";
 import { LiquidProgress } from "./LiquidProgress";
+import { QRScannerModal } from "./QRScannerModal";
 import { SectionHeading } from "./SectionHeading";
-import { Stat, FeatureT, StepT, RoleT, ImpactEqT, ImpactStatT } from "./types";
+import { Stat, FeatureT, StepT, RoleT, ImpactEqT, ImpactStatT, WasteCategory } from "./types";
 
 // Reusable Components & Hooks
 import FloatingParticles from "../FloatingParticles";
 import { CyclingText } from "../CyclingText";
 import { MaskWipeText } from "../MaskWipeText";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 import "./landing-animations.css";
 
@@ -142,35 +146,49 @@ const IMPACT_STATS: ImpactStatT[] = [
 /*                               Main Component                               */
 /* -------------------------------------------------------------------------- */
 export default function LandingPage() {
+  const [qrModalOpen, setQrModalOpen] = useState(false);
   const [bottleCount, setBottleCount] = useState(100);
   const [mounted, setMounted] = useState(false);
+  const { t, language } = useLanguage();
 
   const [totalRecyclers, setTotalRecyclers] = useState<number | null>(null);
   const [activeRecyclers, setActiveRecyclers] = useState<number | null>(null);
   const [totalPickups, setTotalPickups] = useState<number | null>(null);
   const [totalEarnings, setTotalEarnings] = useState<number | null>(null);
 
+  const [totalUsers, setTotalUsers] = useState<number | null>(null);
+  const [totalWalletPoints, setTotalWalletPoints] = useState<number | null>(null);
+  const [wasteCategories, setWasteCategories] = useState<WasteCategory[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<WasteCategory | null>(null);
+
   useEffect(() => {
     setMounted(true);
 
-    const fetchStats = async () => {
+    const loadLandingData = async () => {
       try {
         const API_BASE_URL =
           process.env.NEXT_PUBLIC_API_URL || "https://smartwaste.runasp.net";
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        const [resTotal, resActive, resPickups, resEarnings] =
-          await Promise.all([
-            axios.get(`${API_BASE_URL}/api/admin/total-recyclers`, { headers }),
-            axios.get(`${API_BASE_URL}/api/admin/total-recycling-active`, {
-              headers,
-            }),
-            axios.get(`${API_BASE_URL}/api/admin/total-pickup-requests`, {
-              headers,
-            }),
-            axios.get(`${API_BASE_URL}/api/admin/Total-Earing`, { headers }),
-          ]);
+        // Fetch all stats and configurations from API
+        const [
+          resTotal,
+          resActive,
+          resPickups,
+          resEarnings,
+          resCategories,
+          resTotalUsers,
+          resTotalPoints,
+        ] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/admin/total-recyclers`, { headers }),
+          axios.get(`${API_BASE_URL}/api/admin/total-recycling-active`, { headers }),
+          axios.get(`${API_BASE_URL}/api/admin/total-pickup-requests`, { headers }),
+          axios.get(`${API_BASE_URL}/api/admin/Total-Earing`, { headers }),
+          axios.get(`${API_BASE_URL}/api/admin/waste-categories`, { headers }),
+          axios.get(`${API_BASE_URL}/api/admin/total-users`, { headers }),
+          axios.get(`${API_BASE_URL}/api/admin/total-wallet-points`, { headers }),
+        ]);
 
         if (typeof resTotal.data === "number") {
           setTotalRecyclers(resTotal.data);
@@ -180,75 +198,263 @@ export default function LandingPage() {
 
         if (typeof resActive.data === "number") {
           setActiveRecyclers(resActive.data);
-        } else if (
-          resActive.data &&
-          typeof resActive.data.active === "number"
-        ) {
+        } else if (resActive.data && typeof resActive.data.active === "number") {
           setActiveRecyclers(resActive.data.active);
         }
 
         if (typeof resPickups.data === "number") {
           setTotalPickups(resPickups.data);
-        } else if (
-          resPickups.data &&
-          typeof resPickups.data.total === "number"
-        ) {
+        } else if (resPickups.data && typeof resPickups.data.total === "number") {
           setTotalPickups(resPickups.data.total);
         }
 
         if (typeof resEarnings.data === "number") {
           setTotalEarnings(resEarnings.data);
-        } else if (
-          resEarnings.data &&
-          typeof resEarnings.data.totalEarnings === "number"
-        ) {
+        } else if (resEarnings.data && typeof resEarnings.data.totalEarnings === "number") {
           setTotalEarnings(resEarnings.data.totalEarnings);
         }
+
+        if (typeof resTotalUsers.data === "number") {
+          setTotalUsers(resTotalUsers.data);
+        } else if (resTotalUsers.data && typeof resTotalUsers.data.total === "number") {
+          setTotalUsers(resTotalUsers.data.total);
+        }
+
+        if (typeof resTotalPoints.data === "number") {
+          setTotalWalletPoints(resTotalPoints.data);
+        } else if (resTotalPoints.data && typeof resTotalPoints.data.total === "number") {
+          setTotalWalletPoints(resTotalPoints.data.total);
+        }
+
+        if (Array.isArray(resCategories.data)) {
+          const categoriesData: WasteCategory[] = resCategories.data.map((cat: any) => {
+            const nameLower = cat.categoryName.toLowerCase();
+            let icon = Recycle;
+            let description = "";
+            let displayName = cat.categoryName;
+
+            if (nameLower === "classes") {
+              displayName = "Glass";
+            } else if (nameLower === "plastics" || nameLower === "plastic") {
+              displayName = "Plastic";
+            } else if (nameLower === "anim") {
+              displayName = "Aluminum";
+            } else if (nameLower === "updated category") {
+              displayName = "Cardboard";
+            }
+
+            if (nameLower.includes("plastic")) {
+              icon = Recycle;
+              description = "PET bottles, containers, and other recyclable plastic packaging.";
+            } else if (nameLower.includes("paper") || nameLower.includes("cardboard") || nameLower.includes("updated category")) {
+              icon = Leaf;
+              description = "Cardboard boxes, newspapers, magazines, and office paper waste.";
+            } else if (nameLower.includes("glass") || nameLower.includes("class")) {
+              icon = Recycle;
+              description = "Glass jars, beverage bottles, and glass container recycling.";
+            } else if (nameLower.includes("metal") || nameLower.includes("anim")) {
+              icon = Coins;
+              description = "Aluminum cans, tin foil, steel packaging, and metal containers.";
+            } else if (nameLower.includes("electron")) {
+              icon = Cpu;
+              description = "Old phones, chargers, circuit boards, and electronic components.";
+            } else {
+              description = "Recyclable waste materials sorted and processed using our smart systems.";
+            }
+
+            return {
+              ...cat,
+              categoryName: displayName,
+              icon,
+              description
+            };
+          });
+
+          setWasteCategories(categoriesData);
+          if (categoriesData.length > 0) {
+            setSelectedCategory(categoriesData[0]);
+          }
+        }
       } catch (err) {
-        console.warn("Failed to fetch admin stats, using mock data", err);
+        console.warn("Failed to load landing page API data", err);
       }
     };
 
-    fetchStats();
-  }, []);
+    loadLandingData();
+  }, [language]);
+
+  const formatNumber = (num: number) => {
+    return num.toLocaleString();
+  };
 
   const STATS: Stat[] = useMemo(
     () => [
       {
         icon: Recycle,
-        label: "Total Pickups",
+        label: t("landing.stats.pickups"),
         value: totalPickups !== null ? totalPickups : 2547893,
         suffix: totalPickups !== null ? "" : "+",
         color: "emerald",
       },
       {
         icon: Users,
-        label: "Total Recyclers",
+        label: t("landing.stats.recyclers"),
         value: totalRecyclers !== null ? totalRecyclers : 52140,
         suffix: totalRecyclers !== null ? "" : "+",
         color: "purple",
       },
       {
         icon: Users,
-        label: "Active Recyclers",
+        label: t("landing.stats.active"),
         value: activeRecyclers !== null ? activeRecyclers : 45678,
         suffix: activeRecyclers !== null ? "" : "+",
         color: "blue",
       },
       {
         icon: Coins,
-        label: "Total Earnings",
+        label: t("landing.stats.earnings"),
         value: totalEarnings !== null ? totalEarnings : 1234567,
         suffix: " $",
         color: "amber",
       },
     ],
-    [activeRecyclers, totalRecyclers, totalPickups, totalEarnings],
+    [activeRecyclers, totalRecyclers, totalPickups, totalEarnings, t],
   );
 
-  const calculatedValue = useMemo(() => bottleCount * 0.5, [bottleCount]);
-  const calculatedPoints = useMemo(() => bottleCount * 10, [bottleCount]);
-  const calculatedCO2 = useMemo(() => bottleCount * 0.5, [bottleCount]);
+  const localizedFeatures = useMemo(() => [
+    {
+      icon: Recycle,
+      name: t("landing.features.aiMatch"),
+      accuracy: 99.9,
+      description: t("landing.features.aiMatchDesc"),
+    },
+    {
+      icon: QrCode,
+      name: t("landing.features.qrVerify"),
+      accuracy: 95,
+      description: t("landing.features.qrVerifyDesc"),
+    },
+    {
+      icon: MapPin,
+      name: t("landing.features.routing"),
+      accuracy: 87,
+      description: t("landing.features.routingDesc"),
+    },
+    {
+      icon: Recycle,
+      name: t("landing.features.dashboard"),
+      accuracy: 92,
+      description: t("landing.features.dashboardDesc"),
+    },
+    {
+      icon: Recycle,
+      name: t("landing.features.wallet"),
+      accuracy: 88,
+      description: t("landing.features.walletDesc"),
+    },
+    {
+      icon: Recycle,
+      name: t("landing.features.security"),
+      accuracy: 96,
+      description: t("landing.features.securityDesc"),
+    },
+  ], [t]);
+
+  const localizedSteps = useMemo(() => [
+    { icon: Recycle, title: t("landing.steps.identify"), description: t("landing.steps.identifyDesc") },
+    { icon: QrCode, title: t("landing.steps.scan"), description: t("landing.steps.scanDesc") },
+    { icon: Recycle, title: t("landing.steps.verify"), description: t("landing.steps.verifyDesc") },
+    { icon: MapPin, title: t("landing.steps.collect"), description: t("landing.steps.collectDesc") },
+    { icon: Coins, title: t("landing.steps.earn"), description: t("landing.steps.earnDesc") },
+  ], [t]);
+
+  const localizedRoles = useMemo(() => [
+    {
+      icon: Users,
+      title: t("auth.roleCitizen"),
+      description: totalUsers !== null 
+        ? `${t("landing.roles.citizenDesc")} (${formatNumber(totalUsers)} active citizens)` 
+        : t("landing.roles.citizenDesc"),
+      features: [
+        t("landing.roles.citizenFeat.0", "Scan & Recycle"),
+        t("landing.roles.citizenFeat.1", "Earn Rewards"),
+        t("landing.roles.citizenFeat.2", "Redeem Prizes")
+      ],
+      color: "emerald",
+    },
+    {
+      icon: MapPin,
+      title: t("auth.roleDriver"),
+      description: totalRecyclers !== null 
+        ? `${t("landing.roles.driverDesc")} (${formatNumber(totalRecyclers)} active drivers)` 
+        : t("landing.roles.driverDesc"),
+      features: [
+        t("landing.roles.driverFeat.0", "Optimized Routes"),
+        t("landing.roles.driverFeat.1", "Live Tracking"),
+        t("landing.roles.driverFeat.2", "Earn Income")
+      ],
+      color: "blue",
+    },
+    {
+      icon: Recycle,
+      title: t("auth.roleAdmin"),
+      description: t("landing.roles.adminDesc"),
+      features: [
+        t("landing.roles.adminFeat.0", "Full Dashboard"),
+        t("landing.roles.adminFeat.1", "Deep Analytics"),
+        t("landing.roles.adminFeat.2", "Manage All Operations")
+      ],
+      color: "purple",
+    },
+  ], [t, totalUsers, totalRecyclers, language]);
+
+  const localizedImpactEq = useMemo(() => [
+    { icon: Recycle, text: "1 Bottle" },
+    { icon: Recycle, text: "0.5kg CO₂ Saved" },
+    { icon: Recycle, text: "2 Trees Planted" },
+    { icon: Recycle, text: "10L Water Saved" },
+  ], []);
+
+  const localizedImpactStats = useMemo(() => [
+    {
+      icon: Recycle,
+      label: t("landing.impactStats.bottles"),
+      value: "125,000",
+      subtitle: t("landing.impactStats.bottlesSubtitle"),
+    },
+    {
+      icon: Recycle,
+      label: t("landing.impactStats.co2"),
+      value: "62,500kg",
+      subtitle: t("landing.impactStats.co2Subtitle"),
+    },
+    {
+      icon: Recycle,
+      label: t("landing.impactStats.water"),
+      value: "1,250,000L",
+      subtitle: t("landing.impactStats.waterSubtitle"),
+    },
+  ], [t]);
+
+  const localizedNavItems = useMemo(() => [
+    { label: t("landing.featuresTitle"), href: "#features" },
+    { label: t("landing.howItWorksTitle"), href: "#how-it-works" },
+    { label: t("landing.calculatorTitle"), href: "#pricing" },
+    { label: t("landing.impactTitle"), href: "#impact" },
+  ], [t]);
+
+  const calculatedPoints = useMemo(() => {
+    const rate = selectedCategory ? selectedCategory.pointsPerUnit : 10;
+    return bottleCount * rate;
+  }, [bottleCount, selectedCategory]);
+
+  const calculatedValue = useMemo(() => {
+    return calculatedPoints * 0.05;
+  }, [calculatedPoints]);
+
+  const calculatedCO2 = useMemo(() => {
+    return bottleCount * 0.5;
+  }, [bottleCount]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 relative overflow-hidden">
@@ -263,19 +469,19 @@ export default function LandingPage() {
                 <Recycle className="h-5 w-5 text-white" />
               </div>
               <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                EcoSnap
+                {t("common.appName")}
               </span>
             </div>
 
             <div className="hidden md:flex items-center gap-1 rounded-full bg-emerald-50/60 p-1">
-              {NAV_ITEMS.map((item, index) => (
+              {localizedNavItems.map((item, index) => (
                 <a
-                  key={item}
-                  href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}
+                  key={item.href}
+                  href={item.href}
                   className="animate-nav-item relative rounded-full px-4 py-2 text-sm font-semibold text-gray-600 transition-all hover:text-emerald-700 hover:bg-white/80 hover:-translate-y-px whitespace-nowrap"
                   style={{ animationDelay: `${index * 0.08}s` }}
                 >
-                  {item}
+                  {item.label}
                 </a>
               ))}
             </div>
@@ -285,14 +491,14 @@ export default function LandingPage() {
                 href="/login"
                 className="hidden sm:block rounded-full px-5 py-2 text-sm font-semibold text-emerald-700 transition-all duration-200 hover:bg-emerald-50 hover:scale-[1.04] active:scale-95 whitespace-nowrap cursor-pointer"
               >
-                Sign In
+                {t("common.signIn")}
               </Link>
 
               <Link
                 href="/signup"
                 className="group flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all duration-200 hover:shadow-emerald-500/50 hover:scale-[1.04] active:scale-95 whitespace-nowrap cursor-pointer"
               >
-                Get Started
+                {t("common.getStarted")}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
             </div>
@@ -306,63 +512,36 @@ export default function LandingPage() {
           <div className="animate-fade-in-up">
             <h1 className="animate-scale-pop text-6xl md:text-7xl font-bold text-gray-900 mb-6">
               <CyclingText
-                texts={[
-                  "Recycle Smart",
-                  "Earn Rewards",
-                  "Save Planet",
-                  "Join Movement",
-                ]}
+                texts={language === "ar"
+                  ? ["إعادة التدوير بذكاء", "اكسب مكافآت", "احمِ الكوكب", "انضم للحركة"]
+                  : ["Recycle Smart", "Earn Rewards", "Save Planet", "Join Movement"]}
               />
             </h1>
 
             <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              <MaskWipeText text="Transform bottle recycling with AI matching, live tracking, and instant rewards" />
+              <MaskWipeText text={t("landing.heroSubtitle")} />
             </p>
 
             <div
               className="animate-fade-in-up flex flex-wrap gap-4 justify-center"
               style={{ animationDelay: "0.6s" }}
             >
-              <Link
-                href="/overview"
+              <button
+                onClick={() => setQrModalOpen(true)}
                 className="px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg transition-all duration-300 flex items-center gap-2 shadow-lg hover:scale-105 active:scale-95 hover:shadow-[0_20px_40px_rgba(16,185,129,0.4)] cursor-pointer font-semibold"
               >
-                <Recycle className="w-5 h-5" />
-                Go to Dashboard
+                <QrCode className="w-5 h-5" />
+                {t("common.scanQr")}
                 <span className="inline-flex animate-arrow-nudge">
                   <ArrowRight className="w-5 h-5" />
                 </span>
-              </Link>
+              </button>
 
-              <button className="group px-8 py-4 bg-white text-emerald-600 rounded-lg transition-all duration-300 flex items-center gap-2 shadow-lg border border-emerald-200 hover:scale-105 active:scale-95 hover:shadow-[0_20px_40px_rgba(0,0,0,0.1)] cursor-pointer">
+              <button className="group px-8 py-4 bg-white text-emerald-600 rounded-lg transition-all duration-300 flex items-center gap-2 shadow-lg border border-emerald-200 hover:scale-105 active:scale-95 hover:shadow-[0_20px_40px_rgba(0,0,0,0.1)] cursor-pointer font-semibold">
                 <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                Watch Demo
+                {t("common.watchDemo")}
               </button>
             </div>
-
-            {/* <div className="animate-fade-in-up mt-8 flex flex-col items-center gap-3" style={{ animationDelay: "0.8s" }}>
-              <p className="text-xs uppercase tracking-[3px] text-slate-400 font-bold">
-                Try the Lamp concepts
-              </p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {[
-                  { to: "/login-a", label: "Emerald", dot: "#86efac" },
-                  { to: "/login-b", label: "Cinematic", dot: "#ffc678" },
-                  { to: "/login-c", label: "Teal", dot: "#5eead4" },
-                  { to: "/login-d", label: "Forest", dot: "#a7f3d0" },
-                  { to: "/404", label: "404", dot: "#f59e0b" },
-                ].map((r) => (
-                  <Link
-                    key={r.to}
-                    href={r.to}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-slate-200 text-sm text-slate-700 hover:border-emerald-400 hover:text-emerald-600 transition-colors backdrop-blur font-semibold"
-                  >
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: r.dot }} />
-                    {r.label}
-                  </Link>
-                ))}
-              </div>
-            </div> */}
           </div>
         </div>
       </section>
@@ -382,13 +561,28 @@ export default function LandingPage() {
       <section id="features" className="relative z-10 py-20 px-4">
         <div className="container mx-auto">
           <SectionHeading
-            title="Powerful Features"
-            subtitle="Advanced technology for seamless recycling experience"
+            title={wasteCategories.length > 0 ? "Supported Waste Categories" : t("landing.featuresTitle")}
+            subtitle={wasteCategories.length > 0 ? "We accept various types of waste materials and reward you with points for each unit." : t("landing.featuresSubtitle")}
           />
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {FEATURES.map((feature, i) => (
-              <FeatureCard key={i} feature={feature} index={i} />
-            ))}
+            {wasteCategories.length > 0 ? (
+              wasteCategories.map((category, i) => (
+                <WasteCategoryCard key={category.categoryName} category={category} index={i} />
+              ))
+            ) : (
+              localizedFeatures.map((feature, i) => {
+                const category: WasteCategory = {
+                  categoryName: feature.name,
+                  pointsPerUnit: 10,
+                  imagePath: null,
+                  icon: feature.icon,
+                  description: feature.description
+                };
+                return (
+                  <WasteCategoryCard key={category.categoryName} category={category} index={i} />
+                );
+              })
+            )}
           </div>
         </div>
       </section>
@@ -400,8 +594,8 @@ export default function LandingPage() {
       >
         <div className="container mx-auto">
           <SectionHeading
-            title="How It Works"
-            subtitle="Simple 5-step process"
+            title={t("landing.howItWorksTitle")}
+            subtitle={t("landing.howItWorksSubtitle")}
           />
 
           <div className="max-w-4xl mx-auto">
@@ -411,7 +605,7 @@ export default function LandingPage() {
               </div>
 
               <div className="grid md:grid-cols-5 gap-8 relative">
-                {STEPS.map((step, i) => (
+                {localizedSteps.map((step, i) => (
                   <StepItem key={i} step={step} index={i} />
                 ))}
               </div>
@@ -429,17 +623,41 @@ export default function LandingPage() {
           >
             <div className="text-center mb-8">
               <h2 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-4">
-                Rewards Calculator
+                {t("landing.calculatorTitle")}
               </h2>
-              <p className="text-gray-600">Calculate your potential earnings</p>
+              <p className="text-gray-600">{t("landing.calculatorSubtitle")}</p>
             </div>
 
             <div className="space-y-6">
+              {/* Category Dropdown Selector */}
+              {wasteCategories.length > 0 && (
+                <div className="animate-fade-in-up">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Waste Category:
+                  </label>
+                  <select
+                    value={selectedCategory?.categoryName || ""}
+                    onChange={(e) => {
+                      const cat = wasteCategories.find(c => c.categoryName === e.target.value);
+                      if (cat) setSelectedCategory(cat);
+                    }}
+                    className="w-full bg-white/80 backdrop-blur-md border border-emerald-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-700 shadow-sm capitalize transition-all duration-200 cursor-pointer hover:border-emerald-300 font-medium font-semibold"
+                  >
+                    {wasteCategories.map((cat) => (
+                      <option key={cat.categoryName} value={cat.categoryName} className="text-gray-700 font-semibold">
+                        {cat.categoryName}{" "}
+                        ({cat.pointsPerUnit} pts/unit)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Number of Bottles:{" "}
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Number of Units:{" "}
                   <span className="text-emerald-600 font-bold">
-                    {bottleCount}
+                    {formatNumber(bottleCount)}
                   </span>
                 </label>
                 <input
@@ -461,11 +679,11 @@ export default function LandingPage() {
                   },
                   {
                     label: "Reward Points",
-                    value: calculatedPoints.toLocaleString(),
+                    value: formatNumber(calculatedPoints),
                     gradient: "from-purple-50 to-pink-50",
                   },
                   {
-                    label: "CO₂ Saved",
+                    label: "CO₂ Saved Projection",
                     value: `${calculatedCO2}kg`,
                     gradient: "from-green-50 to-emerald-50",
                   },
@@ -477,7 +695,7 @@ export default function LandingPage() {
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <Recycle className="w-5 h-5 text-emerald-600" />
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-gray-600 font-medium">
                           {item.label}
                         </span>
                       </div>
@@ -502,11 +720,11 @@ export default function LandingPage() {
       <section className="relative z-10 py-20 px-4">
         <div className="container mx-auto">
           <SectionHeading
-            title="Choose Your Role"
-            subtitle="Join as a citizen, driver, or admin"
+            title={t("landing.rolesTitle")}
+            subtitle={t("landing.rolesSubtitle")}
           />
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {ROLES.map((role, i) => (
+            {localizedRoles.map((role, i) => (
               <RoleCard key={i} role={role} index={i} />
             ))}
           </div>
@@ -521,10 +739,13 @@ export default function LandingPage() {
         <div className="container mx-auto relative z-10">
           <div className="animate-fade-in-up text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Environmental Impact
+              {t("landing.impactTitle")}
             </h2>
-            <p className="text-xl text-green-100 max-w-2xl mx-auto">
-              Making a real difference for our planet
+            <p className="text-xl text-green-100 max-w-2xl mx-auto flex items-center justify-center gap-3 flex-wrap">
+              <span>{t("landing.impactSubtitle")}</span>
+              <span className="text-xs bg-white/20 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-white uppercase font-semibold tracking-wider">
+                Estimated
+              </span>
             </p>
           </div>
 
@@ -534,7 +755,7 @@ export default function LandingPage() {
                 Impact Equation
               </h3>
               <div className="flex flex-wrap items-center justify-center gap-4 text-lg">
-                {IMPACT_EQ.map((item, index, array) => {
+                {localizedImpactEq.map((item, index, array) => {
                   const Icon = item.icon;
                   return (
                     <div
@@ -556,9 +777,13 @@ export default function LandingPage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {IMPACT_STATS.map((stat, i) => (
+            {localizedImpactStats.map((stat, i) => (
               <ImpactStatCard key={i} stat={stat} index={i} />
             ))}
+          </div>
+
+          <div className="mt-12 text-center text-green-200/70 text-xs max-w-lg mx-auto leading-relaxed border-t border-white/10 pt-6">
+            * The metrics shown above are estimated ecological calculations based on standard bottle recycling averages and carbon/water conservation index references.
           </div>
         </div>
       </section>
@@ -589,8 +814,7 @@ export default function LandingPage() {
             </h2>
 
             <p className="text-xl text-emerald-100 mb-8 max-w-2xl mx-auto relative z-10">
-              Join thousands of citizens making a difference. Start earning
-              rewards today!
+              Join thousands of citizens making a difference. Start earning rewards today!
             </p>
 
             <div className="flex flex-wrap gap-4 justify-center relative z-10">
@@ -624,11 +848,10 @@ export default function LandingPage() {
                 <div className="animate-spin-slow">
                   <Recycle className="w-6 h-6" />
                 </div>
-                <span className="text-xl font-bold">EcoSnap</span>
+                <span className="text-xl font-bold">{t("common.appName")}</span>
               </div>
               <p className="text-gray-400 text-sm">
-                Smart bottle recycling system with AI verification and instant
-                rewards.
+                Smart bottle recycling system with AI verification and instant rewards.
               </p>
             </div>
 
@@ -636,11 +859,27 @@ export default function LandingPage() {
               {
                 title: "Product",
                 links: [
-                  { label: "Features", href: "#features" },
-                  { label: "How It Works", href: "#how-it-works" },
+                  { label: t("landing.featuresTitle"), href: "#features" },
+                  { label: t("landing.howItWorksTitle"), href: "#how-it-works" },
                   { label: "Pricing", href: "#pricing" },
-                  { label: "Dashboard", href: "/overview" },
+                  { label: t("common.operationsControl"), href: "/overview" }
                 ],
+              },
+              {
+                title: "Company",
+                links: [
+                  { label: "About", href: "#" },
+                  { label: "Careers", href: "#" },
+                  { label: "Contact", href: "#" }
+                ]
+              },
+              {
+                title: "Legal",
+                links: [
+                  { label: "Privacy", href: "#" },
+                  { label: "Terms", href: "#" },
+                  { label: "Security", href: "#" }
+                ]
               },
             ].map((section, index) => (
               <div
@@ -654,7 +893,7 @@ export default function LandingPage() {
                     <li key={link.label}>
                       <a
                         href={link.href}
-                        className="inline-block hover:text-white transition-all duration-200 hover:translate-x-1.5"
+                        className="inline-block hover:text-white transition-all duration-200 hover:translate-x-1.5 animate-nav-item"
                       >
                         {link.label}
                       </a>
@@ -680,6 +919,12 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Modals */}
+      <QRScannerModal
+        isOpen={qrModalOpen}
+        onClose={() => setQrModalOpen(false)}
+      />
     </div>
   );
 }

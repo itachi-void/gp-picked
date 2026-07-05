@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { LayoutDashboard, Sparkles } from "lucide-react";
 import { useAuth } from "@/store/authStore";
 import { GlassCard } from "@/app/components/GlassCard";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-function greetingFor(hour: number) {
-  if (hour < 5) return "Good night";
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+function greetingFor(hour: number, t: any) {
+  if (hour < 5) return t("dashboard.greetings.night");
+  if (hour < 12) return t("dashboard.greetings.morning");
+  if (hour < 18) return t("dashboard.greetings.afternoon");
+  return t("dashboard.greetings.evening");
 }
 
 interface Props {
@@ -19,11 +20,12 @@ export default function OverviewHero({ activePickups, driversOnRoad }: Props) {
   const { user } = useAuth();
   const [now, setNow] = useState(new Date());
   const [mounted, setMounted] = useState(false);
+  const { t, tApi, language } = useLanguage();
 
   useEffect(() => {
     setMounted(true);
-    const t = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(t);
+    const tInterval = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(tInterval);
   }, []);
 
   if (!mounted) {
@@ -40,7 +42,9 @@ export default function OverviewHero({ activePickups, driversOnRoad }: Props) {
   const hour = now.getHours();
   const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   const date = now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
-  const firstName = user?.name?.split(" ")[0] || "Operator";
+  
+  const rawFirstName = user?.name?.split(" ")[0] || "Operator";
+  const firstName = rawFirstName;
 
   return (
     <GlassCard className="p-6 lg:p-8 overflow-hidden relative">
@@ -55,13 +59,13 @@ export default function OverviewHero({ activePickups, driversOnRoad }: Props) {
           <div>
             <div className="flex items-center gap-2 text-xs uppercase tracking-[2px] text-emerald-600 dark:text-emerald-400" style={{ fontWeight: 700 }}>
               <Sparkles className="w-3 h-3" />
-              <span>Operations Command</span>
+              <span>{t("dashboard.hero.command")}</span>
             </div>
             <h1
               className="text-3xl lg:text-4xl tracking-tight text-slate-900 dark:text-white mt-1"
               style={{ fontWeight: 700 }}
             >
-              {greetingFor(hour)}, {firstName}
+              {greetingFor(hour, t)}, {firstName}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-1">
               {date} · {activePickups} active pickup{activePickups === 1 ? "" : "s"} · {driversOnRoad} driver{driversOnRoad === 1 ? "" : "s"} on the road
@@ -72,7 +76,7 @@ export default function OverviewHero({ activePickups, driversOnRoad }: Props) {
         <div className="flex items-center gap-3">
           <div className="px-4 py-3 rounded-2xl bg-white/60 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10">
             <div className="text-[10px] uppercase tracking-[2px] text-slate-500 dark:text-slate-400" style={{ fontWeight: 700 }}>
-              Local Time
+              {t("common.localTime")}
             </div>
             <div className="text-2xl tracking-tight text-slate-900 dark:text-white tabular-nums" style={{ fontWeight: 700 }}>
               {time}
@@ -84,10 +88,10 @@ export default function OverviewHero({ activePickups, driversOnRoad }: Props) {
                 <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60 animate-ping" />
                 <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-emerald-500" />
               </span>
-              System
+              {t("common.system")}
             </div>
             <div className="text-sm text-emerald-700 dark:text-emerald-300 mt-1" style={{ fontWeight: 700 }}>
-              All Systems Nominal
+              {t("common.nominal")}
             </div>
           </div>
         </div>
@@ -95,3 +99,4 @@ export default function OverviewHero({ activePickups, driversOnRoad }: Props) {
     </GlassCard>
   );
 }
+

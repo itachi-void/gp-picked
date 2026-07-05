@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { QrCode, X } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface QRScannerModalProps {
   isOpen: boolean;
@@ -10,6 +11,8 @@ interface QRScannerModalProps {
 
 export function QRScannerModal({ isOpen, onClose }: QRScannerModalProps) {
   const [show, setShow] = useState(false);
+  const { t, language } = useLanguage();
+
   useEffect(() => {
     if (!isOpen) {
       setShow(false);
@@ -49,8 +52,8 @@ export function QRScannerModal({ isOpen, onClose }: QRScannerModalProps) {
             <QrCode className="w-8 h-8 text-emerald-600" />
           </div>
 
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Scan QR Code</h3>
-          <p className="text-gray-600 mb-6">Point your camera at the bottle QR code</p>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">{t("landing.modalTitle")}</h3>
+          <p className="text-gray-600 mb-6">{t("landing.modalSubtitle")}</p>
 
           {/* مربع تمثيلي للكاميرا — بيلمع بنبض */}
           <div className="animate-pulse-ring w-64 h-64 bg-gray-100 rounded-lg mx-auto mb-6 flex items-center justify-center border-4 border-emerald-500 border-dashed">
@@ -69,3 +72,4 @@ export function QRScannerModal({ isOpen, onClose }: QRScannerModalProps) {
     </div>
   );
 }
+

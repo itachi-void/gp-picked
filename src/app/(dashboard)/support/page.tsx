@@ -152,15 +152,14 @@ export default function SupportTicketsPage() {
     return ms && (filterStatus === "all" || t.status === filterStatus);
   });
 
-  const updateStatus = (id: string, status: TicketStatus) => {
-    // Note: Swagger doesn't have an API to update status, we manage it locally
-    const t = tickets.find((x) => x.id === id);
-    setTickets((p) => p.map((t) => (t.id === id ? { ...t, status } : t)));
-    toast.success(`Ticket marked ${status.replace("_", " ")}`);
-    if (status === "resolved") {
-      addNotification({ title: "Ticket resolved", body: t?.subject ?? `Ticket #${id} resolved.`, severity: "success", icon: "CheckCircle2", link: "/support" });
-    }
+  // Note: No backend API exists for ticket status updates — buttons are disabled
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const updateStatus = (_id: string, _status: TicketStatus) => {
+    toast.warning("Status update requires backend support", {
+      description: "This action is not yet supported by the API.",
+    });
   };
+
 
   const handleExport = () => {
     exportToCsv(
@@ -257,20 +256,24 @@ export default function SupportTicketsPage() {
         isAdmin ? (
           <div className="flex gap-2">
             {t.status !== "resolved" && (
-              <button
-                onClick={(e) => { e.stopPropagation(); updateStatus(t.id, "resolved"); }}
-                className="px-3 h-8 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 rounded-full text-xs hover:bg-emerald-500/20 transition-colors cursor-pointer"
-              >
-                Resolve
-              </button>
+              <div title="Backend API support pending — action disabled">
+                <button
+                  disabled
+                  className="px-3 h-8 bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-white/25 border border-slate-200 dark:border-white/10 rounded-full text-xs cursor-not-allowed opacity-60"
+                >
+                  Resolve
+                </button>
+              </div>
             )}
             {t.status === "open" && (
-              <button
-                onClick={(e) => { e.stopPropagation(); updateStatus(t.id, "in_progress"); }}
-                className="px-3 h-8 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 rounded-full text-xs hover:bg-amber-500/20 transition-colors cursor-pointer"
-              >
-                Progress
-              </button>
+              <div title="Backend API support pending — action disabled">
+                <button
+                  disabled
+                  className="px-3 h-8 bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-white/25 border border-slate-200 dark:border-white/10 rounded-full text-xs cursor-not-allowed opacity-60"
+                >
+                  Progress
+                </button>
+              </div>
             )}
           </div>
         ) : (

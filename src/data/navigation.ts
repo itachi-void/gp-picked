@@ -1,7 +1,6 @@
 import {
   Building2,
   MapIcon,
-  Globe2,
   CreditCard,
   Clock,
   ScanLine,
@@ -30,7 +29,9 @@ export interface NavItem {
   label: string;
   icon: any;
   roles: string[];
+  comingSoon?: boolean;
 }
+
 
 export interface NavGroup {
   title: string;
@@ -43,8 +44,8 @@ export const moreGroups: NavGroup[] = [
     items: [
       { to: "/centers",      label: "Centers",       icon: Building2,     roles: ["admin", "manager"] },
       { to: "/centers-list", label: "Centers List",  icon: Building2,     roles: ["admin", "manager", "employee"] },
-      { to: "/communities",  label: "Communities",         icon: MapIcon,       roles: ["admin", "manager"] },
-      { to: "/partners",     label: "Partners",      icon: CreditCard,    roles: ["admin", "manager"] },
+      { to: "/communities",  label: "Communities",   icon: MapIcon,       roles: ["admin", "manager"] },
+      { to: "/partners",     label: "Partners",      icon: CreditCard,    roles: ["admin", "manager"], comingSoon: true },
       { to: "/drivers",      label: "Drivers",       icon: Users,         roles: ["admin", "manager"] },
     ],
   },

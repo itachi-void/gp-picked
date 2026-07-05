@@ -10,6 +10,7 @@ import { Mail, Lock, User as UserIcon, MapPin, Phone, Camera, X } from "lucide-r
 import { useAuth, type Role } from "@/store/authStore";
 import { homePathForRole } from "@/app/utils/roleAccess";
 import PremiumAuthButton from "./PremiumAuthButton";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // ========== ١. قواعد التحقق من البيانات ==========
 const signupSchema = z.object({
@@ -42,6 +43,7 @@ type SignupFormData = z.infer<typeof signupSchema>;
 export function SignupForm() {
   const { signup, selectedRole, setSelectedRole } = useAuth();
   const router = useRouter();
+  const { t, tApi, language } = useLanguage();
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -57,6 +59,10 @@ export function SignupForm() {
     },
   });
 
+  const translateValidationError = (msg?: string) => {
+    return msg || "";
+  };
+
   // دالة الإرسال
   const onSubmit = async (data: SignupFormData) => {
     try {
@@ -65,15 +71,15 @@ export function SignupForm() {
         email: data.email,
         passwordHash: data.password,
         address: data.address,
-        role: selectedRole, // ← من المتجر، مش Props
+        role: selectedRole,
         phone: data.phone || null,
         profilePicture: profilePicture,
       });
       
-      toast.success(`Welcome, ${u.name}`);
+      toast.success(`${t("auth.welcomeBack")}, ${u.name}`);
       router.replace(homePathForRole(u.role));
     } catch (err: any) {
-      toast.error(err?.message ?? "Registration failed");
+      toast.error(err?.message ? tApi(err.message) : t("auth.authFailed"));
       throw err;
     }
   };
@@ -145,7 +151,7 @@ export function SignupForm() {
           className="w-full pl-10 pr-4 h-11 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
         />
         {form.formState.errors.name && (
-          <p className="text-red-500 text-xs mt-1 ml-4">{form.formState.errors.name.message}</p>
+          <p className="text-red-500 text-xs mt-1 ml-4">{translateValidationError(form.formState.errors.name.message)}</p>
         )}
       </div>
 
@@ -155,11 +161,11 @@ export function SignupForm() {
         <input
           {...form.register("email")}
           type="email"
-          placeholder="Email address"
+          placeholder={t("auth.email")}
           className="w-full pl-10 pr-4 h-11 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
         />
         {form.formState.errors.email && (
-          <p className="text-red-500 text-xs mt-1 ml-4">{form.formState.errors.email.message}</p>
+          <p className="text-red-500 text-xs mt-1 ml-4">{translateValidationError(form.formState.errors.email.message)}</p>
         )}
       </div>
 
@@ -173,7 +179,7 @@ export function SignupForm() {
           className="w-full pl-10 pr-4 h-11 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
         />
         {form.formState.errors.password && (
-          <p className="text-red-500 text-xs mt-1 ml-4">{form.formState.errors.password.message}</p>
+          <p className="text-red-500 text-xs mt-1 ml-4">{translateValidationError(form.formState.errors.password.message)}</p>
         )}
       </div>
 
@@ -187,7 +193,7 @@ export function SignupForm() {
           className="w-full pl-10 pr-4 h-11 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
         />
         {form.formState.errors.address && (
-          <p className="text-red-500 text-xs mt-1 ml-4">{form.formState.errors.address.message}</p>
+          <p className="text-red-500 text-xs mt-1 ml-4">{translateValidationError(form.formState.errors.address.message)}</p>
         )}
       </div>
 
@@ -201,7 +207,7 @@ export function SignupForm() {
           className="w-full pl-10 pr-4 h-11 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
         />
         {form.formState.errors.phone && (
-          <p className="text-red-500 text-xs mt-1 ml-4">{form.formState.errors.phone.message}</p>
+          <p className="text-red-500 text-xs mt-1 ml-4">{translateValidationError(form.formState.errors.phone.message)}</p>
         )}
       </div>
 
@@ -213,11 +219,11 @@ export function SignupForm() {
           onChange={(e) => setSelectedRole(e.target.value as Role)}
           className="w-full pl-10 pr-8 h-11 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none cursor-pointer bg-white dark:bg-slate-900"
         >
-          <option value="User">Citizen</option>
-          <option value="Driver">Driver</option>
-          <option value="Admin">Admin</option>
-          <option value="Recycler">Recycler</option>
-          <option value="Employee">Employee</option>
+          <option value="User">{t("auth.roleCitizen")}</option>
+          <option value="Driver">{t("auth.roleDriver")}</option>
+          <option value="Admin">{t("auth.roleAdmin")}</option>
+          <option value="Recycler">{t("auth.roleRecycler")}</option>
+          <option value="Employee">{t("auth.roleEmployee")}</option>
         </select>
         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">▼</div>
       </div>
@@ -227,6 +233,7 @@ export function SignupForm() {
         <PremiumAuthButton
           variant="signup"
           onSignup={handleAuthSubmit}
+          label={t("auth.signup")}
         />
       </div>
     </form>
