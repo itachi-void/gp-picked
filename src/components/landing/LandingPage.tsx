@@ -151,6 +151,7 @@ export default function LandingPage() {
   const [bottleCount, setBottleCount] = useState(100);
   const [mounted, setMounted] = useState(false);
   const { t, language } = useLanguage();
+  const [isLoading, setIsLoading] = useState(true);
 
   const [totalRecyclers, setTotalRecyclers] = useState<number | null>(null);
   const [activeRecyclers, setActiveRecyclers] = useState<number | null>(null);
@@ -271,13 +272,26 @@ export default function LandingPage() {
             };
           });
 
-          setWasteCategories(categoriesData);
-          if (categoriesData.length > 0) {
-            setSelectedCategory(categoriesData[0]);
+          // Deduplicate categories by categoryName to prevent duplicate elements in UI and dropdown lists
+          const uniqueCategories: WasteCategory[] = [];
+          const seenNames = new Set<string>();
+          for (const cat of categoriesData) {
+            const nameKey = cat.categoryName.toLowerCase();
+            if (!seenNames.has(nameKey)) {
+              seenNames.add(nameKey);
+              uniqueCategories.push(cat);
+            }
+          }
+
+          setWasteCategories(uniqueCategories);
+          if (uniqueCategories.length > 0) {
+            setSelectedCategory(uniqueCategories[0]);
           }
         }
       } catch (err) {
         console.warn("Failed to load landing page API data", err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -473,6 +487,24 @@ export default function LandingPage() {
     return bottleCount * 0.5;
   }, [bottleCount]);
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex flex-col items-center justify-center relative overflow-hidden">
+        {mounted && <FloatingParticles />}
+        <div className="relative z-10 flex flex-col items-center gap-4 p-8 rounded-3xl bg-white/60 border border-white/40 shadow-2xl backdrop-blur-xl animate-pulse">
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 rounded-full border-4 border-emerald-500/20" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-emerald-600 animate-spin" />
+            <Recycle className="absolute inset-0 m-auto w-6 h-6 text-emerald-600 animate-pulse" />
+          </div>
+          <span className="text-lg font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+            {language === "ar" ? "جاري تحميل البيانات..." : "Loading smart waste systems..."}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 relative overflow-hidden">
       {mounted && <FloatingParticles />}
@@ -611,7 +643,7 @@ export default function LandingPage() {
             {wasteCategories.length > 0
               ? wasteCategories.map((category, i) => (
                   <WasteCategoryCard
-                    key={category.categoryName}
+                    key={`${category.categoryName}-${i}`}
                     category={category}
                     index={i}
                   />
@@ -624,13 +656,13 @@ export default function LandingPage() {
                     icon: feature.icon,
                     description: feature.description,
                   };
-                  return (
-                    <WasteCategoryCard
-                      key={category.categoryName}
-                      category={category}
-                      index={i}
-                    />
-                  );
+                    return (
+                      <WasteCategoryCard
+                        key={`${category.categoryName}-${i}`}
+                        category={category}
+                        index={i}
+                      />
+                    );
                 })}
           </div>
         </div>
@@ -694,9 +726,9 @@ export default function LandingPage() {
                     }}
                     className="w-full bg-white/80 backdrop-blur-md border border-emerald-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-700 shadow-sm capitalize transition-all duration-200 cursor-pointer hover:border-emerald-300 font-medium font-semibold"
                   >
-                    {wasteCategories.map((cat) => (
+                    {wasteCategories.map((cat, idx) => (
                       <option
-                        key={cat.categoryName}
+                        key={`${cat.categoryName}-${idx}`}
                         value={cat.categoryName}
                         className="text-gray-700 font-semibold"
                       >

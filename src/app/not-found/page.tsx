@@ -519,6 +519,7 @@ function Jerry({
           mixBlendMode: "screen",
           pointerEvents: "none", // Disable PiP overlay elements on hover
           backgroundColor: "transparent",
+          filter: "contrast(1.5) brightness(0.8)", // Force off-black video background to pure black for perfect screen blending
         }}
       />
     </div>
