@@ -24,6 +24,7 @@ export function AuthPageWrapper({ mode }: AuthPageWrapperProps) {
   const router = useRouter();
   const [dayNightMode, setDayNightMode] = useState<"day" | "night">("night");
   const [mounted, setMounted] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     setMounted(true);
@@ -64,8 +65,6 @@ export function AuthPageWrapper({ mode }: AuthPageWrapperProps) {
         background:
           "radial-gradient(ellipse at 50% 55%, #0a1f17 0%, #051410 55%, #020806 100%)",
       };
-
-  const { t } = useLanguage();
 
   return (
     <LampScene

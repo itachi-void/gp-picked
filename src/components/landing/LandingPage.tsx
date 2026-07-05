@@ -324,7 +324,7 @@ export default function LandingPage() {
         // Show 0 as-is — do not substitute from another endpoint
         value: activeRecyclers ?? 0,
         suffix: "",
-        noDataLabel: activeRecyclers === 0 ? (language === "ar" ? "لا يوجد بيانات" : "No data") : undefined,
+        noDataLabel: activeRecyclers === null ? (language === "ar" ? "لا يوجد بيانات" : "No data") : undefined,
         color: "blue",
       },
       {

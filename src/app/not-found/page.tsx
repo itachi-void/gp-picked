@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 const tomImg = "/imports/1000511510-removebg-preview.png";
-const jerrySprite = "/imports/1000511511-removebg-preview.png";
 const jerryVideo = "/imports/video5868658637697720734.mp4";
 import NotFound404_GPS from "./NotFound404_GPS";
 import NotFound404_Recycling from "./NotFound404_Recycling";
@@ -342,7 +341,7 @@ function TomJerryScene() {
             transformOrigin: "50% 100%",
           }}
         />
-        <Jerry pos={pos} sceneRef={sceneRef} />
+        <Jerry />
         <div
           style={{
             position: "absolute",
@@ -441,45 +440,18 @@ function TomJerryScene() {
   );
 }
 
-function Jerry({
-  pos,
-  sceneRef,
-}: {
-  pos: { x: number; y: number };
-  sceneRef: React.RefObject<HTMLDivElement | null>;
-}) {
-  const wrapRef = useRef<HTMLDivElement>(null);
+function Jerry() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [lit, setLit] = useState(false);
-
-  useEffect(() => {
-    const wrap = wrapRef.current;
-    const scene = sceneRef.current;
-    if (!wrap || !scene) return;
-    const wr = wrap.getBoundingClientRect();
-    const sr = scene.getBoundingClientRect();
-    const cx = wr.left - sr.left + wr.width / 2;
-    const cy = wr.top - sr.top + wr.height / 2;
-    const dx = pos.x - cx;
-    const dy = pos.y - cy;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    setLit(dist < FLASHLIGHT_RADIUS * 0.9);
-  }, [pos, sceneRef]);
 
   useEffect(() => {
     const v = videoRef.current;
-    if (!v) return;
-    if (lit) {
+    if (v) {
       v.play().catch(() => {});
-    } else {
-      v.pause();
-      v.currentTime = 0;
     }
-  }, [lit]);
+  }, []);
 
   return (
     <div
-      ref={wrapRef}
       style={{
         position: "absolute",
         right: "12%",
@@ -489,22 +461,10 @@ function Jerry({
         pointerEvents: "none", // Prevent hover elements from showing up
       }}
     >
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          backgroundImage: `url(${jerrySprite})`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "0 0",
-          backgroundSize: "800% 100%",
-          opacity: lit ? 0 : 1,
-          transition: "opacity 0.18s ease",
-          pointerEvents: "none",
-        }}
-      />
       <video
         ref={videoRef}
         src={jerryVideo}
+        autoPlay
         loop
         muted
         playsInline
@@ -514,8 +474,7 @@ function Jerry({
           width: "100%",
           height: "100%",
           objectFit: "contain",
-          opacity: lit ? 1 : 0,
-          transition: "opacity 0.18s ease",
+          opacity: 1,
           mixBlendMode: "screen",
           pointerEvents: "none", // Disable PiP overlay elements on hover
           backgroundColor: "transparent",
