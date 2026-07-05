@@ -46,6 +46,8 @@ export type Stat = {
   value: number;
   suffix?: string;
   color: string;
+  /** When the API returns 0 or null, show this label instead of the counter */
+  noDataLabel?: string;
 };
 
 export type WasteCategory = {

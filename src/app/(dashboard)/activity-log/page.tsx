@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import "@/app/components/motion/motion-components.css";
 import { ClipboardList, Search, Filter, X, Truck, Users, MapPin, AlertTriangle, Settings, Package, RefreshCw, Loader2, Plus } from "lucide-react";
 import { useRoleContext } from "@/contexts/RoleContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import EmptyState from "@/app/components/EmptyState";
 import { GlassCard } from "@/app/components/GlassCard";
@@ -26,14 +27,14 @@ interface ActivityEntry {
   timestamp: Date;
 }
 
-const categoryAccent: Record<Category, { icon: any; bg: string; fg: string; label: string }> = {
-  route: { icon: MapPin, bg: "bg-sky-500/10", fg: "text-sky-600 dark:text-sky-400", label: "Route" },
-  driver: { icon: Truck, bg: "bg-emerald-500/10", fg: "text-emerald-600 dark:text-emerald-400", label: "Driver" },
-  citizen: { icon: Users, bg: "bg-violet-500/10", fg: "text-violet-600 dark:text-violet-400", label: "Citizen" },
-  system: { icon: Settings, bg: "bg-slate-500/10", fg: "text-slate-600 dark:text-slate-300", label: "System" },
-  alert: { icon: AlertTriangle, bg: "bg-rose-500/10", fg: "text-rose-600 dark:text-rose-400", label: "Alert" },
-  collection: { icon: Package, bg: "bg-amber-500/10", fg: "text-amber-600 dark:text-amber-400", label: "Collection" },
-};
+const getCategoryAccent = (language: string): Record<Category, { icon: any; bg: string; fg: string; label: string }> => ({
+  route: { icon: MapPin, bg: "bg-sky-500/10", fg: "text-sky-600 dark:text-sky-400", label: language === "ar" ? "المسار" : "Route" },
+  driver: { icon: Truck, bg: "bg-emerald-500/10", fg: "text-emerald-600 dark:text-emerald-400", label: language === "ar" ? "السائق" : "Driver" },
+  citizen: { icon: Users, bg: "bg-violet-500/10", fg: "text-violet-600 dark:text-violet-400", label: language === "ar" ? "المواطن" : "Citizen" },
+  system: { icon: Settings, bg: "bg-slate-500/10", fg: "text-slate-600 dark:text-slate-300", label: language === "ar" ? "النظام" : "System" },
+  alert: { icon: AlertTriangle, bg: "bg-rose-500/10", fg: "text-rose-600 dark:text-rose-400", label: language === "ar" ? "تنبيه" : "Alert" },
+  collection: { icon: Package, bg: "bg-amber-500/10", fg: "text-amber-600 dark:text-amber-400", label: language === "ar" ? "تجميع" : "Collection" },
+});
 
 const severityAccent: Record<Severity, string> = {
   low: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
@@ -48,18 +49,20 @@ const roleAccent: Record<UserRole, string> = {
   system: "bg-slate-500/10 text-slate-700 dark:text-slate-300",
 };
 
-function timeAgo(d: Date): string {
+function timeAgo(d: Date, language: string): string {
   const diff = Date.now() - d.getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m} min ago`;
+  if (m < 1) return language === "ar" ? "الآن" : "just now";
+  if (m < 60) return language === "ar" ? `منذ ${m} د` : `${m} min ago`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return d.toLocaleDateString();
+  if (h < 24) return language === "ar" ? `منذ ${h} س` : `${h}h ago`;
+  return d.toLocaleDateString(language === "ar" ? "ar-EG" : "en-US");
 }
 
 export default function ActivityLogPage() {
   useRoleContext();
+  const { t, tApi, language } = useLanguage();
+  const categoryAccent = getCategoryAccent(language);
   const [activities, setActivities] = useState<ActivityEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -189,10 +192,10 @@ export default function ActivityLogPage() {
   };
 
   const stats = [
-    { label: "Total Events", value: activities.length, accent: "emerald" },
-    { label: "High Severity", value: activities.filter((a) => a.severity === "high").length, accent: "rose" },
-    { label: "Today", value: activities.filter((a) => Date.now() - a.timestamp.getTime() < 86400000).length, accent: "teal" },
-    { label: "System Events", value: activities.filter((a) => a.userRole === "system").length, accent: "violet" },
+    { label: t("activityLog.totalEvents"), value: activities.length, accent: "emerald" },
+    { label: t("activityLog.highSeverity"), value: activities.filter((a) => a.severity === "high").length, accent: "rose" },
+    { label: t("activityLog.today"), value: activities.filter((a) => Date.now() - a.timestamp.getTime() < 86400000).length, accent: "teal" },
+    { label: t("activityLog.systemEvents"), value: activities.filter((a) => a.userRole === "system").length, accent: "violet" },
   ];
 
   return (
@@ -203,18 +206,18 @@ export default function ActivityLogPage() {
             <ClipboardList className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <h1 className="text-3xl tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 700 }}>Activity Log</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-0.5">Complete record of system events and actions</p>
+            <h1 className="text-3xl tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 700 }}>{t("activityLog.title")}</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-0.5">{t("activityLog.subtitle")}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={fetchLogs} className="flex items-center gap-2 px-4 h-10 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 rounded-full transition-colors text-sm cursor-pointer">
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh
+            {t("common.refresh")}
           </button>
           <button onClick={simulate} className="flex items-center gap-2 px-4 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors text-sm cursor-pointer">
             <Plus className="w-4 h-4" />
-            Simulate Event
+            {t("common.simulateEvent")}
           </button>
         </div>
       </div>
@@ -223,7 +226,7 @@ export default function ActivityLogPage() {
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="animate-pulse flex flex-col items-center gap-3">
             <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
-            <p className="text-emerald-600/80 font-medium text-lg">Aggregating system events from database...</p>
+            <p className="text-emerald-600/80 font-medium text-lg">{t("activityLog.aggregating")}</p>
           </div>
         </div>
       ) : (
@@ -250,7 +253,7 @@ export default function ActivityLogPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search events, users, targets..."
+                placeholder={t("activityLog.searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-10 pr-10 h-10 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
@@ -263,7 +266,7 @@ export default function ActivityLogPage() {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Filter className="w-4 h-4 text-slate-400" />
-              <span className="text-xs text-slate-500 dark:text-slate-400">Category:</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">{t("activityLog.categoryLabel")}</span>
               {(["all", "route", "driver", "citizen", "alert", "system", "collection"] as const).map((c) => (
                 <button
                   key={c}
@@ -279,7 +282,7 @@ export default function ActivityLogPage() {
               ))}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-slate-500 dark:text-slate-400">Severity:</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">{t("activityLog.severityLabel")}</span>
               {(["all", "low", "medium", "high"] as const).map((s) => (
                 <button
                   key={s}
@@ -298,7 +301,7 @@ export default function ActivityLogPage() {
 
           <GlassCard className="overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
-              <h3 className="text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>Events ({filtered.length})</h3>
+              <h3 className="text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>{t("activityLog.eventsCount")} ({filtered.length})</h3>
             </div>
             <div className="divide-y divide-slate-100 dark:divide-white/5 max-h-[600px] overflow-y-auto">
               <>
@@ -306,8 +309,8 @@ export default function ActivityLogPage() {
                   <div className="p-4">
                     <EmptyState
                       Icon={ClipboardList}
-                      title="No events match your filters"
-                      description="Clear filters or wait for new activity to be recorded."
+                      title={t("common.noResults")}
+                      description={t("common.noResultsDesc")}
                     />
                   </div>
                 ) : (
@@ -328,17 +331,17 @@ export default function ActivityLogPage() {
                             <div className="flex-1">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <p className="text-sm text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>{e.action}</p>
-                                <span className={`px-2 py-0.5 rounded-full text-xs capitalize ${severityAccent[e.severity] || "bg-slate-100 text-slate-600"}`}>{e.severity}</span>
+                                <span className={`px-2 py-0.5 rounded-full text-xs capitalize ${severityAccent[e.severity] || "bg-slate-100 text-slate-600"}`}>{tApi(e.severity)}</span>
                               </div>
                               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                Target: <span className="text-slate-700 dark:text-slate-200" style={{ fontWeight: 600 }}>{e.target}</span>
+                                {t("activityLog.targetLabel")} <span className="text-slate-700 dark:text-slate-200" style={{ fontWeight: 600 }}>{e.target}</span>
                               </p>
                               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{e.details}</p>
                             </div>
-                            <p className="text-xs text-slate-400 flex-shrink-0 mt-0.5">{timeAgo(e.timestamp)}</p>
+                            <p className="text-xs text-slate-400 flex-shrink-0 mt-0.5">{timeAgo(e.timestamp, language)}</p>
                           </div>
                           <div className="flex items-center gap-2 mt-2">
-                            <span className={`px-2 py-0.5 rounded-full text-xs capitalize ${roleAccent[e.userRole] || "bg-slate-100 text-slate-600"}`}>{e.userRole}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-xs capitalize ${roleAccent[e.userRole] || "bg-slate-100 text-slate-600"}`}>{tApi(e.userRole)}</span>
                             <span className="text-xs text-slate-500 dark:text-slate-400">{e.user}</span>
                           </div>
                         </div>

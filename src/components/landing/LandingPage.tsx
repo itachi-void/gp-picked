@@ -31,6 +31,7 @@ import FloatingParticles from "../FloatingParticles";
 import { CyclingText } from "../CyclingText";
 import { MaskWipeText } from "../MaskWipeText";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageToggle } from "@/app/components/navigation/LanguageToggle";
 
 import "./landing-animations.css";
 
@@ -292,33 +293,35 @@ export default function LandingPage() {
       {
         icon: Recycle,
         label: t("landing.stats.pickups"),
-        value: totalPickups !== null ? totalPickups : 2547893,
-        suffix: totalPickups !== null ? "" : "+",
+        value: totalPickups ?? 0,
+        suffix: "",
         color: "emerald",
       },
       {
         icon: Users,
         label: t("landing.stats.recyclers"),
-        value: totalRecyclers !== null ? totalRecyclers : 52140,
-        suffix: totalRecyclers !== null ? "" : "+",
+        value: totalRecyclers ?? 0,
+        suffix: "",
         color: "purple",
       },
       {
         icon: Users,
         label: t("landing.stats.active"),
-        value: activeRecyclers !== null ? activeRecyclers : 45678,
-        suffix: activeRecyclers !== null ? "" : "+",
+        // Show 0 as-is — do not substitute from another endpoint
+        value: activeRecyclers ?? 0,
+        suffix: "",
+        noDataLabel: activeRecyclers === 0 ? (language === "ar" ? "لا يوجد بيانات" : "No data") : undefined,
         color: "blue",
       },
       {
         icon: Coins,
         label: t("landing.stats.earnings"),
-        value: totalEarnings !== null ? totalEarnings : 1234567,
+        value: totalEarnings ?? 0,
         suffix: " $",
         color: "amber",
       },
     ],
-    [activeRecyclers, totalRecyclers, totalPickups, totalEarnings, t],
+    [activeRecyclers, totalRecyclers, totalPickups, totalEarnings, t, language],
   );
 
   const localizedFeatures = useMemo(() => [
@@ -415,26 +418,40 @@ export default function LandingPage() {
     { icon: Recycle, text: "10L Water Saved" },
   ], []);
 
-  const localizedImpactStats = useMemo(() => [
-    {
-      icon: Recycle,
-      label: t("landing.impactStats.bottles"),
-      value: "125,000",
-      subtitle: t("landing.impactStats.bottlesSubtitle"),
-    },
-    {
-      icon: Recycle,
-      label: t("landing.impactStats.co2"),
-      value: "62,500kg",
-      subtitle: t("landing.impactStats.co2Subtitle"),
-    },
-    {
-      icon: Recycle,
-      label: t("landing.impactStats.water"),
-      value: "1,250,000L",
-      subtitle: t("landing.impactStats.waterSubtitle"),
-    },
-  ], [t]);
+  const localizedImpactStats = useMemo(() => {
+    // Compute estimates from totalPickups — clearly labelled as Estimated
+    const bottlesEst = totalPickups !== null ? totalPickups * 125 : null;
+    const co2Est = bottlesEst !== null ? bottlesEst * 0.5 : null;
+    const waterEst = bottlesEst !== null ? bottlesEst * 10 : null;
+    const estimatedLabel = language === "ar" ? "تقديري" : "Estimated";
+
+    return [
+      {
+        icon: Recycle,
+        label: t("landing.impactStats.bottles"),
+        value: bottlesEst !== null ? bottlesEst.toLocaleString() : "—",
+        subtitle: bottlesEst !== null
+          ? `${estimatedLabel} · ${t("landing.impactStats.bottlesSubtitle")}`
+          : (language === "ar" ? "لا يوجد بيانات" : "No data available"),
+      },
+      {
+        icon: Recycle,
+        label: t("landing.impactStats.co2"),
+        value: co2Est !== null ? `${co2Est.toLocaleString()}kg` : "—",
+        subtitle: co2Est !== null
+          ? `${estimatedLabel} · ${t("landing.impactStats.co2Subtitle")}`
+          : (language === "ar" ? "لا يوجد بيانات" : "No data available"),
+      },
+      {
+        icon: Recycle,
+        label: t("landing.impactStats.water"),
+        value: waterEst !== null ? `${waterEst.toLocaleString()}L` : "—",
+        subtitle: waterEst !== null
+          ? `${estimatedLabel} · ${t("landing.impactStats.waterSubtitle")}`
+          : (language === "ar" ? "لا يوجد بيانات" : "No data available"),
+      },
+    ];
+  }, [totalPickups, t, language]);
 
   const localizedNavItems = useMemo(() => [
     { label: t("landing.featuresTitle"), href: "#features" },
@@ -487,6 +504,7 @@ export default function LandingPage() {
             </div>
 
             <div className="flex items-center gap-2 flex-shrink-0">
+              <LanguageToggle />
               <Link
                 href="/login"
                 className="hidden sm:block rounded-full px-5 py-2 text-sm font-semibold text-emerald-700 transition-all duration-200 hover:bg-emerald-50 hover:scale-[1.04] active:scale-95 whitespace-nowrap cursor-pointer"
@@ -512,9 +530,21 @@ export default function LandingPage() {
           <div className="animate-fade-in-up">
             <h1 className="animate-scale-pop text-6xl md:text-7xl font-bold text-gray-900 mb-6">
               <CyclingText
-                texts={language === "ar"
-                  ? ["إعادة التدوير بذكاء", "اكسب مكافآت", "احمِ الكوكب", "انضم للحركة"]
-                  : ["Recycle Smart", "Earn Rewards", "Save Planet", "Join Movement"]}
+                texts={
+                  language === "ar"
+                    ? [
+                        "أعد التدوير بذكاء",
+                        "اكسب المكافآت",
+                        "احمِ كوكبك",
+                        "انضم إلينا",
+                      ]
+                    : [
+                        "Recycle Smart",
+                        "Earn Rewards",
+                        "Save Planet",
+                        "Join Movement",
+                      ]
+                }
               />
             </h1>
 
@@ -561,28 +591,47 @@ export default function LandingPage() {
       <section id="features" className="relative z-10 py-20 px-4">
         <div className="container mx-auto">
           <SectionHeading
-            title={wasteCategories.length > 0 ? "Supported Waste Categories" : t("landing.featuresTitle")}
-            subtitle={wasteCategories.length > 0 ? "We accept various types of waste materials and reward you with points for each unit." : t("landing.featuresSubtitle")}
+            title={
+              wasteCategories.length > 0
+                ? language === "ar"
+                  ? "فئات النفايات المدعومة و المخطط لها : بيتا"
+                  : "Supported Waste Categories - Beta"
+                : t("landing.featuresTitle")
+            }
+            subtitle={
+              wasteCategories.length > 0
+                ? language === "ar"
+                  ? "نحن نقبل أنواعًا مختلفة من النفايات ونكافئك بالنقاط عن كل وحدة."
+                  : "We accept various types of waste materials and reward you with points for each unit."
+                : t("landing.featuresSubtitle")
+            }
+            showBeta={wasteCategories.length > 0}
           />
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {wasteCategories.length > 0 ? (
-              wasteCategories.map((category, i) => (
-                <WasteCategoryCard key={category.categoryName} category={category} index={i} />
-              ))
-            ) : (
-              localizedFeatures.map((feature, i) => {
-                const category: WasteCategory = {
-                  categoryName: feature.name,
-                  pointsPerUnit: 10,
-                  imagePath: null,
-                  icon: feature.icon,
-                  description: feature.description
-                };
-                return (
-                  <WasteCategoryCard key={category.categoryName} category={category} index={i} />
-                );
-              })
-            )}
+            {wasteCategories.length > 0
+              ? wasteCategories.map((category, i) => (
+                  <WasteCategoryCard
+                    key={category.categoryName}
+                    category={category}
+                    index={i}
+                  />
+                ))
+              : localizedFeatures.map((feature, i) => {
+                  const category: WasteCategory = {
+                    categoryName: feature.name,
+                    pointsPerUnit: 10,
+                    imagePath: null,
+                    icon: feature.icon,
+                    description: feature.description,
+                  };
+                  return (
+                    <WasteCategoryCard
+                      key={category.categoryName}
+                      category={category}
+                      index={i}
+                    />
+                  );
+                })}
           </div>
         </div>
       </section>
@@ -633,20 +682,26 @@ export default function LandingPage() {
               {wasteCategories.length > 0 && (
                 <div className="animate-fade-in-up">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Waste Category:
+                    {language === "ar" ? "فئة النفايات:" : "Waste Category:"}
                   </label>
                   <select
                     value={selectedCategory?.categoryName || ""}
                     onChange={(e) => {
-                      const cat = wasteCategories.find(c => c.categoryName === e.target.value);
+                      const cat = wasteCategories.find(
+                        (c) => c.categoryName === e.target.value,
+                      );
                       if (cat) setSelectedCategory(cat);
                     }}
                     className="w-full bg-white/80 backdrop-blur-md border border-emerald-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-700 shadow-sm capitalize transition-all duration-200 cursor-pointer hover:border-emerald-300 font-medium font-semibold"
                   >
                     {wasteCategories.map((cat) => (
-                      <option key={cat.categoryName} value={cat.categoryName} className="text-gray-700 font-semibold">
-                        {cat.categoryName}{" "}
-                        ({cat.pointsPerUnit} pts/unit)
+                      <option
+                        key={cat.categoryName}
+                        value={cat.categoryName}
+                        className="text-gray-700 font-semibold"
+                      >
+                        {cat.categoryName} ({cat.pointsPerUnit}{" "}
+                        {language === "ar" ? "نقاط/وحدة" : "pts/unit"})
                       </option>
                     ))}
                   </select>
@@ -655,7 +710,7 @@ export default function LandingPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Number of Units:{" "}
+                  {language === "ar" ? "عدد الوحدات:" : "Number of Units:"}{" "}
                   <span className="text-emerald-600 font-bold">
                     {formatNumber(bottleCount)}
                   </span>
@@ -673,18 +728,25 @@ export default function LandingPage() {
               <div className="grid md:grid-cols-3 gap-6">
                 {[
                   {
-                    label: "Cash Value",
+                    label: language === "ar" ? "القيمة النقدية" : "Cash Value",
                     value: `$${calculatedValue.toFixed(2)}`,
                     gradient: "from-emerald-50 to-teal-50",
                   },
                   {
-                    label: "Reward Points",
+                    label:
+                      language === "ar" ? "نقاط المكافأة" : "Reward Points",
                     value: formatNumber(calculatedPoints),
                     gradient: "from-purple-50 to-pink-50",
                   },
                   {
-                    label: "CO₂ Saved Projection",
-                    value: `${calculatedCO2}kg`,
+                    label:
+                      language === "ar"
+                        ? "توقعات خفض الكربون *تقديري"
+                        : "CO₂ Projection *Estimated",
+                    value:
+                      language === "ar"
+                        ? `${formatNumber(calculatedCO2)} كجم`
+                        : `${calculatedCO2}kg`,
                     gradient: "from-green-50 to-emerald-50",
                   },
                 ].map((item, index) => {
@@ -783,7 +845,9 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-12 text-center text-green-200/70 text-xs max-w-lg mx-auto leading-relaxed border-t border-white/10 pt-6">
-            * The metrics shown above are estimated ecological calculations based on standard bottle recycling averages and carbon/water conservation index references.
+            * The metrics shown above are estimated ecological calculations
+            based on standard bottle recycling averages and carbon/water
+            conservation index references.
           </div>
         </div>
       </section>
@@ -814,7 +878,8 @@ export default function LandingPage() {
             </h2>
 
             <p className="text-xl text-emerald-100 mb-8 max-w-2xl mx-auto relative z-10">
-              Join thousands of citizens making a difference. Start earning rewards today!
+              Join thousands of citizens making a difference. Start earning
+              rewards today!
             </p>
 
             <div className="flex flex-wrap gap-4 justify-center relative z-10">
@@ -851,7 +916,8 @@ export default function LandingPage() {
                 <span className="text-xl font-bold">{t("common.appName")}</span>
               </div>
               <p className="text-gray-400 text-sm">
-                Smart bottle recycling system with AI verification and instant rewards.
+                Smart bottle recycling system with AI verification and instant
+                rewards.
               </p>
             </div>
 
@@ -860,9 +926,12 @@ export default function LandingPage() {
                 title: "Product",
                 links: [
                   { label: t("landing.featuresTitle"), href: "#features" },
-                  { label: t("landing.howItWorksTitle"), href: "#how-it-works" },
+                  {
+                    label: t("landing.howItWorksTitle"),
+                    href: "#how-it-works",
+                  },
                   { label: "Pricing", href: "#pricing" },
-                  { label: t("common.operationsControl"), href: "/overview" }
+                  { label: t("common.operationsControl"), href: "/overview" },
                 ],
               },
               {
@@ -870,16 +939,16 @@ export default function LandingPage() {
                 links: [
                   { label: "About", href: "#" },
                   { label: "Careers", href: "#" },
-                  { label: "Contact", href: "#" }
-                ]
+                  { label: "Contact", href: "#" },
+                ],
               },
               {
                 title: "Legal",
                 links: [
                   { label: "Privacy", href: "#" },
                   { label: "Terms", href: "#" },
-                  { label: "Security", href: "#" }
-                ]
+                  { label: "Security", href: "#" },
+                ],
               },
             ].map((section, index) => (
               <div

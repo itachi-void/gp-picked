@@ -12,6 +12,7 @@ import { usePickup, PickupProvider } from "@/app/contexts/PickupContext";
 import { GlassCard } from "@/app/components/GlassCard";
 import api from "@/lib/axios";
 import { useQuery } from "@tanstack/react-query";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /* =========================================================================
  * Driver Overview — the driver's home dashboard.
@@ -41,6 +42,7 @@ export default function DriverOverviewPage() {
 function DriverOverviewDashboard() {
   const { user } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
 
@@ -235,7 +237,7 @@ function DriverOverviewDashboard() {
             >
               <Clock className="w-4 h-4 text-emerald-500" /> Today’s schedule{" "}
               <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                Coming Soon
+                {t("common.comingSoon")}
               </span>
             </h2>
             <button
@@ -282,7 +284,7 @@ function DriverOverviewDashboard() {
           >
             <Truck className="w-4 h-4 text-cyan-500" /> Vehicle status{" "}
             <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-              Coming Soon
+              {t("common.comingSoon")}
             </span>
           </h2>
           <div className="flex items-center gap-2 mb-4">

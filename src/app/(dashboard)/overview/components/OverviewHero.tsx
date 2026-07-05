@@ -40,8 +40,8 @@ export default function OverviewHero({ activePickups, driversOnRoad }: Props) {
   }
 
   const hour = now.getHours();
-  const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  const date = now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+  const time = now.toLocaleTimeString(language === "ar" ? "ar-EG" : [], { hour: "2-digit", minute: "2-digit" });
+  const date = now.toLocaleDateString(language === "ar" ? "ar-EG" : [], { weekday: "long", month: "long", day: "numeric" });
   
   const rawFirstName = user?.name?.split(" ")[0] || "Operator";
   const firstName = rawFirstName;
@@ -65,10 +65,18 @@ export default function OverviewHero({ activePickups, driversOnRoad }: Props) {
               className="text-3xl lg:text-4xl tracking-tight text-slate-900 dark:text-white mt-1"
               style={{ fontWeight: 700 }}
             >
-              {greetingFor(hour, t)}, {firstName}
+              {language === "ar" ? `${firstName}، ${greetingFor(hour, t)}` : `${greetingFor(hour, t)}, ${firstName}`}
             </h1>
-            <p className="text-slate-600 dark:text-slate-400 mt-1">
-              {date} · {activePickups} active pickup{activePickups === 1 ? "" : "s"} · {driversOnRoad} driver{driversOnRoad === 1 ? "" : "s"} on the road
+            <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm">
+              {language === "ar" ? (
+                <>
+                  {date} · {activePickups.toLocaleString("ar-EG")} {activePickups === 1 ? t("dashboard.hero.activePickups") : t("dashboard.hero.activePickupsPlural")} · {driversOnRoad.toLocaleString("ar-EG")} {driversOnRoad === 1 ? t("dashboard.hero.driversRoad") : t("dashboard.hero.driversRoadPlural")}
+                </>
+              ) : (
+                <>
+                  {date} · {activePickups} active pickup{activePickups === 1 ? "" : "s"} · {driversOnRoad} driver{driversOnRoad === 1 ? "" : "s"} on the road
+                </>
+              )}
             </p>
           </div>
         </div>

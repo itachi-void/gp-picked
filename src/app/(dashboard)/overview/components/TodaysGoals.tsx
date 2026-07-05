@@ -38,10 +38,10 @@ export default function TodaysGoals({
   useEffect(() => { setMounted(true); }, []);
 
   const goals: Goal[] = [
-    { label: t("dashboard.goals.pickupTarget"), current: completedPickups, target: Math.max(totalPickups, 1), unit: "requests", accent: "emerald" },
-    { label: t("dashboard.goals.tonnageTarget"), current: todayTonnage, target: 120, unit: "tonnes", accent: "violet" },
-    { label: t("dashboard.goals.fleetTarget"), current: driversOnRoad, target: totalDrivers, unit: "drivers", accent: "sky" },
-    { label: "SLA Compliance", current: 94, target: 95, unit: "%", accent: "amber" },
+    { label: t("dashboard.goals.pickupTarget"), current: completedPickups, target: Math.max(totalPickups, 1), unit: language === "ar" ? "طلب" : "requests", accent: "emerald" },
+    { label: t("dashboard.goals.tonnageTarget"), current: todayTonnage, target: 120, unit: language === "ar" ? "طن" : "tonnes", accent: "violet" },
+    { label: t("dashboard.goals.fleetTarget"), current: driversOnRoad, target: totalDrivers, unit: language === "ar" ? "سائق" : "drivers", accent: "sky" },
+    { label: language === "ar" ? "الالتزام باتفاقية الخدمة" : "SLA Compliance", current: 94, target: 95, unit: "%", accent: "amber" },
   ];
 
   const overallProgress = Math.round(
@@ -49,7 +49,9 @@ export default function TodaysGoals({
   );
 
   const formatNumber = (num: number, maximumFractionDigits = 0) => {
-    return num.toFixed(maximumFractionDigits);
+    return language === "ar" 
+      ? num.toLocaleString("ar-EG", { minimumFractionDigits: 0, maximumFractionDigits }) 
+      : num.toFixed(maximumFractionDigits);
   };
 
   return (
@@ -72,21 +74,21 @@ export default function TodaysGoals({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs text-slate-500 dark:text-slate-400" style={{ fontWeight: 600 }}>
-              Overall Progress
+              {language === "ar" ? "معدل التقدم الإجمالي" : "Overall Progress"}
             </p>
             <p className="text-3xl tracking-tight text-slate-900 dark:text-white mt-0.5 tabular-nums" style={{ fontWeight: 700 }}>
-              {overallProgress}%
+              {language === "ar" ? `${overallProgress.toLocaleString("ar-EG")}٪` : `${overallProgress}%`}
             </p>
           </div>
           {overallProgress >= 80 ? (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-xs" style={{ fontWeight: 700 }}>
               <CheckCircle2 className="w-3.5 h-3.5" />
-              On track
+              {language === "ar" ? "في المسار المخطط" : "On track"}
             </div>
           ) : (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 text-xs" style={{ fontWeight: 700 }}>
               <AlertTriangle className="w-3.5 h-3.5" />
-              Behind pace
+              {language === "ar" ? "متأخر عن الخطة" : "Behind pace"}
             </div>
           )}
         </div>

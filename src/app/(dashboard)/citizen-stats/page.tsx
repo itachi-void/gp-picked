@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useAuth } from "@/store/authStore";
 import { useUserWallet } from "@/hooks/useUserWallet";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { usePickupHistory } from "@/hooks/usePickupHistory";
 import { GlassCard } from "@/app/components/GlassCard";
 import { useQuery } from "@tanstack/react-query";
@@ -31,6 +32,7 @@ const LEVELS: { level: number; title: string; min: number; max: number; perks: s
 export default function CitizenStatsPage() {
   const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
+  const { language } = useLanguage();
 
   useEffect(() => { setMounted(true); }, []);
   
@@ -137,24 +139,41 @@ export default function CitizenStatsPage() {
   const kpis = useMemo(() => {
     const base: { label: string; value: string | number; icon: any; accent: string; subtext?: string }[] = [
       { 
-        label: "Total Points Earned", 
-        value: walletPoints.toLocaleString(), 
+        label: language === "ar" ? "إجمالي النقاط المكتسبة" : "Total Points Earned", 
+        value: language === "ar" ? walletPoints.toLocaleString("ar-EG") : walletPoints.toLocaleString(), 
         icon: Coins, 
         accent: "amber",
         subtext: compareToAvg 
-          ? `${compareToAvg.pct}% ${compareToAvg.isAbove ? "above" : "below"} community average (${Math.round(avgPoints)} pts)`
-          : "Comparing data..."
+          ? (language === "ar" 
+              ? `${compareToAvg.pct.toLocaleString("ar-EG")}٪ ${compareToAvg.isAbove ? "أعلى من" : "أقل من"} متوسط المجتمع (${Math.round(avgPoints).toLocaleString("ar-EG")} نقطة)`
+              : `${compareToAvg.pct}% ${compareToAvg.isAbove ? "above" : "below"} community average (${Math.round(avgPoints)} pts)`)
+          : (language === "ar" ? "جاري مقارنة البيانات..." : "Comparing data...")
       },
-      { label: "Completed Pickups", value: stats.completedPickups, icon: Recycle, accent: "sky" },
+      { 
+        label: language === "ar" ? "عمليات الاستلام المكتملة" : "Completed Pickups", 
+        value: language === "ar" ? stats.completedPickups.toLocaleString("ar-EG") : stats.completedPickups, 
+        icon: Recycle, 
+        accent: "sky" 
+      },
     ];
 
     if (stats.hasWeightFromApi) {
-      base.splice(1, 0, { label: "Total Weight Recycled", value: `${stats.totalWeight} kg`, icon: Scale, accent: "emerald" });
-      base.push({ label: "CO₂ Emissions Saved", value: `${stats.co2Saved} kg`, icon: Leaf, accent: "green" });
+      base.splice(1, 0, { 
+        label: language === "ar" ? "إجمالي الوزن المعاد تدويره" : "Total Weight Recycled", 
+        value: language === "ar" ? `${stats.totalWeight.toLocaleString("ar-EG")} كجم` : `${stats.totalWeight} kg`, 
+        icon: Scale, 
+        accent: "emerald" 
+      });
+      base.push({ 
+        label: language === "ar" ? "انبعاثات ثاني أكسيد الكربون المخفضة" : "CO₂ Emissions Saved", 
+        value: language === "ar" ? `${stats.co2Saved.toLocaleString("ar-EG")} كجم` : `${stats.co2Saved} kg`, 
+        icon: Leaf, 
+        accent: "green" 
+      });
     }
 
     return base;
-  }, [walletPoints, stats, compareToAvg, avgPoints]);
+  }, [walletPoints, stats, compareToAvg, avgPoints, language]);
 
   const accentClasses: Record<string, { bg: string; fg: string; border: string; gradient: string }> = {
     amber: { bg: "bg-amber-500/10", fg: "text-amber-600 dark:text-amber-400", border: "border-amber-500/20", gradient: "from-amber-400 to-amber-600" },
@@ -170,7 +189,9 @@ export default function CitizenStatsPage() {
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="animate-pulse flex flex-col items-center gap-3">
           <Recycle className="w-10 h-10 text-emerald-500 animate-spin" />
-          <p className="text-emerald-600/80 font-medium text-lg">Loading your statistics...</p>
+          <p className="text-emerald-600/80 font-medium text-lg">
+            {language === "ar" ? "جاري تحميل إحصائياتك..." : "Loading your statistics..."}
+          </p>
         </div>
       </div>
     );
@@ -185,10 +206,12 @@ export default function CitizenStatsPage() {
         </div>
         <div>
           <h1 className="text-3xl tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 700 }}>
-            Citizen Stats & Impact
+            {language === "ar" ? "إحصائيات وأثر المواطن" : "Citizen Stats & Impact"}
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-0.5">
-            Detailed breakdown of your plastic bottle recycling, earnings, and impact
+          <p className="text-slate-500 dark:text-slate-400 mt-0.5 text-sm">
+            {language === "ar" 
+              ? "تفاصيل عمليات إعادة تدوير الزجاجات البلاستيكية، والأرباح، والأثر البيئي"
+              : "Detailed breakdown of your plastic bottle recycling, earnings, and impact"}
           </p>
         </div>
       </div>
@@ -229,26 +252,28 @@ export default function CitizenStatsPage() {
           <GlassCard className="p-6 h-full flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg text-slate-900 dark:text-white" style={{ fontWeight: 600 }}>
-                  Progression & Level
+                <h3 className="text-lg text-slate-900 dark:text-white font-bold" style={{ fontWeight: 600 }}>
+                  {language === "ar" ? "التقدم والمستوى" : "Progression & Level"}
                 </h3>
                 <span className="px-3 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold">
-                  Tier L{progression.current.level}
+                  {language === "ar" ? `فئة L${progression.current.level.toLocaleString("ar-EG")}` : `Tier L${progression.current.level}`}
                 </span>
               </div>
               
               <div className="text-center p-4 bg-slate-50 dark:bg-white/5 rounded-2xl mb-6">
-                <p className="text-xs text-slate-500 dark:text-slate-400">Current Level</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{language === "ar" ? "المستوى الحالي" : "Current Level"}</p>
                 <p className="text-2xl text-slate-900 dark:text-white font-bold mt-1" style={{ fontWeight: 700 }}>
-                  {progression.current.title}
+                  {language === "ar" 
+                    ? (progression.current.title === "Green Initiate" ? "مبتدئ بيئي" : progression.current.title === "Green Hero" ? "بطل بيئي" : progression.current.title === "Eco Guardian" ? "حارس البيئة" : "منقذ الكوكب")
+                    : progression.current.title}
                 </p>
                 
                 {/* Progress bar to next level */}
                 <div className="mt-4">
                   <div className="flex justify-between text-[11px] text-slate-400 mb-1.5 font-semibold">
-                    <span>{progression.current.min} pts</span>
-                    <span>{progression.progress}% to next rank</span>
-                    <span>{progression.current.max === Infinity ? "∞" : `${progression.current.max} pts`}</span>
+                    <span>{language === "ar" ? `${progression.current.min.toLocaleString("ar-EG")} نقطة` : `${progression.current.min} pts`}</span>
+                    <span>{language === "ar" ? `${progression.progress.toLocaleString("ar-EG")}٪ إلى الرتبة التالية` : `${progression.progress}% to next rank`}</span>
+                    <span>{progression.current.max === Infinity ? "∞" : (language === "ar" ? `${progression.current.max.toLocaleString("ar-EG")} نقطة` : `${progression.current.max} pts`)}</span>
                   </div>
                   <div className="h-2.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                     <div 
@@ -261,31 +286,55 @@ export default function CitizenStatsPage() {
                 {progression.toNext > 0 && (
                   <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-3 font-semibold flex items-center justify-center gap-1">
                     <Sparkles className="w-3.5 h-3.5" />
-                    You need {progression.toNext} more points to level up to {progression.next.title}!
+                    {language === "ar" ? (
+                      <>
+                        أنت بحاجة إلى {progression.toNext.toLocaleString("ar-EG")} نقطة إضافية للارتقاء إلى مستوى {progression.next.title === "Green Initiate" ? "مبتدئ بيئي" : progression.next.title === "Green Hero" ? "بطل بيئي" : progression.next.title === "Eco Guardian" ? "حارس البيئة" : "منقذ الكوكب"}!
+                      </>
+                    ) : (
+                      <>
+                        You need {progression.toNext} more points to level up to {progression.next.title}!
+                      </>
+                    )}
                   </p>
                 )}
               </div>
 
               {/* Next Level Perks */}
               <div className="space-y-3">
-                <p className="text-xs text-slate-600 dark:text-slate-300 font-bold">
-                  {progression.toNext > 0 ? `Unlocked perks at Level ${progression.next.level} (${progression.next.title}):` : "All levels unlocked:"}
+                <p className="text-xs text-slate-600 dark:text-slate-300 font-bold text-start">
+                  {progression.toNext > 0 
+                    ? (language === "ar" ? `الميزات المفتوحة في مستوى ${progression.next.level.toLocaleString("ar-EG")} (${progression.next.title === "Green Initiate" ? "مبتدئ بيئي" : progression.next.title === "Green Hero" ? "بطل بيئي" : progression.next.title === "Eco Guardian" ? "حارس البيئة" : "منقذ الكوكب"}):` : `Unlocked perks at Level ${progression.next.level} (${progression.next.title}):`) 
+                    : (language === "ar" ? "جميع المستويات مفتوحة:" : "All levels unlocked:")}
                 </p>
                 <div className="space-y-2">
-                  {(progression.toNext > 0 ? progression.next.perks : progression.current.perks).map((perk, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-200 p-2.5 bg-white dark:bg-[#0d121f]/50 border border-slate-100 dark:border-white/5 rounded-xl">
-                      <Gift className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                      <span className="font-semibold">{perk}</span>
-                    </div>
-                  ))}
+                  {(progression.toNext > 0 ? progression.next.perks : progression.current.perks).map((perk, idx) => {
+                    const translatedPerk = language === "ar"
+                      ? (perk.includes("Point Multiplier") 
+                          ? `مضاعف نقاط ${perk.split("x")[0]}x` 
+                          : perk === "Basic badges unlocked" ? "تم فتح الشارات الأساسية"
+                          : perk === "Local partner discounts unlocked" ? "خصومات الشركاء المحليين مفتوحة"
+                          : perk === "Exclusive rewards store catalog" ? "كتالوج متجر الجوائز الحصري"
+                          : perk === "VIP community badge" ? "شارة المجتمع المتميزة (VIP)"
+                          : perk === "Priority pickup scheduling" ? "جدولة استلام ذات أولوية"
+                          : perk)
+                      : perk;
+                    return (
+                      <div key={idx} className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-200 p-2.5 bg-white dark:bg-[#0d121f]/50 border border-slate-100 dark:border-white/5 rounded-xl">
+                        <Gift className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                        <span className="font-semibold">{translatedPerk}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
 
             <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl flex items-center gap-3 mt-6">
               <Award className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-normal">
-                Recycle more plastic bottles to earn points and upgrade your level multiplier!
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-normal text-start">
+                {language === "ar" 
+                  ? "أعد تدوير المزيد من الزجاجات البلاستيكية لكسب النقاط وترقية مضاعف المستوى الخاص بك!"
+                  : "Recycle more plastic bottles to earn points and upgrade your level multiplier!"}
               </p>
             </div>
           </GlassCard>

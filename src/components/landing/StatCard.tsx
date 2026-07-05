@@ -22,10 +22,15 @@ export function StatCard({ stat, index }: StatCardProps) {
       </div>
 
       <div className={`text-3xl font-bold ${colorText[stat.color] || "text-emerald-600"} mb-1`}>
-        <AnimatedCounter end={stat.value} suffix={stat.suffix} />
+        {stat.noDataLabel ? (
+          <span className="text-lg font-semibold text-gray-400 italic">{stat.noDataLabel}</span>
+        ) : (
+          <AnimatedCounter end={stat.value} suffix={stat.suffix} />
+        )}
       </div>
 
       <div className="text-sm text-gray-600">{stat.label}</div>
     </div>
   );
 }
+

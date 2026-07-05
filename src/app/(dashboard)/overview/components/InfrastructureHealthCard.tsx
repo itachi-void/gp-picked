@@ -35,22 +35,22 @@ export function InfrastructureHealthCard() {
   useEffect(() => { setMounted(true); }, []);
 
   const localizedCenters: Center[] = useMemo(() => [
-    { id: "main",         label: "Main Hub",      short: "MAIN", color: "#06b6d4", ring: "ring-cyan-400/40",    Icon: Boxes,    load: 67, x: 22, y: 58 },
-    { id: "sorting",      label: "Sorting",        short: "SORT", color: "#a855f7", ring: "ring-violet-400/40", Icon: Building2,load: 89, x: 50, y: 26 },
-    { id: "processing",   label: "Processing",     short: "PROC", color: "#f59e0b", ring: "ring-amber-400/40",  Icon: Factory,  load: 78, x: 78, y: 45 },
-    { id: "distribution", label: "Distribution",   short: "DIST", color: "#10b981", ring: "ring-emerald-400/40",Icon: Truck,    load: 65, x: 58, y: 78 },
-    { id: "east",         label: "East Station",   short: "EAST", color: "#0ea5e9", ring: "ring-sky-400/40",    Icon: Warehouse,load: 84, x: 20, y: 84 },
-  ], []);
+    { id: "main",         label: language === "ar" ? "المركز الرئيسي" : "Main Hub",      short: language === "ar" ? "رئيسي" : "MAIN", color: "#06b6d4", ring: "ring-cyan-400/40",    Icon: Boxes,    load: 67, x: 22, y: 58 },
+    { id: "sorting",      label: language === "ar" ? "مركز الفرز" : "Sorting",        short: language === "ar" ? "فرز" : "SORT", color: "#a855f7", ring: "ring-violet-400/40", Icon: Building2,load: 89, x: 50, y: 26 },
+    { id: "processing",   label: language === "ar" ? "مركز المعالجة" : "Processing",     short: language === "ar" ? "معالجة" : "PROC", color: "#f59e0b", ring: "ring-amber-400/40",  Icon: Factory,  load: 78, x: 78, y: 45 },
+    { id: "distribution", label: language === "ar" ? "مركز التوزيع" : "Distribution",   short: language === "ar" ? "توزيع" : "DIST", color: "#10b981", ring: "ring-emerald-400/40",Icon: Truck,    load: 65, x: 58, y: 78 },
+    { id: "east",         label: language === "ar" ? "محطة الشرق" : "East Station",   short: language === "ar" ? "شرق" : "EAST", color: "#0ea5e9", ring: "ring-sky-400/40",    Icon: Warehouse,load: 84, x: 20, y: 84 },
+  ], [language]);
 
   const localizedStats: Stat[] = useMemo(() => [
-    { label: "Centers Online", value: "5/5",  delta: "All operational",      trend: "up", icon: Network,   accent: "emerald", progress: 100 },
-    { label: "Throughput",     value: "1,240", delta: "t/hr · +4.2%",        trend: "up", icon: Zap,       accent: "sky",     progress: 82  },
-    { label: "Efficiency",     value: "94%",  delta: "+1.8% vs last week",   trend: "up", icon: TrendingUp, accent: "violet",  progress: 94  },
-    { label: "Overall Load",   value: "87%",  delta: "Capacity used",        trend: "up", icon: Gauge,     accent: "amber",   progress: 87  },
-  ], []);
+    { label: language === "ar" ? "المراكز المتصلة" : "Centers Online", value: language === "ar" ? "٥/٥" : "5/5",  delta: language === "ar" ? "تعمل بالكامل" : "All operational",      trend: "up", icon: Network,   accent: "emerald", progress: 100 },
+    { label: language === "ar" ? "معدل التدفق" : "Throughput",     value: language === "ar" ? "١,٢٤٠" : "1,240", delta: language === "ar" ? "طن/ساعة · +٤.٢٪" : "t/hr · +4.2%",        trend: "up", icon: Zap,       accent: "sky",     progress: 82  },
+    { label: language === "ar" ? "معدل الكفاءة" : "Efficiency",     value: language === "ar" ? "٩٤٪" : "94%",  delta: language === "ar" ? "+١.٨٪ مقابل الأسبوع الماضي" : "+1.8% vs last week",   trend: "up", icon: TrendingUp, accent: "violet",  progress: 94  },
+    { label: language === "ar" ? "الحمل الإجمالي للشبكة" : "Overall Load",   value: language === "ar" ? "٨٧٪" : "87%",  delta: language === "ar" ? "نسبة القدرة المستغلة" : "Capacity used",        trend: "up", icon: Gauge,     accent: "amber",   progress: 87  },
+  ], [language]);
 
   const formatNumber = (num: number) => {
-    return num.toLocaleString();
+    return language === "ar" ? num.toLocaleString("ar-EG") : num.toLocaleString();
   };
 
   return (
@@ -65,7 +65,7 @@ export function InfrastructureHealthCard() {
               {t("dashboard.infrastructure.title")}
             </h2>
             <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-              Demo Visualization
+              {t("common.demoVisualization")}
             </span>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">

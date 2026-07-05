@@ -136,30 +136,30 @@ export default function UsersPage() {
   });
 
   const handleDeleteUser = (id: number) => {
-    if (confirm("Are you sure you want to delete this user?")) {
+    if (confirm(t("users.deleteConfirm"))) {
       deleteMutation.mutate(id);
     }
   };
 
   const handleSubmit = () => {
     if (form.fullName.length < 5) {
-      toast.error("Full name must be at least 5 letters");
+      toast.error(language === "ar" ? "يجب أن يكون الاسم الكامل من ٥ أحرف على الأقل" : "Full name must be at least 5 letters");
       return;
     }
     if (!form.email.includes("@")) {
-      toast.error("Please enter a valid email");
+      toast.error(language === "ar" ? "الرجاء إدخال بريد إلكتروني صالح" : "Please enter a valid email");
       return;
     }
     if (form.password.length < 8) {
-      toast.error("Password must be at least 8 characters");
+      toast.error(language === "ar" ? "يجب أن تتكون كلمة المرور من ٨ رموز على الأقل" : "Password must be at least 8 characters");
       return;
     }
     if (form.address.length < 30) {
-      toast.error("Address must be at least 30 characters");
+      toast.error(language === "ar" ? "يجب أن يكون العنوان من ٣٠ حرفاً على الأقل" : "Address must be at least 30 characters");
       return;
     }
     if (!/^01[0125][0-9]{8}$/.test(form.phone)) {
-      toast.error("Phone must be a valid Egyptian mobile number (e.g. 01012345678)");
+      toast.error(language === "ar" ? "يجب أن يكون رقم الهاتف رقم هاتف مصري صالح" : "Phone must be a valid Egyptian mobile number (e.g. 01012345678)");
       return;
     }
 
@@ -176,16 +176,17 @@ export default function UsersPage() {
     return matchSearch && matchRole;
   });
 
-  const summary = [
-    { label: "Total Users", value: users.length, accent: "emerald" },
-    { label: t("auth.roleAdmin"), value: users.filter((u) => u.role === "admin").length, accent: "emerald" },
-    { label: t("auth.roleDriver"), value: users.filter((u) => u.role === "driver").length, accent: "amber" },
-    { label: "Active", value: users.filter((u) => u.status === "active").length, accent: "sky" },
-  ];
-
   const formatNumber = (num: number) => {
     return num.toLocaleString();
   };
+
+  const summary = [
+    { label: language === "ar" ? "إجمالي المستخدمين" : "Total Users", value: formatNumber(users.length), accent: "emerald" },
+    { label: t("auth.roleAdmin"), value: formatNumber(users.filter((u) => u.role === "admin").length), accent: "emerald" },
+    { label: t("auth.roleDriver"), value: formatNumber(users.filter((u) => u.role === "driver").length), accent: "amber" },
+    { label: language === "ar" ? "النشطين" : "Active", value: formatNumber(users.filter((u) => u.status === "active").length), accent: "sky" },
+  ];
+
 
   if (isLoading) {
     return (
@@ -209,10 +210,10 @@ export default function UsersPage() {
       <div data-aos="fade-up" className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl text-slate-900 dark:text-white tracking-tight" style={{ fontWeight: 700 }}>
-            {t("dashboard.nav.users")}
+            {t("users.title")}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Manage all platform users
+            {t("users.subtitle")}
           </p>
         </div>
         {role === "Admin" && (
@@ -222,7 +223,7 @@ export default function UsersPage() {
             style={{ fontWeight: 600 }}
           >
             <Plus className="w-4 h-4" />
-            Add User
+            {t("users.addUser")}
           </button>
         )}
       </div>
@@ -248,7 +249,7 @@ export default function UsersPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search name or email…"
+            placeholder={t("users.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 h-10 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
@@ -278,11 +279,11 @@ export default function UsersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100 dark:border-white/5 text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                <th className="text-left px-6 py-4" style={{ fontWeight: 600 }}>User</th>
-                <th className="text-left px-6 py-4" style={{ fontWeight: 600 }}>Role</th>
-                <th className="text-left px-6 py-4 hidden md:table-cell" style={{ fontWeight: 600 }}>Joined</th>
-                <th className="text-left px-6 py-4 hidden lg:table-cell" style={{ fontWeight: 600 }}>Last Seen</th>
-                <th className="text-left px-6 py-4" style={{ fontWeight: 600 }}>Status</th>
+                <th className="text-start px-6 py-4" style={{ fontWeight: 600 }}>{language === "ar" ? "المستخدم" : "User"}</th>
+                <th className="text-start px-6 py-4" style={{ fontWeight: 600 }}>{t("common.role")}</th>
+                <th className="text-start px-6 py-4 hidden md:table-cell" style={{ fontWeight: 600 }}>{language === "ar" ? "تاريخ الانضمام" : "Joined"}</th>
+                <th className="text-start px-6 py-4 hidden lg:table-cell" style={{ fontWeight: 600 }}>{language === "ar" ? "آخر ظهور" : "Last Seen"}</th>
+                <th className="text-start px-6 py-4" style={{ fontWeight: 600 }}>{t("common.status")}</th>
                 <th className="px-6 py-4" />
               </tr>
             </thead>
@@ -290,7 +291,7 @@ export default function UsersPage() {
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-slate-400 dark:text-slate-500">
-                    No users found
+                    {t("users.noUsers")}
                   </td>
                 </tr>
               ) : (
@@ -298,8 +299,8 @@ export default function UsersPage() {
                   const rc = roleConfig[u.role] || roleConfig.citizen;
                   const RoleIcon = rc.icon;
                   const initials = u.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
-                  const displayJoined = u.joinedAt ? new Date(u.joinedAt).toLocaleDateString([]) : "Just now";
-                  const displayLastSeen = u.lastSeen ? new Date(u.lastSeen).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Active";
+                  const displayJoined = u.joinedAt ? new Date(u.joinedAt).toLocaleDateString(language === "ar" ? "ar-EG" : []) : (language === "ar" ? "الآن" : "Just now");
+                  const displayLastSeen = u.lastSeen ? new Date(u.lastSeen).toLocaleTimeString(language === "ar" ? "ar-EG" : [], { hour: "2-digit", minute: "2-digit" }) : (language === "ar" ? "نشط" : "Active");
                   return (
                     <tr key={u.id || u.name} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
                       <td className="px-6 py-4">
@@ -341,11 +342,11 @@ export default function UsersPage() {
                             : "bg-slate-200/60 dark:bg-white/5 text-slate-500 dark:text-slate-400"
                         }`} style={{ fontWeight: 600 }}>
                           <span className={`w-1.5 h-1.5 rounded-full ${u.status === "active" ? "bg-emerald-500" : "bg-slate-400"}`} />
-                          {u.status === "active" ? "Active" : "Inactive"}
+                          {language === "ar" ? (u.status === "active" ? "نشط" : "غير نشط") : (u.status === "active" ? "Active" : "Inactive")}
                         </span>
                       </td>
 
-                      <td className="px-6 py-4 text-right flex items-center justify-end gap-1">
+                      <td className="px-6 py-4 text-start flex items-center justify-end gap-1">
                         {role === "Admin" && (
                           <button
                             onClick={() => handleDeleteUser(Number(u.id))}
@@ -368,7 +369,15 @@ export default function UsersPage() {
         </div>
 
         <div className="px-6 py-3 border-t border-slate-100 dark:border-white/5 text-xs text-slate-400 dark:text-slate-500">
-          Showing {filtered.length} of {users.length} users
+          {language === "ar" ? (
+            <>
+              عرض {formatNumber(filtered.length)} من {formatNumber(users.length)} مستخدمين
+            </>
+          ) : (
+            <>
+              Showing {filtered.length} of {users.length} users
+            </>
+          )}
         </div>
       </GlassCard>
 
@@ -378,7 +387,7 @@ export default function UsersPage() {
           <div className="bg-white dark:bg-[#0a0e14] rounded-3xl p-6 max-w-md w-full border border-slate-200 dark:border-white/10 mc-scale-up">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg tracking-tight text-slate-900 dark:text-white font-bold" style={{ fontWeight: 600 }}>
-                Add New User
+                {t("users.addUser")}
               </h2>
               <button onClick={() => setShowForm(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer">
                 <X className="w-5 h-5 text-slate-500" />
@@ -386,32 +395,32 @@ export default function UsersPage() {
             </div>
             <div className="space-y-3">
               <label className="block">
-                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Full Name</span>
-                <input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50" placeholder="Min 5 letters" />
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">{t("users.fullName")}</span>
+                <input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50" placeholder={language === "ar" ? "الحد الأدنى ٥ أحرف" : "Min 5 letters"} />
               </label>
               <label className="block">
-                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Email</span>
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">{t("users.email")}</span>
                 <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50" placeholder="user@domain.com" />
               </label>
               <label className="block">
-                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Password</span>
-                <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50" placeholder="Min 8 chars, 1 uppercase, 1 symbol" />
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">{t("users.password")}</span>
+                <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50" placeholder={t("centersList.passwordPlaceholder")} />
               </label>
               <label className="block">
-                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Address</span>
-                <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50" placeholder="Min 30 characters" />
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">{t("users.address")}</span>
+                <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50" placeholder={language === "ar" ? "العنوان بالتفصيل - ٣٠ حرفاً على الأقل" : "Min 30 characters"} />
               </label>
               <label className="block">
-                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">Phone</span>
-                <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50" placeholder="Egyptian mobile e.g. 01012345678" />
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1">{t("users.phone")}</span>
+                <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full h-10 px-4 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50" placeholder={language === "ar" ? "رقم محمول مصري مثل: 01012345678" : "Egyptian mobile e.g. 01012345678"} />
               </label>
             </div>
             <div className="mt-6 flex items-center justify-end gap-2">
               <button onClick={() => setShowForm(false)} className="h-10 px-5 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 cursor-pointer">
-                Cancel
+                {language === "ar" ? "إلغاء" : "Cancel"}
               </button>
               <button onClick={handleSubmit} className="h-10 px-5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm cursor-pointer font-bold" style={{ fontWeight: 600 }}>
-                Add User
+                {t("users.createUser")}
               </button>
             </div>
           </div>

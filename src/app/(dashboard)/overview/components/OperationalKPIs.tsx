@@ -61,8 +61,8 @@ export default function OperationalKPIs({
   const kpis: KPI[] = [
     {
       label: t("dashboard.kpis.pickups"),
-      value: String(activePickups),
-      sub: "in progress + pending",
+      value: language === "ar" ? activePickups.toLocaleString("ar-EG") : String(activePickups),
+      sub: language === "ar" ? "قيد المعالجة + في الانتظار" : "in progress + pending",
       delta: 12.4,
       Icon: Recycle,
       accent: "emerald",
@@ -70,8 +70,8 @@ export default function OperationalKPIs({
     },
     {
       label: t("dashboard.kpis.drivers"),
-      value: `${driversOnRoad}/${totalDrivers}`,
-      sub: "currently dispatched",
+      value: language === "ar" ? `${driversOnRoad.toLocaleString("ar-EG")}/${totalDrivers.toLocaleString("ar-EG")}` : `${driversOnRoad}/${totalDrivers}`,
+      sub: language === "ar" ? "تم إرسالهم حالياً" : "currently dispatched",
       delta: 4.1,
       Icon: Truck,
       accent: "sky",
@@ -79,8 +79,8 @@ export default function OperationalKPIs({
     },
     {
       label: t("dashboard.kpis.tonnage"),
-      value: `${todayTonnage.toFixed(1)}t`,
-      sub: "collected since midnight",
+      value: language === "ar" ? `${todayTonnage.toLocaleString("ar-EG", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} طن` : `${todayTonnage.toFixed(1)}t`,
+      sub: language === "ar" ? "تم جمعها منذ منتصف الليل" : "collected since midnight",
       delta: 8.6,
       Icon: Users,
       accent: "violet",
@@ -88,8 +88,8 @@ export default function OperationalKPIs({
     },
     {
       label: t("dashboard.kpis.utilization"),
-      value: `${fleetUtilization}%`,
-      sub: "capacity in use",
+      value: language === "ar" ? `${fleetUtilization.toLocaleString("ar-EG")}٪` : `${fleetUtilization}%`,
+      sub: language === "ar" ? "القدرة المستخدمة" : "capacity in use",
       delta: -2.3,
       Icon: Gauge,
       accent: "amber",

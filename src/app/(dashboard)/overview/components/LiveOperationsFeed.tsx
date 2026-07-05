@@ -90,7 +90,7 @@ export default function LiveOperationsFeed() {
           className="hidden sm:inline-flex items-center gap-1 text-sm text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 cursor-pointer"
           style={{ fontWeight: 600 }}
         >
-          View all <ArrowRight className="w-4 h-4" />
+          {language === "ar" ? "عرض الكل" : "View all"} <ArrowRight className="w-4 h-4" />
         </button>
       </div>
 
@@ -98,11 +98,11 @@ export default function LiveOperationsFeed() {
         {loading ? (
           <div className="h-full flex items-center justify-center py-10 text-slate-400 text-sm gap-2">
             <span className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-            Loading live activity...
+            {language === "ar" ? "جاري تحميل النشاط المباشر..." : "Loading live activity..."}
           </div>
         ) : feed.length === 0 ? (
           <div className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs">
-            No active operations currently in progress.
+            {language === "ar" ? "لا توجد عمليات نشطة حالياً." : "No active operations currently in progress."}
           </div>
         ) : (
           feed.slice(0, 5).map((r, i) => {
@@ -114,7 +114,7 @@ export default function LiveOperationsFeed() {
               <button
                 key={r.id}
                 onClick={() => router.push("/pickups")}
-                className="mc-card-in w-full text-left p-3 rounded-2xl bg-white/60 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/[0.07] transition-colors flex items-center gap-3 cursor-pointer"
+                className="mc-card-in w-full text-start p-3 rounded-2xl bg-white/60 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/[0.07] transition-colors flex items-center gap-3 cursor-pointer"
                 style={{ animationDelay: `${i * 0.04}s` }}
               >
                 <span className="relative flex w-2 h-2 mt-1 shrink-0">
@@ -136,7 +136,7 @@ export default function LiveOperationsFeed() {
                     </span>
                     <span className="truncate">{displayCitizen}</span>
                     <span className="hidden md:inline">
-                      {`${r.weight}kg`}
+                      {language === "ar" ? `${r.weight.toLocaleString("ar-EG")} كجم` : `${r.weight}kg`}
                     </span>
                   </div>
                 </div>
@@ -152,10 +152,10 @@ export default function LiveOperationsFeed() {
       <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
         <span className="flex items-center gap-1.5">
           <Clock className="w-3.5 h-3.5" />
-          Updated just now
+          {language === "ar" ? "تم التحديث الآن" : "Updated just now"}
         </span>
         <span>
-          {`${feed.length} total requests`}
+          {language === "ar" ? `${feed.length.toLocaleString("ar-EG")} إجمالي الطلبات` : `${feed.length} total requests`}
         </span>
       </div>
     </GlassCard>

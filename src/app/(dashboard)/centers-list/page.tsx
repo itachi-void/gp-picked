@@ -7,6 +7,7 @@ import api from "@/lib/axios";
 import { Building2, MapPin, Users, Trash2, Edit, Plus, X, Activity, Eye } from "lucide-react";
 import { useRoleContext } from "@/contexts/RoleContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { GlassCard } from "@/app/components/GlassCard";
 import { accentMap } from "@/app/utils/accent";
@@ -35,6 +36,7 @@ const statusAccent: Record<string, { bg: string; fg: string; dot: string }> = {
 export default function CentersListPage() {
   const { role } = useRoleContext();
   const { addNotification } = useNotifications();
+  const { t, tApi, language } = useLanguage();
 
   const [centers, setCenters] = useState<Center[]>([]);  // ١. البيانات
 
@@ -53,12 +55,12 @@ export default function CentersListPage() {
       });
     },
     onSuccess: () => {
-      toast.success("Hub staff member deleted successfully");
+      toast.success(language === "ar" ? "تم حذف عضو موظفي المركز بنجاح" : "Hub staff member deleted successfully");
       refetchStaff();
     },
     onError: (err: any) => {
       console.error("Failed to delete hub staff:", err);
-      toast.error(err.response?.data?.message || "Failed to delete hub staff");
+      toast.error(err.response?.data?.message || (language === "ar" ? "فشل في حذف موظفي المركز" : "Failed to delete hub staff"));
     },
   });
 
@@ -67,13 +69,13 @@ export default function CentersListPage() {
       await api.post("/admin/create-hub-staff", formData);
     },
     onSuccess: () => {
-      toast.success("Hub staff center created successfully");
+      toast.success(language === "ar" ? "تم إنشاء مركز موظفي المركز بنجاح" : "Hub staff center created successfully");
       refetchStaff();
       closeModal();
     },
     onError: (err: any) => {
       console.error("Failed to create hub staff:", err);
-      toast.error(err.response?.data?.message || "Failed to create hub staff");
+      toast.error(err.response?.data?.message || (language === "ar" ? "فشل في إنشاء موظفي المركز" : "Failed to create hub staff"));
     },
   });
 
@@ -129,7 +131,7 @@ export default function CentersListPage() {
 
       return {
         id: String(staffId),
-        name: `${managerName}'s Collection Center`,
+        name: language === "ar" ? `${managerName} ${t("centersList.centerNameSuffix")}` : `${managerName}${t("centersList.centerNameSuffix")}`,
         location,
         capacity: "-",
         currentLoad: "-",
@@ -138,7 +140,7 @@ export default function CentersListPage() {
         contact,
       };
     });
-  }, [rawStaff, staffQueryDataString]);
+  }, [rawStaff, staffQueryDataString, language, t]);
 
   useEffect(() => {
     if (fetchedCenters && fetchedCenters.length > 0) {
@@ -153,9 +155,9 @@ export default function CentersListPage() {
 
   // ========== إحصائيات ==========
   const stats = [
-    { label: "Total Centers", value: centers.length, icon: Building2, accent: "emerald" },
-    { label: "Active Centers", value: centers.filter((c) => c.status === "active").length, icon: Users, accent: "sky" },
-    { label: "Total Capacity", value: "-", icon: Activity, accent: "rose" },
+    { label: t("centersList.totalCenters"), value: centers.length, icon: Building2, accent: "emerald" },
+    { label: t("centersList.activeCenters"), value: centers.filter((c) => c.status === "active").length, icon: Users, accent: "sky" },
+    { label: t("centersList.totalCapacity"), value: "-", icon: Activity, accent: "rose" },
   ];
 
   // ========== فتح الـ Modal للإضافة ==========
@@ -189,19 +191,19 @@ export default function CentersListPage() {
           c.id === editing.id ? form : c
         )
       );
-      toast.success("Center details updated locally");
+      toast.success(language === "ar" ? "تم تحديث تفاصيل المركز محلياً" : "Center details updated locally");
       closeModal();
     } else if (create) {
       if (!form.manager.trim()) {
-        toast.error("Manager name is required (Hub Staff FullName)");
+        toast.error(t("centersList.managerNameReq"));
         return;
       }
       if (form.manager.length < 5 || form.manager.length > 30) {
-        toast.error("Manager name must be between 5 and 30 characters");
+        toast.error(t("centersList.managerNameLen"));
         return;
       }
       if (!form.password || form.password.length < 8) {
-        toast.error("Password must be at least 8 characters");
+        toast.error(t("centersList.passwordMin"));
         return;
       }
 
@@ -214,7 +216,7 @@ export default function CentersListPage() {
 
   // ========== حذف ==========
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this collection center staff member?")) {
+    if (confirm(t("centersList.deleteConfirm"))) {
       deleteMutation.mutate(Number(id));
     }
   };
@@ -228,13 +230,13 @@ export default function CentersListPage() {
             <Building2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <h1 className="text-3xl tracking-tight text-slate-900 dark:text-white font-bold">Collection Centers</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-0.5">Manage recycling collection centers</p>
+            <h1 className="text-3xl tracking-tight text-slate-900 dark:text-white font-bold">{t("centersList.title")}</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-0.5">{t("centersList.subtitle")}</p>
           </div>
         </div>
         {(role === "Admin") && (
-          <button onClick={openCreate} className="flex items-center gap-2 px-4 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors text-sm">
-            <Plus className="w-4 h-4" /> Add Center
+          <button onClick={openCreate} className="flex items-center gap-2 px-4 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors text-sm cursor-pointer">
+            <Plus className="w-4 h-4" /> {t("centersList.addCenter")}
           </button>
         )}
       </div>
@@ -242,9 +244,9 @@ export default function CentersListPage() {
       <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-4 flex items-start gap-3">
         <Eye className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
         <div>
-          <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Future Centers Suggestion</p>
+          <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">{t("centersList.futureSuggestion")}</p>
           <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-            These zones are suggested based on current pickup activity. Each zone shows active citizens and request volume. Real community management features are coming soon.
+            {t("centersList.futureSuggestionDesc")}
           </p>
         </div>
       </div>
@@ -273,9 +275,17 @@ export default function CentersListPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-white/10 text-left">
-                {["Center", "Location", "Capacity", "Load", "Status", "Manager", "Actions"].map((h) => (
-                  <th key={h} className="py-4 px-6 text-sm text-slate-500 dark:text-slate-400 font-semibold">{h}</th>
+              <tr className="border-b border-slate-200 dark:border-white/10 text-start">
+                {[
+                  t("centersList.table.center"),
+                  t("centersList.table.location"),
+                  t("centersList.table.capacity"),
+                  t("centersList.table.load"),
+                  t("centersList.table.status"),
+                  t("centersList.table.manager"),
+                  t("centersList.table.actions")
+                ].map((h) => (
+                  <th key={h} className="py-4 px-6 text-sm text-slate-500 dark:text-slate-400 font-semibold text-start">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -321,7 +331,7 @@ export default function CentersListPage() {
                     <td className="py-4 px-6">
                       <span className={`px-3 py-1 text-xs rounded-full inline-flex items-center gap-1.5 ${sa.bg} ${sa.fg}`}>
                         <div className={`w-1.5 h-1.5 rounded-full ${sa.dot}`} />
-                        <span className="capitalize">{c.status}</span>
+                        <span className="capitalize">{tApi(c.status)}</span>
                       </span>
                     </td>
                     <td className="py-4 px-6">
@@ -356,7 +366,7 @@ export default function CentersListPage() {
           <div className="bg-white dark:bg-[#0a0e14] rounded-3xl p-6 max-w-lg w-full border border-slate-200 dark:border-white/10" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg tracking-tight text-slate-900 dark:text-white font-semibold">
-                {editing ? "Edit Center" : "Add Center"}
+                {editing ? t("centersList.editCenterModal") : t("centersList.addCenterModal")}
               </h2>
               <button onClick={closeModal} className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer">
                 <X className="w-5 h-5 text-slate-500" />
@@ -365,22 +375,22 @@ export default function CentersListPage() {
             <CenterForm form={form} setForm={setForm} />
             {create && (
               <label className="block mt-3">
-                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1 font-semibold" style={{ fontWeight: 600 }}>Password</span>
+                <span className="block text-sm text-slate-600 dark:text-slate-300 mb-1 font-semibold" style={{ fontWeight: 600 }}>{t("centersList.passwordLabel")}</span>
                 <input
                   type="password"
                   value={form.password || ""}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="Min 8 chars, 1 uppercase, 1 symbol"
+                  placeholder={t("centersList.passwordPlaceholder")}
                   className="w-full px-3 h-10 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
                 />
               </label>
             )}
             <div className="mt-6 flex justify-end gap-2">
               <button onClick={closeModal} className="px-4 h-10 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-200 cursor-pointer">
-                Cancel
+                {t("common.cancel")}
               </button>
               <button onClick={handleSave} className="px-4 h-10 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm cursor-pointer">
-                {editing ? "Save Changes" : "Create"}
+                {editing ? t("centersList.saveChanges") : t("centersList.create")}
               </button>
             </div>
           </div>

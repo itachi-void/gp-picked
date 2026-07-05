@@ -132,8 +132,8 @@ export function MobileNav() {
                         {item.icon && <item.icon className="h-4 w-4 text-gray-500 shrink-0" />}
                         <span className="truncate">{t(routeToKey[item.to], item.label)}</span>
                         {item.comingSoon && (
-                          <span className="ml-auto px-1.5 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0 whitespace-nowrap">
-                            Coming Soon
+                          <span className="ms-auto px-1.5 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0 whitespace-nowrap">
+                            {t("common.comingSoon")}
                           </span>
                         )}
                       </Link>

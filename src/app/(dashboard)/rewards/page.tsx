@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import { useAuth } from "@/store/authStore";
 import { useUserWallet } from "@/hooks/useUserWallet";
 import { useRedeemPoints } from "@/hooks/useRedeemPoints";
+import { useLanguage } from "@/contexts/LanguageContext";
 import api from "@/lib/axios";
 import { GlassCard } from "@/app/components/GlassCard";
 import { 
@@ -28,6 +29,7 @@ const CONVERSION_RATE = 0.1;
 
 export default function RewardsPage() {
   const { user } = useAuth();
+  const { t, tApi, language } = useLanguage();
   const { data: walletData, isLoading: walletLoading } = useUserWallet(user?.id);
   const redeemMutation = useRedeemPoints();
 
@@ -137,17 +139,21 @@ export default function RewardsPage() {
     setFormError(null);
 
     if (!walletNumber.trim()) {
-      setFormError("Please enter your wallet number or ID.");
+      setFormError(language === "ar" ? "يرجى إدخال رقم المحفظة أو المعرف." : "Please enter your wallet number or ID.");
       return;
     }
 
     if (enteredPoints <= 0) {
-      setFormError("Please enter a positive amount of points to redeem.");
+      setFormError(language === "ar" ? "يرجى إدخال كمية نقاط موجبة لاستردادها." : "Please enter a positive amount of points to redeem.");
       return;
     }
 
     if (enteredPoints > currentPoints) {
-      setFormError(`Insufficient points. You only have ${currentPoints} points available.`);
+      setFormError(
+        language === "ar"
+          ? `نقاط غير كافية. لديك فقط ${currentPoints} نقطة متاحة.`
+          : `Insufficient points. You only have ${currentPoints} points available.`
+      );
       return;
     }
 
@@ -209,7 +215,9 @@ export default function RewardsPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-pulse flex flex-col items-center gap-3">
           <Coins className="w-10 h-10 text-emerald-500 animate-bounce" />
-          <p className="text-emerald-600/80 font-medium text-lg">Loading rewards balance...</p>
+          <p className="text-emerald-600/80 font-medium text-lg">
+            {language === "ar" ? "جاري تحميل رصيد المكافآت..." : "Loading rewards balance..."}
+          </p>
         </div>
       </div>
     );
@@ -227,10 +235,10 @@ export default function RewardsPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 700 }}>
-              Eco Rewards Management 🎁
+              {language === "ar" ? "إدارة مكافآت إيكو 🎁" : "Eco Rewards Management 🎁"}
             </h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
-              Monitor, track, and manage all citizen points redemptions and cashouts.
+              {language === "ar" ? "مراقبة وتتبع وإدارة جميع عمليات استرداد نقاط المواطنين وصرف النقود." : "Monitor, track, and manage all citizen points redemptions and cashouts."}
             </p>
           </div>
         </div>
@@ -242,17 +250,17 @@ export default function RewardsPage() {
               <Coins className="w-6 h-6" />
             </div>
             <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{totalPointsRedeemed.toLocaleString()}</p>
-            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">Total Points Redeemed</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">lifetime conversion</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">{language === "ar" ? "إجمالي النقاط المستردة" : "Total Points Redeemed"}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{language === "ar" ? "التحويل مدى الحياة" : "lifetime conversion"}</p>
           </GlassCard>
 
           <GlassCard className="p-5">
             <div className="w-12 h-12 bg-sky-500/10 rounded-2xl flex items-center justify-center mb-3 text-sky-600 dark:text-sky-400">
               <Banknote className="w-6 h-6 animate-pulse" />
             </div>
-            <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{totalCashOutflow.toLocaleString()} EGP</p>
-            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">Total Cash Outflow</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">disbursed to mobile wallets</p>
+            <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{totalCashOutflow.toLocaleString()} {language === "ar" ? "ج.م" : "EGP"}</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">{language === "ar" ? "إجمالي الأموال الخارجة" : "Total Cash Outflow"}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{language === "ar" ? "المصروفة للمحافظ الإلكترونية" : "disbursed to mobile wallets"}</p>
           </GlassCard>
 
           <GlassCard className="p-5">
@@ -260,17 +268,17 @@ export default function RewardsPage() {
               <ArrowRightLeft className="w-6 h-6" />
             </div>
             <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{totalRedemptionsCount}</p>
-            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">Total Redemptions</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">processed transactions</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">{language === "ar" ? "إجمالي عمليات الاسترداد" : "Total Redemptions"}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{language === "ar" ? "العمليات المعالجة" : "processed transactions"}</p>
           </GlassCard>
 
           <GlassCard className="p-5">
             <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center mb-3 text-amber-600 dark:text-amber-400">
               <DollarSign className="w-6 h-6" />
             </div>
-            <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{avgCashout.toFixed(2)} EGP</p>
-            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">Average Cashout Size</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">per redemption txn</p>
+            <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{avgCashout.toFixed(2)} {language === "ar" ? "ج.م" : "EGP"}</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">{language === "ar" ? "متوسط حجم السحب" : "Average Cashout Size"}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{language === "ar" ? "لكل عملية استرداد" : "per redemption txn"}</p>
           </GlassCard>
         </div>
 
@@ -279,10 +287,10 @@ export default function RewardsPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
             <div>
               <h2 className="text-lg text-slate-900 dark:text-white flex items-center gap-2 font-bold" style={{ fontWeight: 600 }}>
-                <TrendingUp className="w-5 h-5 text-emerald-500 animate-pulse" /> Platform Redemptions Feed (All Users)
+                <TrendingUp className="w-5 h-5 text-emerald-500 animate-pulse" /> {language === "ar" ? "تغذية عمليات الاسترداد للمنصة (جميع المستخدمين)" : "Platform Redemptions Feed (All Users)"}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Live redemption logs for all eco-citizens on the network.
+                {language === "ar" ? "سجلات الاسترداد المباشرة لجميع المواطنين البيئيين على الشبكة." : "Live redemption logs for all eco-citizens on the network."}
               </p>
             </div>
             
@@ -290,7 +298,7 @@ export default function RewardsPage() {
             <div className="relative w-full md:w-64">
               <input
                 type="text"
-                placeholder="Search by user name..."
+                placeholder={language === "ar" ? "البحث باسم المستخدم..." : "Search by user name..."}
                 value={historySearch}
                 onChange={(e) => setHistorySearch(e.target.value)}
                 className="w-full px-4 py-2 bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
@@ -301,24 +309,24 @@ export default function RewardsPage() {
           {globalLoading ? (
             <div className="py-12 flex flex-col items-center justify-center gap-2 text-slate-400">
               <span className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-              <p className="text-xs">Aggregating redemption histories from all users...</p>
+              <p className="text-xs">{language === "ar" ? "تجميع سجلات الاسترداد من جميع المستخدمين..." : "Aggregating redemption histories from all users..."}</p>
             </div>
           ) : filteredGlobalHistory.length === 0 ? (
             <div className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs">
-              No redemptions found on the platform yet.
+              {language === "ar" ? "لم يتم العثور على عمليات استرداد على المنصة بعد." : "No redemptions found on the platform yet."}
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
+              <table className="w-full text-start text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200/50 dark:border-white/5 text-slate-500 font-semibold">
-                    <th className="py-3 px-4">User</th>
-                    <th className="py-3 px-4">Redemption ID</th>
-                    <th className="py-3 px-4">Points</th>
-                    <th className="py-3 px-4">Amount (EGP)</th>
-                    <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4">Details</th>
+                    <th className="py-3 px-4 text-start">{language === "ar" ? "المستخدم" : "User"}</th>
+                    <th className="py-3 px-4 text-start">{language === "ar" ? "معرف الاسترداد" : "Redemption ID"}</th>
+                    <th className="py-3 px-4 text-start">{language === "ar" ? "النقاط" : "Points"}</th>
+                    <th className="py-3 px-4 text-start">{language === "ar" ? "المبلغ" : "Amount"} ({language === "ar" ? "ج.م" : "EGP"})</th>
+                    <th className="py-3 px-4 text-start">{language === "ar" ? "التاريخ" : "Date"}</th>
+                    <th className="py-3 px-4 text-start">{language === "ar" ? "الحالة" : "Status"}</th>
+                    <th className="py-3 px-4 text-start">{language === "ar" ? "التفاصيل" : "Details"}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -326,10 +334,10 @@ export default function RewardsPage() {
                     <tr key={item.redemptionId || idx} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.01] transition-colors">
                       <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white">{item.userName}</td>
                       <td className="py-3 px-4 font-mono text-slate-400">#{item.redemptionId}</td>
-                      <td className="py-3 px-4 text-amber-600 dark:text-amber-400 font-bold">{item.points} pts</td>
-                      <td className="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold">{item.amountEgp?.toFixed(2)} EGP</td>
+                      <td className="py-3 px-4 text-amber-600 dark:text-amber-400 font-bold">{item.points} {language === "ar" ? "نقطة" : "pts"}</td>
+                      <td className="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold">{item.amountEgp?.toFixed(2)} {language === "ar" ? "ج.م" : "EGP"}</td>
                       <td className="py-3 px-4 text-slate-500">
-                        {item.transactionDate ? new Date(item.transactionDate).toLocaleDateString(undefined, {
+                        {item.transactionDate ? new Date(item.transactionDate).toLocaleDateString(language === "ar" ? "ar-EG" : undefined, {
                           year: "numeric",
                           month: "short",
                           day: "numeric",
@@ -339,7 +347,7 @@ export default function RewardsPage() {
                       </td>
                       <td className="py-3 px-4">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
-                          {item.status || "Completed"}
+                          {tApi(item.status || "Completed")}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-slate-400 max-w-xs truncate">{item.details || "—"}</td>
@@ -360,12 +368,12 @@ export default function RewardsPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 700 }}>
-            Eco Rewards Portal 🎁
+            {language === "ar" ? "بوابة مكافآت إيكو 🎁" : "Eco Rewards Portal 🎁"}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">
             {role === "driver"
-              ? "Track your trip earnings and redeem your rewards for cash."
-              : "Redeem your hard-earned points for real cash sent directly to your mobile wallet or bank account."}
+              ? (language === "ar" ? "تتبع أرباح رحلاتك واسترد مكافآتك نقداً." : "Track your trip earnings and redeem your rewards for cash.")
+              : (language === "ar" ? "استرد نقاطك التي حصلت عليها بشق الأنفس مقابل أموال حقيقية تُرسل مباشرة إلى محفظتك الإلكترونية أو حسابك البنكي." : "Redeem your hard-earned points for real cash sent directly to your mobile wallet or bank account.")}
           </p>
         </div>
       </div>
@@ -378,28 +386,28 @@ export default function RewardsPage() {
               <Truck className="w-6 h-6" />
             </div>
             <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{driverStatsLoading ? "..." : driverStats?.totalTripsCompleted ?? 0}</p>
-            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">Total Trips</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">{language === "ar" ? "إجمالي الرحلات" : "Total Trips"}</p>
           </GlassCard>
           <GlassCard className="p-5">
             <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center mb-3 text-amber-600 dark:text-amber-400">
               <Star className="w-6 h-6" />
             </div>
             <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{driverStatsLoading ? "..." : driverStats?.rating ?? "—"}</p>
-            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">Rating</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">{language === "ar" ? "التقييم" : "Rating"}</p>
           </GlassCard>
           <GlassCard className="p-5">
             <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-3 text-emerald-600 dark:text-emerald-400">
               <Coins className="w-6 h-6" />
             </div>
             <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{walletLoading ? "..." : currentPoints.toLocaleString()}</p>
-            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">Wallet Points</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">{language === "ar" ? "نقاط المحفظة" : "Wallet Points"}</p>
           </GlassCard>
           <GlassCard className="p-5">
             <div className="w-12 h-12 bg-violet-500/10 rounded-2xl flex items-center justify-center mb-3 text-violet-600 dark:text-violet-400">
               <Banknote className="w-6 h-6" />
             </div>
-            <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{walletLoading ? "..." : currentCashVal.toFixed(2)} EGP</p>
-            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">Cash Value</p>
+            <p className="text-2xl tracking-tight text-slate-900 dark:text-white font-bold">{walletLoading ? "..." : currentCashVal.toFixed(2)} {language === "ar" ? "ج.م" : "EGP"}</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-0.5">{language === "ar" ? "القيمة النقدية" : "Cash Value"}</p>
           </GlassCard>
         </div>
       )}
@@ -418,16 +426,16 @@ export default function RewardsPage() {
             <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
-                  <Coins className="w-3.5 h-3.5 animate-spin-slow" /> Active Wallet Balance
+                  <Coins className="w-3.5 h-3.5 animate-spin-slow" /> {language === "ar" ? "رصيد المحفظة النشط" : "Active Wallet Balance"}
                 </span>
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl tracking-tight text-slate-900 dark:text-white" style={{ fontWeight: 800 }}>
                     {walletLoading ? "..." : currentPoints.toLocaleString()}
                   </span>
-                  <span className="text-slate-500 dark:text-slate-400 font-medium">Points</span>
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">{language === "ar" ? "نقطة" : "Points"}</span>
                 </div>
                 <p className="text-xs text-slate-400 dark:text-slate-500">
-                  Earned from verified plastic bottle deposits.
+                  {language === "ar" ? "مكتسبة من إيداعات زجاجات البلاستيك المعتمدة." : "Earned from verified plastic bottle deposits."}
                 </p>
               </div>
 
@@ -436,9 +444,9 @@ export default function RewardsPage() {
                   <Banknote className="w-5 h-5 animate-pulse" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Cash Equivalent</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{language === "ar" ? "ما يعادلها نقداً" : "Cash Equivalent"}</p>
                   <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                    ≈ {walletLoading ? "..." : currentCashVal.toFixed(2)} EGP
+                    ≈ {walletLoading ? "..." : currentCashVal.toFixed(2)} {language === "ar" ? "ج.م" : "EGP"}
                   </p>
                 </div>
               </div>
@@ -446,15 +454,15 @@ export default function RewardsPage() {
 
             {/* Exchange Rate Badge */}
             <div className="mt-5 pt-4 border-t border-slate-200/50 dark:border-white/5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span className="flex items-center gap-1"><Info className="w-3.5 h-3.5 text-teal-500" /> Exchange Rate: 10 Points = 1.00 EGP</span>
-              <span className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">1 Point = 0.10 EGP</span>
+              <span className="flex items-center gap-1"><Info className="w-3.5 h-3.5 text-teal-500" /> {language === "ar" ? "سعر الصرف: 10 نقاط = 1.00 ج.م" : "Exchange Rate: 10 Points = 1.00 EGP"}</span>
+              <span className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">{language === "ar" ? "1 نقطة = 0.10 ج.م" : "1 Point = 0.10 EGP"}</span>
             </div>
           </GlassCard>
 
           {/* Redemption Form */}
           <GlassCard className="p-6">
             <h2 className="text-lg text-slate-900 dark:text-white mb-4 flex items-center gap-2" style={{ fontWeight: 600 }}>
-              <ArrowRightLeft className="w-5 h-5 text-emerald-500" /> Convert Points to Cash
+              <ArrowRightLeft className="w-5 h-5 text-emerald-500" /> {language === "ar" ? "تحويل النقاط إلى نقد" : "Convert Points to Cash"}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -462,14 +470,14 @@ export default function RewardsPage() {
               {/* Select Provider */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Wallet Provider / Method
+                  {language === "ar" ? "مزود المحفظة / طريقة الدفع" : "Wallet Provider / Method"}
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {[
-                    { id: "vodafone", label: "Vodafone Cash" },
-                    { id: "instapay", label: "InstaPay Egypt" },
-                    { id: "orange", label: "Orange Cash" },
-                    { id: "etisalat", label: "Etisalat Cash" }
+                    { id: "vodafone", label: language === "ar" ? "فودافون كاش" : "Vodafone Cash" },
+                    { id: "instapay", label: language === "ar" ? "إنستاباي مصر" : "InstaPay Egypt" },
+                    { id: "orange", label: language === "ar" ? "أورنج كاش" : "Orange Cash" },
+                    { id: "etisalat", label: language === "ar" ? "اتصالات كاش" : "Etisalat Cash" }
                   ].map((p) => (
                     <button
                       key={p.id}
@@ -490,8 +498,12 @@ export default function RewardsPage() {
               {/* Wallet Number / InstaPay ID */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex justify-between">
-                  <span>{provider === "instapay" ? "InstaPay Address (IPA)" : "Wallet Mobile Number"}</span>
-                  <span className="text-xs text-slate-400 normal-case">Required</span>
+                  <span>
+                    {provider === "instapay" 
+                      ? (language === "ar" ? "عنوان إنستاباي (IPA)" : "InstaPay Address (IPA)") 
+                      : (language === "ar" ? "رقم هاتف المحفظة" : "Wallet Mobile Number")}
+                  </span>
+                  <span className="text-xs text-slate-400 normal-case">{language === "ar" ? "مطلوب" : "Required"}</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -504,16 +516,16 @@ export default function RewardsPage() {
                     onChange={(e) => setWalletNumber(e.target.value)}
                     placeholder={
                       provider === "instapay"
-                        ? "e.g., username@instapay"
-                        : "e.g., 01012345678"
+                        ? (language === "ar" ? "مثال: username@instapay" : "e.g., username@instapay")
+                        : (language === "ar" ? "مثال: 01012345678" : "e.g., 01012345678")
                     }
                     className="block w-full pl-10 pr-4 py-2.5 bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl focus:border-emerald-500 focus:ring focus:ring-emerald-500/20 text-slate-900 dark:text-white placeholder-slate-400 text-sm outline-none transition-colors"
                   />
                 </div>
                 <p className="text-[11px] text-slate-400 dark:text-slate-500">
                   {provider === "instapay" 
-                    ? "Enter your Instapay address linked to your bank account."
-                    : "Make sure this number is registered for cash wallet services."
+                    ? (language === "ar" ? "أدخل عنوان إنستاباي المرتبط بحسابك البنكي." : "Enter your Instapay address linked to your bank account.")
+                    : (language === "ar" ? "تأكد من تسجيل هذا الرقم في خدمات المحفظة النقدية." : "Make sure this number is registered for cash wallet services.")
                   }
                 </p>
               </div>
@@ -522,10 +534,10 @@ export default function RewardsPage() {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Points to Convert
+                    {language === "ar" ? "النقاط المراد تحويلها" : "Points to Convert"}
                   </label>
                   <span className="text-xs text-slate-400 dark:text-slate-500">
-                    Max: {currentPoints.toLocaleString()} pts
+                    {language === "ar" ? "الأقصى:" : "Max:"} {currentPoints.toLocaleString()} {language === "ar" ? "نقطة" : "pts"}
                   </span>
                 </div>
                 <div className="flex gap-2">
@@ -543,7 +555,7 @@ export default function RewardsPage() {
                         setPointsInput(e.target.value);
                         setFormError(null);
                       }}
-                      placeholder="Enter points count"
+                      placeholder={language === "ar" ? "أدخل عدد النقاط" : "Enter points count"}
                       className="block w-full pl-10 pr-4 py-2.5 bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl focus:border-emerald-500 focus:ring focus:ring-emerald-500/20 text-slate-900 dark:text-white placeholder-slate-400 text-sm outline-none transition-colors"
                     />
                   </div>
@@ -569,7 +581,7 @@ export default function RewardsPage() {
                       onClick={() => quickSelect(1)}
                       className="px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
                     >
-                      All
+                      {language === "ar" ? "الكل" : "All"}
                     </button>
                   </div>
                 </div>
@@ -579,15 +591,15 @@ export default function RewardsPage() {
               {enteredPoints > 0 && (
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 flex items-center justify-between animate-fade-in">
                   <div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">You convert</p>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{enteredPoints} Eco-Points</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{language === "ar" ? "أنت تحول" : "You convert"}</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{enteredPoints} {language === "ar" ? "نقاط بيئية" : "Eco-Points"}</p>
                   </div>
                   <div className="text-slate-400">
                     <ArrowRightLeft className="w-4 h-4" />
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-slate-500 dark:text-slate-400">You receive</p>
-                    <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{cashToReceive.toFixed(2)} EGP</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{language === "ar" ? "ستستلم" : "You receive"}</p>
+                    <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{cashToReceive.toFixed(2)} {language === "ar" ? "ج.م" : "EGP"}</p>
                   </div>
                 </div>
               )}
@@ -609,12 +621,14 @@ export default function RewardsPage() {
                 {redeemMutation.isPending ? (
                   <>
                     <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Processing cashout...
+                    {language === "ar" ? "جاري معالجة السحب..." : "Processing cashout..."}
                   </>
                 ) : (
                   <>
                     <ArrowUpRight className="w-4 h-4" />
-                    Redeem for {cashToReceive > 0 ? cashToReceive.toFixed(2) : "0.00"} EGP
+                    {language === "ar" 
+                      ? `استرداد مقابل ${cashToReceive > 0 ? cashToReceive.toFixed(2) : "0.00"} ج.م` 
+                      : `Redeem for ${cashToReceive > 0 ? cashToReceive.toFixed(2) : "0.00"} EGP`}
                   </>
                 )}
               </button>
@@ -629,24 +643,24 @@ export default function RewardsPage() {
           {/* Rules & Information */}
           <GlassCard className="p-5 space-y-4">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Info className="w-4 h-4 text-emerald-500" /> Redemption Guidelines
+              <Info className="w-4 h-4 text-emerald-500" /> {language === "ar" ? "إرشادات الاسترداد" : "Redemption Guidelines"}
             </h3>
             <ul className="space-y-3 text-xs text-slate-500 dark:text-slate-400">
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                <span>Instant deposits for Vodafone Cash, Orange Cash, and Etisalat Cash.</span>
+                <span>{language === "ar" ? "إيداع فوري لـ فودافون كاش، أورنج كاش، واتصالات كاش." : "Instant deposits for Vodafone Cash, Orange Cash, and Etisalat Cash."}</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                <span>InstaPay transfers process instantly into your mapped bank account.</span>
+                <span>{language === "ar" ? "تتم معالجة تحويلات إنستاباي فوراً إلى حسابك البنكي المرتبط." : "InstaPay transfers process instantly into your mapped bank account."}</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                <span>Redemptions are final and points cannot be refunded once transferred.</span>
+                <span>{language === "ar" ? "عمليات الاسترداد نهائية ولا يمكن استرداد النقاط بمجرد تحويلها." : "Redemptions are final and points cannot be refunded once transferred."}</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                <span>Minimum redemption amount is 10 points (1.00 EGP).</span>
+                <span>{language === "ar" ? "الحد الأدنى للاسترداد هو 10 نقاط (1.00 ج.م)." : "Minimum redemption amount is 10 points (1.00 EGP)."}</span>
               </li>
             </ul>
           </GlassCard>
@@ -654,23 +668,23 @@ export default function RewardsPage() {
           {/* Recent Ledger History */}
           <GlassCard className="p-5">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-teal-500" /> Recent Cashouts
+              <TrendingUp className="w-4 h-4 text-teal-500" /> {language === "ar" ? "عمليات السحب الأخيرة" : "Recent Cashouts"}
             </h3>
             <div className="space-y-3">
               {ownHistoryLoading ? (
-                <div className="text-xs text-slate-400 animate-pulse py-2">Loading history...</div>
+                <div className="text-xs text-slate-400 animate-pulse py-2">{language === "ar" ? "جاري تحميل السجل..." : "Loading history..."}</div>
               ) : ownHistory.length === 0 ? (
-                <div className="text-xs text-slate-400 py-2">No cashout history yet.</div>
+                <div className="text-xs text-slate-400 py-2">{language === "ar" ? "لا يوجد سجل سحب نقدي بعد." : "No cashout history yet."}</div>
               ) : (
                 ownHistory.slice(0, 5).map((item: any, idx: number) => (
                   <div key={item.id || idx} className="p-3 rounded-xl bg-slate-50/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-1">
                     <div className="flex justify-between text-xs">
                       <span className="font-semibold text-slate-700 dark:text-slate-300">{item.method || item.provider || item.paymentMethod || "-"}</span>
-                      <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">+{Number(item.amount || item.cashAmount || 0).toFixed(2)} EGP</span>
+                      <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">+{Number(item.amount || item.cashAmount || 0).toFixed(2)} {language === "ar" ? "ج.م" : "EGP"}</span>
                     </div>
                     <div className="flex justify-between text-[10px] text-slate-400">
-                      <span>{item.date || item.transactionDate || "-"} · {item.points || item.pointsRedeemed || 0} pts</span>
-                      <span className="text-emerald-500 font-medium">● {item.status || "Completed"}</span>
+                      <span>{item.date || item.transactionDate || "-"} · {item.points || item.pointsRedeemed || 0} {language === "ar" ? "نقطة" : "pts"}</span>
+                      <span className="text-emerald-500 font-medium">● {tApi(item.status || "Completed")}</span>
                     </div>
                   </div>
                 ))
@@ -686,10 +700,10 @@ export default function RewardsPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
           <div>
             <h2 className="text-lg text-slate-900 dark:text-white flex items-center gap-2 font-bold" style={{ fontWeight: 600 }}>
-              <TrendingUp className="w-5 h-5 text-emerald-500 animate-pulse" /> Platform Redemptions Feed (All Users)
+              <TrendingUp className="w-5 h-5 text-emerald-500 animate-pulse" /> {language === "ar" ? "تغذية عمليات الاسترداد للمنصة (جميع المستخدمين)" : "Platform Redemptions Feed (All Users)"}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Live redemption logs for all eco-citizens on the network.
+              {language === "ar" ? "سجلات الاسترداد المباشرة لجميع المواطنين البيئيين على الشبكة." : "Live redemption logs for all eco-citizens on the network."}
             </p>
           </div>
           
@@ -697,7 +711,7 @@ export default function RewardsPage() {
           <div className="relative w-full md:w-64">
             <input
               type="text"
-              placeholder="Search by user name..."
+              placeholder={language === "ar" ? "البحث باسم المستخدم..." : "Search by user name..."}
               value={historySearch}
               onChange={(e) => setHistorySearch(e.target.value)}
               className="w-full px-4 py-2 bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
@@ -708,24 +722,24 @@ export default function RewardsPage() {
         {globalLoading ? (
           <div className="py-12 flex flex-col items-center justify-center gap-2 text-slate-400">
             <span className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-xs">Aggregating redemption histories from all users...</p>
+            <p className="text-xs">{language === "ar" ? "تجميع سجلات الاسترداد من جميع المستخدمين..." : "Aggregating redemption histories from all users..."}</p>
           </div>
         ) : filteredGlobalHistory.length === 0 ? (
           <div className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs">
-            No redemptions found on the platform yet.
+            {language === "ar" ? "لم يتم العثور على عمليات استرداد على المنصة بعد." : "No redemptions found on the platform yet."}
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-start text-xs border-collapse">
               <thead>
                 <tr className="border-b border-slate-200/50 dark:border-white/5 text-slate-500 font-semibold">
-                  <th className="py-3 px-4">User</th>
-                  <th className="py-3 px-4">Redemption ID</th>
-                  <th className="py-3 px-4">Points</th>
-                  <th className="py-3 px-4">Amount (EGP)</th>
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Details</th>
+                  <th className="py-3 px-4 text-start">{language === "ar" ? "المستخدم" : "User"}</th>
+                  <th className="py-3 px-4 text-start">{language === "ar" ? "معرف الاسترداد" : "Redemption ID"}</th>
+                  <th className="py-3 px-4 text-start">{language === "ar" ? "النقاط" : "Points"}</th>
+                  <th className="py-3 px-4 text-start">{language === "ar" ? "المبلغ" : "Amount"} ({language === "ar" ? "ج.م" : "EGP"})</th>
+                  <th className="py-3 px-4 text-start">{language === "ar" ? "التاريخ" : "Date"}</th>
+                  <th className="py-3 px-4 text-start">{language === "ar" ? "الحالة" : "Status"}</th>
+                  <th className="py-3 px-4 text-start">{language === "ar" ? "التفاصيل" : "Details"}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -733,10 +747,10 @@ export default function RewardsPage() {
                   <tr key={item.redemptionId || idx} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.01] transition-colors">
                     <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white">{item.userName}</td>
                     <td className="py-3 px-4 font-mono text-slate-400">#{item.redemptionId}</td>
-                    <td className="py-3 px-4 text-amber-600 dark:text-amber-400 font-bold">{item.points} pts</td>
-                    <td className="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold">{item.amountEgp?.toFixed(2)} EGP</td>
+                    <td className="py-3 px-4 text-amber-600 dark:text-amber-400 font-bold">{item.points} {language === "ar" ? "نقطة" : "pts"}</td>
+                    <td className="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold">{item.amountEgp?.toFixed(2)} {language === "ar" ? "ج.م" : "EGP"}</td>
                     <td className="py-3 px-4 text-slate-500">
-                      {item.transactionDate ? new Date(item.transactionDate).toLocaleDateString(undefined, {
+                      {item.transactionDate ? new Date(item.transactionDate).toLocaleDateString(language === "ar" ? "ar-EG" : undefined, {
                         year: "numeric",
                         month: "short",
                         day: "numeric",
@@ -746,7 +760,7 @@ export default function RewardsPage() {
                     </td>
                     <td className="py-3 px-4">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
-                        {item.status || "Completed"}
+                        {tApi(item.status || "Completed")}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-slate-400 max-w-xs truncate">{item.details || "—"}</td>
